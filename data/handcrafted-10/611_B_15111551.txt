@@ -1,0 +1,20 @@
+s = raw_input().split(' ')
+len2 = len(str(bin(int(s[1])))[2:])
+n = int(s[0])
+m = int(s[1])
+ll = 1
+ans = 0
+while ll <= len2:
+    s = ''
+    for i in range(ll):
+        s += 1
+    i = 1
+    while i < ll:
+        sn = s[:i]+'0'+s[i+1:]
+        mid = int(sn, 2)
+        if n <= mid and mid <= m:
+            ans += 1
+        i += 1
+    ll += 1
+
+print ans

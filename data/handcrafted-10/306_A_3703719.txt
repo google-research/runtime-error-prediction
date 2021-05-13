@@ -1,0 +1,10 @@
+
+inp=map(int,raw_input().split(" ",2));
+n=inp[0];
+m=inp[1];
+ec=n/m;
+lc=n/m;
+outa=[ec for i in range(m)];
+for i in range(lc):
+	outa[i]=outa[i]+1;
+print " ".join(map(str,outa));	

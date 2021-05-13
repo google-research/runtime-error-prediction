@@ -1,0 +1,21 @@
+a,c = map(int, raw_input().split())
+A = map(int, raw_input().split())
+B = map(int, raw_input().split())
+X = 0
+C = []
+for j in range(a):
+  X = X + B[j]
+  C.append(max(0, A[j]-(c*X)))
+S = 0
+D = [None]
+for i in range(a-1,-1,-1):
+  S = S + B[i]
+  D.append(max(0, A[i]-(c*S)))
+if sum(C)>sum(D):
+  print 'Limak'
+if sum(C)<sum(D):
+  print 'Radewoosh'
+if sum(C) == sum(D):
+  print 'Tie'
+  
+  

@@ -1,0 +1,15 @@
+n=int(raw_input())
+h,a=[],[]
+for i in xrange(n):
+    x,y=raw_input().split()
+    h.append(int(x))
+    a.append(int(y))
+ch=[0 for i in xrange(11)]
+for x in h:
+    ch[x]+=1
+for i in xrange(n):
+    nh,na=n-1,n-1
+    if ch[a[i]]!=0:
+        nh+=ch[a[i]]
+        na-=ch[a[i]]
+    print nh,na

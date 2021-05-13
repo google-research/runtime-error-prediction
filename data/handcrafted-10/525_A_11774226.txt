@@ -1,0 +1,11 @@
+n = int(raw_input())
+s = raw_input().split()[0]
+dic = [0]*26
+count = 0
+for j in xrange(len(s)/2):
+    dic[ord(s[i*2])-97] += 1
+    if dic[ord(s[i*2+1])-65] >0:
+        dic[ord(s[i*2+1])-65] -= 1
+    else:
+        count += 1
+print count
