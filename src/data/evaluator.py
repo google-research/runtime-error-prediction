@@ -15,14 +15,19 @@
 """Runs codeforces submissions to check for runtime errors and correctness."""
 
 import fire
+
+import getpass
 import os
 import pickle
 import shutil
 import subprocess
 
 PIPE = subprocess.PIPE
-PYTHON = '/Users/dbieber/.virtualenvs/_2/bin/python'
-ERROR_CHECKER = '/Users/dbieber/code/playground/codeforces-data/error-checker.py'
+PYTHON2 = '/usr/bin/python2'
+if getpass.getuser() == 'dbieber':
+  PYTHON2 = '/Users/dbieber/.virtualenvs/_2/bin/python'
+FILE_DIRNAME = os.path.dirname(__file__)
+ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
 
 
 def run_in_process_py2(python_filepath, input_filepath):
@@ -38,7 +43,7 @@ def run_in_process_py3(python_filepath, input_filepath):
 
 
 def run(python_filepath, input_filepath):
-  command = [PYTHON, python_filepath]
+  command = [PYTHON2, python_filepath]
   return subprocess.run(
       command,
       input=open(input_filepath, 'rb').read(),
@@ -49,7 +54,7 @@ def run(python_filepath, input_filepath):
 
 def run_for_errors(python_filepath, input_filepath):
   print(input_filepath)
-  command = [PYTHON, python_filepath]
+  command = [PYTHON2, python_filepath]
   print(command)
   p = subprocess.run(
       command,
@@ -83,7 +88,7 @@ def run_for_errors3(python_filepath, input_filepath):
   error_path = os.path.join(out_dir, 'error.txt')
   stdout_path = os.path.join(out_dir, 'stdout.txt')
   stderr_path = os.path.join(out_dir, 'stderr.txt')
-  command = [PYTHON, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
+  command = [PYTHON2, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
   p = subprocess.run(
       command,
       input=open(input_filepath, 'rb').read(),
