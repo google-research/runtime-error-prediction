@@ -18,18 +18,43 @@ from misc_utils import get_codeforeces_paths
 from get_trace import run_for_errors
 from add_code import add_error
 
+
 def main(base_path, trace_code_path, process_suffix="processed"):
-	code_inp_data_paths = get_codeforeces_paths(base_path)
-	for code_path, inp_paths in code_inp_data_paths:
-		for idx, inp_path in enumerate(inp_paths):
-			err_path = inp_path.replace(".txt", "_error.txt")
-			out_path = inp_path.replace(".txt", "_out.txt")
-			out_code_path = code_path.replace(".txt", "_"+str(idx)+"_perturbed.txt")
-			data_trace_path = code_path.replace(".txt", "_"+str(idx)+"_trace.json")
-			trace_successful = run_for_errors(code_path, data_trace_path, trace_code_path, inp_path, out_path, err_path, process_suffix)
-			if trace_successful:
-				data_trace_path = data_trace_path.replace(".json", "_"+process_suffix+".json")
-				add_error(code_path, data_trace_path, "zero_err")
+    code_inp_data_paths = get_codeforeces_paths(base_path)
+    for (
+        code_path,
+        inp_paths,
+        perturbed_code_path,
+        trace_data_path,
+        sol_err_out_path,
+    ) in code_inp_data_paths:
+        for idx, inp_path in enumerate(inp_paths):
+            # print inp_path
+            err_path = sol_err_out_path.replace(
+                ".txt", "_error" + "_" + str(idx) + ".txt"
+            )
+            out_path = sol_err_out_path.replace(
+                ".txt", "_out" + "_" + str(idx) + ".txt"
+            )
+            out_code_path = perturbed_code_path.replace(".txt", "_" + str(idx) + ".txt")
+            data_trace_path = trace_data_path.replace(
+                ".json", "_trace_" + str(idx) + ".json"
+            )
+            trace_successful = run_for_errors(
+                code_path,
+                data_trace_path,
+                trace_code_path,
+                inp_path,
+                out_path,
+                err_path,
+                process_suffix,
+            )
+            # print trace_successful
+            if trace_successful:
+                data_trace_path = data_trace_path.replace(
+                    ".json", "_" + process_suffix + ".json"
+                )
+                _ = add_error(code_path, data_trace_path, out_code_path, "zero_err")
 
 
-main("/Users/rishabgoel/Downloads/description2code_current/codeforces", "trace_code.py")
+main("/Users/rishabgoel/Documents/compressive-ipagnn/data/codeforces", "trace_code.py")

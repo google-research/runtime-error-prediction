@@ -2,14 +2,15 @@ from collections import defaultdict
 
 data = defaultdict(list)
 
+
 def trace_lines(frame, event, arg):
-    if event != 'line':
+    if event != "line":
         return
     co = frame.f_code
     func_name = co.co_name
     line_no = frame.f_lineno
     filename = co.co_filename
-    if filename=="<string>":
+    if filename == "<string>":
         locals_dict = {}
         for key, value in frame.f_locals.items():
             try:
@@ -21,7 +22,7 @@ def trace_lines(frame, event, arg):
 
 
 def trace_calls(frame, event, arg):
-    if event!="call":
+    if event != "call":
         return
     co = frame.f_code
     func_name = co.co_name

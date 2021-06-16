@@ -17,10 +17,20 @@ import numpy as np
 import os
 import json
 
+
 def get_codeforces_inp_data_paths(base_path):
     inp_data_directory = os.path.join(base_path, "samples")
-    inp_data_paths = [inp_data_directory+"/"+path for path in os.listdir(inp_data_directory) if "input" in path]
+    inp_data_paths = [
+        inp_data_directory + "/" + path
+        for path in os.listdir(inp_data_directory)
+        if "input" in path
+    ]
     return inp_data_paths
+
+
+def create_dirs(dir):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
 
 
 def get_codeforeces_paths(base_path):
@@ -29,21 +39,44 @@ def get_codeforeces_paths(base_path):
         for problem_name_dir in os.listdir(base_path)
         if os.path.isdir(os.path.join(base_path, problem_name_dir))
     ]
-    print(len(problem_paths))
-    solution_paths = []
+    # print(len(problem_paths))
+    data_paths = []
     for problem_path in problem_paths:
-        solutions_path = os.path.join(problem_path, "solutions_python")
+        prob_solutions_path = os.path.join(problem_path, "solutions_python")
+        # print prob_solutions_path
+        perturbed_prob_solutions_path = os.path.join(
+            problem_path, "perturbed_solutions_python"
+        )
+        create_dirs(perturbed_prob_solutions_path)
+        trace_path = os.path.join(problem_path, "trace")
+        create_dirs(trace_path)
+        err_out_path = os.path.join(problem_path, "err_out")
+        create_dirs(err_out_path)
         inp_data_paths = get_codeforces_inp_data_paths(problem_path)
         # import pdb;pdb.set_trace()
-        if os.path.exists(solutions_path):
-            solutions_path = [
-                (os.path.join(solutions_path, sol_name), inp_data_paths)
-                for sol_name in os.listdir(solutions_path)
-            ]
-            solution_paths.append(solutions_path)
+        if os.path.exists(prob_solutions_path):
+            solution_paths = []
+            for sol_name in os.listdir(prob_solutions_path):
+                code_path = os.path.join(prob_solutions_path, sol_name)
+                sol_name_json = sol_name.replace(".txt", ".json")
+                perturbed_code_path = os.path.join(
+                    perturbed_prob_solutions_path, sol_name
+                )
+                trace_code_path = os.path.join(trace_path, sol_name_json)
+                sol_err_out_path = os.path.join(err_out_path, sol_name)
+                solution_paths.append(
+                    (
+                        code_path,
+                        inp_data_paths,
+                        perturbed_code_path,
+                        trace_code_path,
+                        sol_err_out_path,
+                    )
+                )
+            data_paths.append(solution_paths)
 
-    solution_paths = [sol_path for path in solution_paths for sol_path in path]
-    return solution_paths
+    data_paths = [sol_path for path in data_paths for sol_path in path]
+    return data_paths
 
 
 def set_seeds(seed=10):
@@ -56,9 +89,11 @@ def load_data(fp):
         data = file.read().strip()
     return data
 
+
 def load_json(fp):
     with open(fp, "r") as file:
         return json.load(file)
+
 
 def write_csv(data, fp):
     with open(fp, "w") as file:
