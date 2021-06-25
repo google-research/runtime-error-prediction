@@ -27,6 +27,7 @@ In the compressive-ipagnn folder run the following command:
 python -m error_generation.main
 """
 
+
 def main(config_fp):
     config = load_yaml(config_fp)
     set_seeds()
@@ -66,9 +67,16 @@ def main(config_fp):
                 )
                 for err_suffix in config["errors"]:
                     # import pdb;pdb.set_trace()
-                    _ = add_error(code_path, data_trace_path, out_code_path, err_suffix, error_expr_factory_obj)
+                    _ = add_error(
+                        code_path,
+                        data_trace_path,
+                        out_code_path,
+                        err_suffix,
+                        error_expr_factory_obj,
+                    )
             # break
         # break
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main("error_generation/config.yaml")

@@ -1,4 +1,4 @@
-# Get line by line trace for variables in a program. 
+# Get line by line trace for variables in a program.
 # It is adapted from the examples in the following link:
 # https://pymotw.com/2/sys/tracing.html
 

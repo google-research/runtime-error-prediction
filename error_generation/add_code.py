@@ -41,12 +41,15 @@ def get_perturb_line_step(code_trace_org, err_suffx):
     perturb_val = perturb_step[perturb_var]
     return int(perturb_line), perturb_var, perturb_val
 
+
 def perturb_program(red, code_trace, err_suffx, error_expr_factory_obj):
-    perturb_line, perturb_var, perturb_val = get_perturb_line_step(code_trace, err_suffx)
+    perturb_line, perturb_var, perturb_val = get_perturb_line_step(
+        code_trace, err_suffx
+    )
     if perturb_line is None:
         return 0
-    perturb_expression, is_err_present = error_expr_factory_obj.add_err( err_suffx, 
-        perturb_var, perturb_val
+    perturb_expression, is_err_present = error_expr_factory_obj.add_err(
+        err_suffx, perturb_var, perturb_val
     )
     # TODO(rishab): Need to be careful to ensure that that the insertion
     # line is not an AssignmentNode in RedBaron.
@@ -55,14 +58,16 @@ def perturb_program(red, code_trace, err_suffx, error_expr_factory_obj):
         # can be called. I am not sure if we can just add the expression
         # without proper imports.
         import_statement, perturb_expression = perturb_expression.split(";")
-        red.at(perturb_line).insert_before(import_statement, offset=perturb_line-1)
-        red.at(perturb_line+1).insert_after(perturb_expression)
+        red.at(perturb_line).insert_before(import_statement, offset=perturb_line - 1)
+        red.at(perturb_line + 1).insert_after(perturb_expression)
     else:
         red.at(perturb_line).insert_after(perturb_expression)
     return is_err_present
 
 
-def add_error(org_code_fp, code_trace_fp, err_code_fp, err_suffx, error_expr_factory_obj):
+def add_error(
+    org_code_fp, code_trace_fp, err_code_fp, err_suffx, error_expr_factory_obj
+):
     # We can optimize the code by passing the read file.
     # But for now to ensure isolation, I am doing it
     # explicitly.
@@ -74,7 +79,9 @@ def add_error(org_code_fp, code_trace_fp, err_code_fp, err_suffx, error_expr_fac
     program = load_data(org_code_fp).strip()
     red = rb.RedBaron(program)
     try:
-        is_err_present = perturb_program(red, code_trace, err_suffx, error_expr_factory_obj)
+        is_err_present = perturb_program(
+            red, code_trace, err_suffx, error_expr_factory_obj
+        )
         err_code_fp = err_code_fp.replace(".txt", "-" + str(is_err_present) + ".txt")
     except Exception as e:
         # We can handle the exception as we want.
