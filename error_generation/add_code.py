@@ -20,6 +20,7 @@ from misc_utils import (
     write_csv,
     get_random_int,
     get_random_float,
+    get_valid_code_trace,
 )
 
 VARIABLE_NAMES = ["tmp{}".format(i) for i in range(10)] + [
@@ -28,65 +29,53 @@ VARIABLE_NAMES = ["tmp{}".format(i) for i in range(10)] + [
 NUM_RANGE = [1, 100]
 
 
-def get_perturb_line_step(code_trace):
+def get_perturb_line_step(code_trace_org, err_suffx):
+    # Not all the variable types are valid for all the errors.
+    # For instance for index out of range an int var is not valid.
+    code_trace = get_valid_code_trace(code_trace_org, err_suffx)
+    if not code_trace:
+        return None, None, None
     perturb_line = get_random_list_sample(code_trace.keys(), 1)[0]
     perturb_step = get_random_list_sample(code_trace[perturb_line], 1)[0]
-    # import pdb;pdb.set_trace()
     perturb_var = get_random_list_sample(perturb_step.keys(), 1)[0]
     perturb_val = perturb_step[perturb_var]
-    return int(perturb_line), perturb_var, int(perturb_val)
+    return int(perturb_line), perturb_var, perturb_val
 
-
-def get_zero_perturb_expression(perturb_var, perturb_val):
-    assign_var = get_random_list_sample(VARIABLE_NAMES, 1)[0]
-    is_zerro_err = get_random_int(0, 1)
-    if is_zerro_err:
-        numerator = get_random_float(*NUM_RANGE, size=1)[0]
-        return (
-            assign_var
-            + "="
-            + str(int(numerator))
-            + "/"
-            + str(perturb_val)
-            + "-"
-            + perturb_var,
-            is_zerro_err,
-        )
-    else:
-        perturb_val_offset, numerator = get_random_float(*NUM_RANGE, size=2)
-        perturb_val = perturb_val + int(perturb_val_offset)
-        return (
-            assign_var
-            + "="
-            + str(int(numerator))
-            + "/"
-            + str(perturb_val)
-            + "-"
-            + perturb_var,
-            is_zerro_err,
-        )
-
-
-def perturb_program(red, code_trace):
-    perturb_line, perturb_var, perturb_val = get_perturb_line_step(code_trace)
-    perturb_expression, is_err_present = get_zero_perturb_expression(
+def perturb_program(red, code_trace, err_suffx, error_expr_factory_obj):
+    perturb_line, perturb_var, perturb_val = get_perturb_line_step(code_trace, err_suffx)
+    if perturb_line is None:
+        return 0
+    perturb_expression, is_err_present = error_expr_factory_obj.add_err( err_suffx, 
         perturb_var, perturb_val
     )
-    red.at(perturb_line).insert_after(perturb_expression)
+    # TODO(rishab): Need to be careful to ensure that that the insertion
+    # line is not an AssignmentNode in RedBaron.
+    if err_suffx == "math_domain_err":
+        # The sqrt function needs to be imported so that sqrt function
+        # can be called. I am not sure if we can just add the expression
+        # without proper imports.
+        import_statement, perturb_expression = perturb_expression.split(";")
+        red.at(perturb_line).insert_before(import_statement, offset=perturb_line-1)
+        red.at(perturb_line+1).insert_after(perturb_expression)
+    else:
+        red.at(perturb_line).insert_after(perturb_expression)
     return is_err_present
 
 
-def add_error(org_code_fp, code_trace_fp, err_code_fp, suffx):
+def add_error(org_code_fp, code_trace_fp, err_code_fp, err_suffx, error_expr_factory_obj):
+    # We can optimize the code by passing the read file.
+    # But for now to ensure isolation, I am doing it
+    # explicitly.
     code_trace = load_json(code_trace_fp)
     # To keep this function generic the name of the output
     # code file has the error type and indicator whether the
     # the error is present or not as suffix.
-    err_code_fp = err_code_fp.replace(".txt", "_" + suffx + ".txt")
+    err_code_fp = err_code_fp.replace(".txt", "-" + err_suffx + ".txt")
     program = load_data(org_code_fp).strip()
     red = rb.RedBaron(program)
     try:
-        is_zerro_err = perturb_program(red, code_trace)
-        err_code_fp = err_code_fp.replace(".txt", "_" + str(is_zerro_err) + ".txt")
+        is_err_present = perturb_program(red, code_trace, err_suffx, error_expr_factory_obj)
+        err_code_fp = err_code_fp.replace(".txt", "-" + str(is_err_present) + ".txt")
     except Exception as e:
         # We can handle the exception as we want.
         # But for the time being we can return False.

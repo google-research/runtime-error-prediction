@@ -49,6 +49,7 @@ def run_for_errors(
     python_source = open(python_filepath, "r").read()
     python_source = python_source.replace('__name__ == "__main__"', "True")
     python_source = python_source.replace("__name__ == '__main__'", "True")
+    # TODO(rishab): Clean the python_source variable.
     python_source = (
         "import json\n"
         + "import sys\n"
@@ -70,7 +71,7 @@ def run_for_errors(
             stderr=open(stderr_file, "wb"),
         )
     except Exception as e:
-        raise e
+        # raise e
         return False
     postprocess_and_save(data_path, offset, processed_suffix)
     return True

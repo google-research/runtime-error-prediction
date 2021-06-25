@@ -14,13 +14,24 @@
 
 import os
 
-from misc_utils import get_codeforeces_paths
-from get_trace import run_for_errors
-from add_code import add_error
+from error_generation.misc_utils import get_codeforeces_paths, load_yaml, set_seeds
+from error_generation.get_trace import run_for_errors
+from error_generation.add_code import add_error
+from error_generation.error_expression_factory import ErrorFactory
 
+"""
+TODO(rishab): Setup code to include codechef as well.
 
-def main(base_path, trace_code_path, process_suffix="processed"):
-    code_inp_data_paths = get_codeforeces_paths(base_path)
+Run instructions:
+In the compressive-ipagnn folder run the following command:
+python -m error_generation.main
+"""
+
+def main(config_fp):
+    config = load_yaml(config_fp)
+    set_seeds()
+    code_inp_data_paths = get_codeforeces_paths(config["base_path"])
+    error_expr_factory_obj = ErrorFactory()
     for (
         code_path,
         inp_paths,
@@ -40,21 +51,24 @@ def main(base_path, trace_code_path, process_suffix="processed"):
             data_trace_path = trace_data_path.replace(
                 ".json", "_trace_" + str(idx) + ".json"
             )
-            trace_successful = run_for_errors(
+            is_trace_successful = run_for_errors(
                 code_path,
                 data_trace_path,
-                trace_code_path,
+                config["trace_code_path"],
                 inp_path,
                 out_path,
                 err_path,
-                process_suffix,
+                config["process_suffix"],
             )
-            # print trace_successful
-            if trace_successful:
+            if is_trace_successful:
                 data_trace_path = data_trace_path.replace(
-                    ".json", "_" + process_suffix + ".json"
+                    ".json", "_" + config["process_suffix"] + ".json"
                 )
-                _ = add_error(code_path, data_trace_path, out_code_path, "zero_err")
+                for err_suffix in config["errors"]:
+                    # import pdb;pdb.set_trace()
+                    _ = add_error(code_path, data_trace_path, out_code_path, err_suffix, error_expr_factory_obj)
+            # break
+        # break
 
-
-main("/Users/rishabgoel/Documents/compressive-ipagnn/data/codeforces", "trace_code.py")
+if __name__ == '__main__':
+    main("error_generation/config.yaml")

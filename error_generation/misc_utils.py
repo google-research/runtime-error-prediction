@@ -16,7 +16,19 @@ import random
 import numpy as np
 import os
 import json
+import yaml
+import copy
+from collections import defaultdict
 
+ALLOWED_TYPE = {
+        "zero_err": [int, float],
+        "assert_err": [int, float],
+        "not_subscriptable_err": [int, float],
+        "idx_out_range_err": [list],
+        "undef_var_err": [int, float, str, list],
+        "math_domain_err": [int, float],
+        "not_iterable_err": [int, float]
+        }
 
 def get_codeforces_inp_data_paths(base_path):
     inp_data_directory = os.path.join(base_path, "samples")
@@ -78,6 +90,20 @@ def get_codeforeces_paths(base_path):
     data_paths = [sol_path for path in data_paths for sol_path in path]
     return data_paths
 
+def is_valid_type(val, type):
+    return isinstance(val, type)
+
+def get_valid_code_trace(code_trace, err_suffx):
+    code_trace_filtered = defaultdict(list)
+    for line in code_trace:
+        for step_idx in range(len(code_trace[line])):
+            new_step_dict = {}
+            for var in code_trace[line][step_idx]:
+                if any(is_valid_type(code_trace[line][step_idx][var], typ) for typ in ALLOWED_TYPE[err_suffx]):
+                    new_step_dict[var] = code_trace[line][step_idx][var]
+            if new_step_dict:
+                code_trace_filtered[line].append(new_step_dict)
+    return code_trace_filtered
 
 def set_seeds(seed=10):
     random.seed(seed)
@@ -94,6 +120,9 @@ def load_json(fp):
     with open(fp, "r") as file:
         return json.load(file)
 
+def load_yaml(fp):
+    with open(fp, "r") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)
 
 def write_csv(data, fp):
     with open(fp, "w") as file:
