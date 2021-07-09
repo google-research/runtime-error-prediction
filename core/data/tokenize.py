@@ -39,4 +39,4 @@ def load_tokenizer(path=DEFAULT_TOKENIZER_PATH):
 
 
 if __name__ == '__main__':
-  fire.Fire(tmp)
+  fire.Fire()
