@@ -10,14 +10,25 @@ from core.data import tokenize
 
 
 @dataclasses.dataclass
-class RuntimeErrorProblem:
-  """RuntimeErrorProblem"""
+class RawRuntimeErrorProblem:
+  """RawRuntimeErrorProblem."""
   source: Text
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
   node_span_starts: List[int]
   node_span_ends: List[int]
+
+
+@dataclasses.dataclass
+class RuntimeErrorProblem:
+  """RuntimeErrorProblem for use on an accelerator."""
+  tokens: List[int]
+  edge_sources: List[int]
+  edge_dests: List[int]
+  edge_types: List[int]
+  node_token_span_starts: List[int]
+  node_token_span_ends: List[int]
 
 
 def get_character_index(source, lineno, col_offset):
@@ -27,8 +38,8 @@ def get_character_index(source, lineno, col_offset):
   return line_start + col_offset
 
 
-def make_runtimeerrorproblem(source, target):
-  """Constructs a RuntimeErrorProblem from the provided source and target.
+def make_rawruntimeerrorproblem(source, target):
+  """Constructs a RawRuntimeErrorProblem from the provided source and target.
 
   TODO(dbieber): Use target in RuntimeErrorProblem.
 
@@ -69,7 +80,7 @@ def make_runtimeerrorproblem(source, target):
       edge_dests.append(node_indexes[next_node.uuid])
       edge_types.append(0)
 
-  return RuntimeErrorProblem(
+  return RawRuntimeErrorProblem(
       source=source,
       edge_sources=edge_sources,
       edge_dests=edge_dests,
@@ -79,8 +90,22 @@ def make_runtimeerrorproblem(source, target):
   )
 
 
-def tokenize_example_with_spans(tokenizer, example):
-  return tokenize_with_spans(tokenizer, example.source, example.node_span_starts, example.node_span_ends)
+def make_runtimeerrorproblem(source, target):
+  raw = make_rawruntimeerrorproblem(source, target)
+  tokenizer = tokenize.load_tokenizer()
+  token_data = tokenize_raw_with_spans(tokenizer, raw)
+  return RuntimeErrorProblem(
+      tokens=token_data['tokens'],
+      edge_sources=raw.edge_sources,
+      edge_dests=raw.edge_dests,
+      edge_types=raw.edge_types,
+      node_token_span_starts=token_data['node_token_span_starts'],
+      node_token_span_ends=token_data['node_token_span_ends'],
+  )
+
+
+def tokenize_raw_with_spans(tokenizer, raw):
+  return tokenize_with_spans(tokenizer, raw.source, raw.node_span_starts, raw.node_span_ends)
 
 
 def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends):
@@ -111,9 +136,9 @@ def demo_parse_code():
   source = """n = input()
 print(any(set('47') >= set(str(i)) and n % i == 0 for i in range(1, n+1)) and 'YES' or 'NO')
 """
-  example = make_runtimeerrorproblem(source, '1')
+  raw = make_rawruntimeerrorproblem(source, '1')
   tokenizer = tokenize.load_tokenizer()
-  data = tokenize_example_with_spans(tokenizer, example)
+  data = tokenize_raw_with_spans(tokenizer, raw)
 
 
 if __name__ == '__main__':
