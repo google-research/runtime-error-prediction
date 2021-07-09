@@ -6,7 +6,7 @@ from typing import List, Text
 
 import dataclasses
 from python_graphs import control_flow
-from src.data import tokenize
+from core.data import tokenize
 
 
 @dataclasses.dataclass

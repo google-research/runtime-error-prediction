@@ -1,4 +1,4 @@
-"""Tokenizes"""
+"""Generate and load tokenizers for processing source code."""
 
 import fire
 
