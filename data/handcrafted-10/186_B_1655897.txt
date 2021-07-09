@@ -1,0 +1,43 @@
+# -*- coding: utf_8 -*- 
+#===========================================================================// 
+# Author: Zakhar_Voit
+# Module: B
+# Description: 
+# Creation date: 05.05.2012 13:55:33
+# Remarks: 
+#===========================================================================//
+
+import sys
+from math import *
+from string import *
+
+try:
+    fi = open("input.txt", "r")
+    fo = open("output.txt", "w")
+except:
+    fi = sys.stdin
+    fo = sys.stdout
+
+n, t1, t2, k = map(int, fi.readline().split())
+a = {}
+b = {}
+for i in xrange(n):
+    a[i], b[i] = map(int, fi.readline().split())
+
+res = []
+for i in xrange(n):
+    res1 = a[i]*t1 - (a[i]*float(t1))*float(k)/100.0 + b[i]*t2
+    res2 = b[i]*t1 - (b[i]*float(t1))*float(k)/100.0 + a[i]*t2
+    res.append([max(res1, res2), i])
+
+res.sort(key = lambda x: x[0])
+t = True
+res.reverse()
+while t:
+    t = True
+    for i in xrange(n - 1):
+        if res[i][0] == res[i + 1][0] and res[i][1] > res[i + 1][1]:
+            res[i][1], res[i + 1][1] = res[i + 1][1], res[i][1]
+            t = True
+for i in xrange(n):
+    fo.write(str(res[i][1] + 1) + " " + ("%.2f"%res[i][0]) + "\n")

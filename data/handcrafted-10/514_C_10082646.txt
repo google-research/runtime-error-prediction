@@ -1,0 +1,37 @@
+from sys import stdin, stdout
+from collections import defaultdict
+def main():
+    n, m = map(int, stdin.readline().split())
+    ss = stdin.read().split()
+    mod0 = 1000000007
+    mod1 = 1000000009
+    toi = {'a': 0, 'b': 1, 'c': 3}
+    d = defaultdict(set)
+    for s in ss[:n]:
+        k0 = k1 = 0
+        for c in s:
+            k0 = (k0 + k0 + k0 + toi[c]) % mod0
+            k1 = (k1 + k1 + k1 + toi[c]) % mod1
+        d[len(s)].add((k0, k1))
+    al = [(1, 2), (-1, 1), (-2, -1)]
+    ans = []
+    aa = ans.append
+    for s in ss[n:]:
+        k0 = k1 = 0
+        for c in s:
+            k0 = (k0 + k0 + k0 + toi[c]) % mod0
+            k1 = (k1 + k1 + k1 + toi[c]) % mod1
+        l = len(s)
+        f = 0
+        x0 = x1 = 1
+        for c in reversed(s):
+            c = toi[c]
+            for a in al[c]:
+                nk = ((k0 + a * x0) % mod0, (k1 + a * x1) % mod1)
+                if nk in d[l]:
+                    f = 1
+            x0 = x0 * 3 % mod0
+            x1 = x1 * 3 % mod1
+        aa("YES" if f else "NO")
+    stdout.write("\n".join(ans))     
+main()

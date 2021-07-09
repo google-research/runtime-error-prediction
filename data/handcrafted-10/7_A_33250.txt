@@ -1,0 +1,13 @@
+import fileinput
+
+rows = [0]*8
+cols = [0]*8
+for j,a in enumerate(fileinput.input()):
+    for i,c in enumerate(a):        
+        if c=='B': 
+            cols[i]+=1
+            rows[j]+=1
+
+r = rows.count(8)/cols.count(8)
+if r==16:r=8
+print r

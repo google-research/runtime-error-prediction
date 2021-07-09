@@ -1,0 +1,2 @@
+n = input()
+print any(set('47') >= set(str(i)) and n % i == 0 for i in range(n+1)) and 'YES' or 'NO'
