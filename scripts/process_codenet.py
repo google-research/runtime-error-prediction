@@ -10,10 +10,13 @@ def process_codenet():
       python_path = codenet.get_python_path(problem_id, submission_id)
       with open(python_path, 'r') as f:
         source = f.read()
+        target = 'n/a'
+
+      raw = process.make_rawruntimeerrorproblem(source, target)
 
       count += 1
       if count % 1000 == 0:
-        print(count)
+        return
 
 
 if __name__ == '__main__':
