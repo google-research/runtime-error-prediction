@@ -90,9 +90,9 @@ def make_rawruntimeerrorproblem(source, target):
   )
 
 
-def make_runtimeerrorproblem(source, target):
+def make_runtimeerrorproblem(source, target, tokenizer=None):
   raw = make_rawruntimeerrorproblem(source, target)
-  tokenizer = tokenize.load_tokenizer()
+  tokenizer = tokenizer or tokenize.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],

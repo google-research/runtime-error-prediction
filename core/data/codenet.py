@@ -1,16 +1,24 @@
 import fire
 
+import os
 import socket
+import subprocess
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
 
 PIPE = subprocess.PIPE
-PYTHON2 = '/usr/bin/python3'
+PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
 if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
-  PYTHON2 = '/Users/dbieber/.virtualenvs/_2/bin/python'
+  PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/googleprivate/compressive-ipagnn/data/Project_CodeNet'
+
+
+def get_all_problem_ids():
+  problem_dir = os.path.join(DATA_ROOT, 'data')
+  return os.path.listdir(problem_dir)
 
 
 def get_python_path(problem_id, submission_id):
