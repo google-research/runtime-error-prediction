@@ -75,6 +75,11 @@ def get_metadata_path(problem_id):
   return os.path.join(DATA_ROOT, 'metadata', f'{problem_id}.csv')
 
 
+def get_all_problem_ids():
+  problem_dir = os.path.join(DATA_ROOT, 'data')
+  return os.path.listdir(problem_dir)
+
+
 def get_python_path(problem_id, submission_id):
   return os.path.join(DATA_ROOT, 'data', problem_id, 'Python', f'{submission_id}.py')
 
