@@ -80,6 +80,13 @@ def get_all_problem_ids():
   return os.listdir(problem_dir)
 
 
+def get_all_submission_ids(problem_id):
+  submission_dir = os.path.join(DATA_ROOT, 'data', problem_id, 'Python')
+  submission_filenames = os.listdir(submission_dir)
+  submission_ids = [filename.split('.')[0] for filename in submission_filenames]
+  return submission_ids
+
+
 def get_python_path(problem_id, submission_id):
   return os.path.join(DATA_ROOT, 'data', problem_id, 'Python', f'{submission_id}.py')
 
