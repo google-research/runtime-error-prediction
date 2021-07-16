@@ -77,7 +77,7 @@ def get_metadata_path(problem_id):
 
 def get_all_problem_ids():
   problem_dir = os.path.join(DATA_ROOT, 'data')
-  return os.path.listdir(problem_dir)
+  return os.listdir(problem_dir)
 
 
 def get_python_path(problem_id, submission_id):
