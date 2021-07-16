@@ -23,9 +23,12 @@ def get_all_problem_ids():
 
 def get_all_submission_ids(problem_id):
   submission_dir = os.path.join(DATA_ROOT, 'data', problem_id, 'Python')
-  submission_filenames = os.listdir(submission_dir)
-  submission_ids = [filename.split('.')[0] for filename in submission_filenames]
-  return submission_ids
+  if os.exists(submission_dir):
+    submission_filenames = os.listdir(submission_dir)
+    submission_ids = [filename.split('.')[0] for filename in submission_filenames]
+    return submission_ids
+  else:
+    return []
 
 
 def get_python_path(problem_id, submission_id):
