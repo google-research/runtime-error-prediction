@@ -53,10 +53,12 @@ def get_output_path(problem_id, submission_id):
   return os.path.join(DATA_ROOT, 'derived', 'input_output', 'data', problem_id, 'input.txt')
 
 
-def run_for_errors(problem_id, submission_id):
+def run_for_errors(problem_id, submission_id, skip_existing=True):
   """Runs the command in the error-checker subprocess."""
   out_dir = os.path.join('out', 'evals', problem_id, submission_id)
   if os.path.exists(out_dir):
+    if skip_existing:
+      return
     shutil.rmtree(out_dir)
   os.makedirs(out_dir)
   python_filepath = get_python_path(problem_id, submission_id)
