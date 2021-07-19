@@ -144,7 +144,7 @@ def process_codenet(
       continue
 
     python_path = codenet.get_python_path(problem_id, submission_id)
-    with open(python_path, 'r') as f:
+    with open(python_patpulh, 'r') as f:
       source = f.read()
       error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
       if error_kind == error_kinds.NO_DATA:
@@ -161,6 +161,7 @@ def process_codenet(
     except SyntaxError:
       print(f'SyntaxError: {python_path}')
     except IndexError:
+      # TODO(dbieber): Support programs with length-0 argument lists.
       print(f'IndexError: {python_path}')
       # raise
     except RuntimeError:
