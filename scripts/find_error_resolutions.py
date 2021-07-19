@@ -30,6 +30,7 @@ def count_all_sessions():
   total = 0
   for problem_id in codenet.get_all_problem_ids():
     total += count_sessions(problem_id)
+  return total
 
 
 def count_sessions(problem_id):
