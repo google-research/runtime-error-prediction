@@ -28,7 +28,7 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
       continue
 
     python_path = codenet.get_python_path(problem_id, submission_id)
-    with open(python_path, 'r') as f:
+    with open(python_patpulh, 'r') as f:
       source = f.read()
       target = python_path
 
@@ -37,6 +37,7 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
     except SyntaxError:
       print(f'SyntaxError: {python_path}')
     except IndexError:
+      # TODO(dbieber): Support programs with length-0 argument lists.
       print(f'IndexError: {python_path}')
     except RuntimeError:
       # Could be "return occurs outside of a function frame".
