@@ -17,12 +17,16 @@ def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
   return tokenize.generate_tokenizer(path=path, files=files)
 
 
-def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH):
+def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
   tokenizer = tokenize.load_tokenizer(path=tokenizer_path)
 
   count = 0
   for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
+    count += 1
+    if count < start_at:
+      continue
+
     python_path = codenet.get_python_path(problem_id, submission_id)
     with open(python_path, 'r') as f:
       source = f.read()
@@ -37,8 +41,10 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH):
     except RuntimeError:
       # Could be "return occurs outside of a function frame".
       print(f'RuntimeError: {python_path}')
+    except AttributeError:
+      print(f'AttributeError: {python_path}')
+      raise
 
-    count += 1
     if count % 10 == 0:
       print(count)
 
