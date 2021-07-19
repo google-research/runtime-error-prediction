@@ -34,6 +34,9 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH):
       print(f'SyntaxError: {python_path}')
     except IndexError:
       print(f'IndexError: {python_path}')
+    except RuntimeError:
+      # Could be "return occurs outside of a function frame".
+      print(f'RuntimeError: {python_path}')
 
     count += 1
     if count % 10 == 0:
