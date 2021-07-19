@@ -7,7 +7,7 @@ import fire
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/full.json'
 
 
-def generate_tokenizer(pat=DEFAULT_TOKENIZER_PATH):
+def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH):
   files = []  
   for problem_id in codenet.get_all_problem_ids():
     for submission_id in codenet.get_all_submission_ids(problem_id):
