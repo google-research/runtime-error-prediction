@@ -33,7 +33,6 @@ def find_runtime_error_submissions(problem_id):
     if submission_metadata['status'] == 'Runtime Error':
       yield submission_id
 
-
 def find_submissions_by_user(problem_id, user_id):
   """Finds all submissions for a problem by a particular user."""
   metadata = codenet.get_problem_metadata(problem_id)
