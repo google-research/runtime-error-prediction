@@ -136,7 +136,9 @@ def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends):
       # Want first token starting after or at node_span_end
       node_token_span_end = token_ends.index(node_span_end)
     except ValueError:
-      print('ValueError')
+      print('ValueError debug info')
+      print(source)
+      print(tokens)
       print(token_starts)
       print(node_span_start)
       print(token_ends)
