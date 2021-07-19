@@ -4,7 +4,6 @@ import collections
 import json
 import itertools
 import random
-
 import fire
 from python_graphs import control_flow
 import tensorflow as tf
