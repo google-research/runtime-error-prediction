@@ -1,3 +1,5 @@
+"""Parsing, tokenizing, and generating datasets from the CodeNet data."""
+
 from core.data import codenet
 from core.data import process
 from core.data import tokenize
@@ -11,6 +13,15 @@ DEFAULT_DATASET_PATH = 'out/data/default.tfrecords'
 
 
 def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
+  """Generates a tokenizer for the CodeNet data.
+
+  Args:
+    path: The location to write the tokenizer data to.
+    max_files: (optional) The maximum number of submissions to use for
+      generating the tokenizer.
+  Returns:
+    The generated Tokenizer.
+  """
   files = []  
   for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
     python_path = codenet.get_python_path(problem_id, submission_id)
@@ -21,10 +32,12 @@ def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
 
 
 def _float_feature(value):
+  """Constructs a tf.train.Feature for the given value list."""
   return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 
 def to_tf_example(problem):
+  """Constructs a tf.train.Example for the process.RuntimeErrorProblem."""
   return tf.train.Example(features=tf.train.Features(feature={
       "tokens": _float_feature(problem.tokens),
       "edge_sources": _float_feature(problem.edge_sources),
@@ -39,6 +52,12 @@ def to_tf_example(problem):
 def generate_codenet_dataset(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_DATASET_PATH):
+  """Generates a TFRecord dataset from the CodeNet data.
+
+  Args:
+    tokenizer_path: The tokenizer data to use when generating the dataset.
+    dataset_path: The path to write the dataset to.
+  """
   with tf.io.TFRecordWriter(dataset_path) as file_writer:
     for problem in process_codenet(tokenizer_path=tokenizer_path):
       record_bytes = to_tf_example(problem).SerializeToString()
