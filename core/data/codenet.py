@@ -55,7 +55,7 @@ def get_output_path(problem_id, submission_id):
 
 def run_for_errors(problem_id, submission_id):
   """Runs the command in the error-checker subprocess."""
-  out_dir = os.path.join('out', problem_id, submission_id)
+  out_dir = os.path.join('out', 'evals', problem_id, submission_id)
   if os.path.exists(out_dir):
     shutil.rmtree(out_dir)
   os.makedirs(out_dir)

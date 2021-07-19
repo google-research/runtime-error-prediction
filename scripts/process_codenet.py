@@ -129,6 +129,7 @@ def process_codenet_raw(max_files=None):
 
 def run_codenet_programs(max_files=None):
   for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
+    print(f'{problem_id}: {submission_id}')
     codenet.run_for_errors(problem_id, submission_id)
 
 
