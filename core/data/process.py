@@ -140,7 +140,10 @@ def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends, tar
   tokenized = tokenizer(source, return_offsets_mapping=True)
   tokens = tokenized['input_ids']
   offset_mapping = tokenized['offset_mapping']
-  token_starts, token_ends = zip(*offset_mapping)
+  if offset_mapping:
+    token_starts, token_ends = zip(*offset_mapping)
+  else:  # No tokens.
+    token_starts, token_ends = tuple(), tuple()
 
   node_token_span_starts = []
   node_token_span_ends = []
