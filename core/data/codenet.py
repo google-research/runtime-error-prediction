@@ -206,6 +206,8 @@ def get_problem_metadata(problem_id):
   headers = headers_str.split(',')
   metadata = {}
   for line in body_lines:
+    if not line:
+      continue
     values = line.split(',')
     line_data = dict(zip(headers, values))
     submission_id = line_data['submission_id']
