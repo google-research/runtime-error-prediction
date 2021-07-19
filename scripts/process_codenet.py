@@ -161,7 +161,6 @@ def process_codenet(
     except SyntaxError:
       print(f'SyntaxError: {python_path}')
     except IndexError:
-      # TODO(dbieber): Support programs with length-0 argument lists.
       print(f'IndexError: {python_path}')
       # raise
     except RuntimeError:
