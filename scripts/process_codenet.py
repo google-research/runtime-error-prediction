@@ -28,7 +28,7 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
       continue
 
     python_path = codenet.get_python_path(problem_id, submission_id)
-    with open(python_patpulh, 'r') as f:
+    with open(python_path, 'r') as f:
       source = f.read()
       target = python_path
 
