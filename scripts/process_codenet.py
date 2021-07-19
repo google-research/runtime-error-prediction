@@ -1,5 +1,6 @@
 from core.data import codenet
 from core.data import process
+from core.data import tokenize
 
 import fire
 
