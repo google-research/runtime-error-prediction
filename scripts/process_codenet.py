@@ -36,7 +36,7 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH):
       print(f'IndexError: {python_path}')
 
     count += 1
-    if count % 3000 == 0:
+    if count % 10 == 0:
       print(count)
 
 
