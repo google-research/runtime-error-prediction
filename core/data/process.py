@@ -8,6 +8,7 @@ import dataclasses
 import fire
 import gast as ast
 from python_graphs import control_flow
+from python_graphs import instruction as instruction_module
 
 from core.data import tokenize
 
@@ -43,8 +44,18 @@ def get_character_index(source, lineno, col_offset):
   return line_start + col_offset
 
 
-def get_span(ast_node):
-  if isinstance(ast_node, ast.arguments):
+def get_span(instruction):
+  ast_node = instruction.node
+  if instruction.source == instruction_module.EXCEPTION:
+    # Caution: Leaky abstraction.
+    # The accesses of an exception node are defined in control_flow's handle_ExceptHandler.
+    # TODO(dbieber): Add parent accessor to instruction module.
+    parent = instruction.accesses[0][-1]  # An AST ExceptHandler node.
+    lineno = parent.lineno
+    col_offset = parent.col_offset
+    end_lineno = parent.end_lineno
+    end_col_offset = parent.end_col_offset
+  elif isinstance(ast_node, ast.arguments):
     arg0 = ast_node.args[0]
     argN = ast_node.args[-1]
     lineno = arg0.lineno
@@ -58,10 +69,9 @@ def get_span(ast_node):
     end_col_offset = ast_node.end_col_offset
   return lineno, col_offset, end_lineno, end_col_offset
 
+
 def make_rawruntimeerrorproblem(source, target):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
-
-  TODO(dbieber): Use target in RuntimeErrorProblem.
 
   Fields:
   - source: The text of a program
@@ -80,8 +90,7 @@ def make_rawruntimeerrorproblem(source, target):
   for node_index, node in enumerate(graph.nodes):
     node_indexes[node.uuid] = node_index
 
-    ast_node = node.instruction.node
-    lineno, col_offset, end_lineno, end_col_offset = get_span(ast_node)
+    lineno, col_offset, end_lineno, end_col_offset = get_span(node.instruction)
     node_span_start = get_character_index(source, lineno, col_offset)
     node_span_end = get_character_index(source, end_lineno, end_col_offset)
     node_span_starts.append(node_span_start)
