@@ -209,7 +209,8 @@ def get_problem_metadata(problem_id):
     values = line.split(',')
     line_data = dict(zip(headers, values))
     submission_id = line_data['submission_id']
-    metadata[submission_id] = line_data
+    if line_data['language'] == 'Python':
+      metadata[submission_id] = line_data
   return metadata
 
 
