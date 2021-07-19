@@ -130,10 +130,18 @@ def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends):
   node_token_span_starts = []
   node_token_span_ends = []
   for i, (node_span_start, node_span_end) in enumerate(zip(node_span_starts, node_span_ends)):
-    # Want first token starting before or at node_span_start
-    node_token_span_start = token_starts.index(node_span_start)
-    # Want first token starting after or at node_span_end
-    node_token_span_end = token_ends.index(node_span_end)
+    try:
+      # Want first token starting before or at node_span_start
+      node_token_span_start = token_starts.index(node_span_start)
+      # Want first token starting after or at node_span_end
+      node_token_span_end = token_ends.index(node_span_end)
+    except ValueError:
+      print('ValueError')
+      print(token_starts)
+      print(node_span_start)
+      print(token_ends)
+      print(node_span_end)
+      raise
     node_token_span_starts.append(node_token_span_start)
     node_token_span_ends.append(node_token_span_end)
 
