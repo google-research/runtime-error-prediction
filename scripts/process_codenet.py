@@ -7,15 +7,15 @@ import fire
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/full.json'
 
 
-def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH):
+def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
   files = []  
   for problem_id in codenet.get_all_problem_ids():
     for submission_id in codenet.get_all_submission_ids(problem_id):
       python_path = codenet.get_python_path(problem_id, submission_id)
       files.append(python_path)
-      if len(files) == 1000:
+      if max_files and len(files) >= max_files:
         break
-    if len(files) == 1000:
+    if max_files and len(files) >= max_files:
       break
   return tokenize.generate_tokenizer(path=path, files=files)
 
