@@ -56,8 +56,8 @@ def get_span(instruction):
     end_lineno = parent.end_lineno
     end_col_offset = parent.end_col_offset
   elif instruction.source == instruction_module.ARGS:
-    arg0 = instruction.accesses[0]
-    argN = instruction.accesses[-1]
+    arg0 = instruction.accesses[0][1]
+    argN = instruction.accesses[-1][1]
     lineno = arg0.lineno
     col_offset = arg0.col_offset
     end_lineno = argN.end_lineno
