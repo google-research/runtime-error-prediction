@@ -3,6 +3,22 @@ from core.data import process
 
 import fire
 
+DEFAULT_TOKENIZER_PATH = 'out/tokenizers/full.json'
+
+
+def generate_tokenizer(pat=DEFAULT_TOKENIZER_PATH):
+  files = []  
+  for problem_id in codenet.get_all_problem_ids():
+    for submission_id in codenet.get_all_submission_ids(problem_id):
+      python_path = codenet.get_python_path(problem_id, submission_id)
+      files.append(python_path)
+      if len(files) == 1000:
+        break
+    if len(files) == 1000:
+      break
+  return tokenize.generate_tokenizer(path=path, files=files)
+
+
 def process_codenet():
   count = 0
   for problem_id in codenet.get_all_problem_ids():
@@ -21,7 +37,7 @@ def process_codenet():
 
       count += 1
       if count % 3000 == 0:
-        return
+        print(count)
 
 
 if __name__ == '__main__':

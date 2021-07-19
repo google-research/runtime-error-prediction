@@ -26,7 +26,7 @@ SAMPLE_FILES = [
 ]
 
 
-def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH):
+def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, files=SAMPLE_FILES):
   tokenizer = Tokenizer(BPE(unk_token="[UNK]"))
   trainer = BpeTrainer(special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
 
