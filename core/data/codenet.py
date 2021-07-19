@@ -41,6 +41,10 @@ def get_all_problem_and_submission_ids():
       yield problem_id, submission_id
 
 
+def get_metadata_path(problem_id):
+  return os.path.join(DATA_ROOT, 'metadata', f'{problem_id}.csv')
+
+
 def get_python_path(problem_id, submission_id):
   return os.path.join(DATA_ROOT, 'data', problem_id, 'Python', f'{submission_id}.py')
 
@@ -51,6 +55,28 @@ def get_input_path(problem_id, submission_id):
 
 def get_output_path(problem_id, submission_id):
   return os.path.join(DATA_ROOT, 'derived', 'input_output', 'data', problem_id, 'input.txt')
+
+
+def get_problem_metadata(problem_id):
+  metadata_path = get_metadata_path(problem_id)
+  with open(metadata_path, 'r') as f:
+    metadata_str = f.read()
+  metadata_str_lines = metadata_str.split('\n')
+  headers_str, body_lines = metadata_str_lines[0], metadata_str_lines[1:]
+  assert headers_str == 'submission_id,problem_id,user_id,date,language,original_language,filename_ext,status,cpu_time,memory,code_size,accuracy'
+  headers = headers_str.split(',')
+  metadata = {}
+  for line in body_lines:
+    values = line.split(',')
+    line_data = dict(zip(headers, values))
+    submission_id = line_data['submission_id']
+    metadata[submission_id] = line_data
+  return metadata
+
+
+def get_submission_metadata(problem_id, submission_id):
+  metadata = get_problem_metadata(problem_id)
+  return metadata.get(submission_id)
 
 
 def run_for_errors(problem_id, submission_id, skip_existing=True):
