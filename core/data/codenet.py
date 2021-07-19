@@ -6,6 +6,7 @@ import socket
 import subprocess
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
 
@@ -84,7 +85,7 @@ def get_submission_metadata(problem_id, submission_id):
 
 def run_for_errors(problem_id, submission_id, skip_existing=True):
   """Runs the command in the error-checker subprocess."""
-  out_dir = os.path.join('out', 'evals', problem_id, submission_id)
+  out_dir = os.path.join(EVALS_ROOT, problem_id, submission_id)
   if os.path.exists(out_dir):
     if skip_existing:
       return
