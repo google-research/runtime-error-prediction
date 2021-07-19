@@ -1,8 +1,10 @@
 """Dataset preprocessing."""
 
-import fire
-
 from typing import List, Text
+
+import ast
+
+import fire
 
 import dataclasses
 from python_graphs import control_flow
