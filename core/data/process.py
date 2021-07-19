@@ -2,11 +2,13 @@
 
 from typing import List, Text
 
+import bisect
+import dataclasses
+
 import fire
 import gast as ast
-
-import dataclasses
 from python_graphs import control_flow
+
 from core.data import tokenize
 
 
@@ -136,9 +138,11 @@ def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends, tar
   for i, (node_span_start, node_span_end) in enumerate(zip(node_span_starts, node_span_ends)):
     try:
       # Want first token starting before or at node_span_start
-      node_token_span_start = token_starts.index(node_span_start)
+      node_token_span_start = bisect.bisect_left(token_starts, node_span_start)
+      while token_starts[node_token_span_start] > node_span_start:
+        node_token_span_start -= 1
       # Want first token starting after or at node_span_end
-      node_token_span_end = token_ends.index(node_span_end)
+      node_token_span_end = bisect.bisect_left(token_ends, node_span_end)
     except ValueError:
       print('ValueError debug info')
       print(source)
