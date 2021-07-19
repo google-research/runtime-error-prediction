@@ -1,6 +1,7 @@
 import fire
 
 import os
+import shutil
 import socket
 import subprocess
 
@@ -45,10 +46,12 @@ def get_output_path(problem_id, submission_id):
 
 def run_for_errors(problem_id, submission_id):
   """Runs the command in the error-checker subprocess."""
-  out_dir = os.path.join('out', problem_id, solution_id)
+  out_dir = os.path.join('out', problem_id, submission_id)
   if os.path.exists(out_dir):
     shutil.rmtree(out_dir)
   os.makedirs(out_dir)
+  python_filepath = get_python_path(problem_id, submission_id)
+  input_filepath = get_input_path(problem_id, submission_id)
   error_path = os.path.join(out_dir, 'error.txt')
   stdout_path = os.path.join(out_dir, 'stdout.txt')
   stderr_path = os.path.join(out_dir, 'stderr.txt')
