@@ -10,7 +10,7 @@ import gast as ast
 from python_graphs import control_flow
 from python_graphs import instruction as instruction_module
 
-from core.data import tokenize
+from core.data import tokenization
 
 
 @dataclasses.dataclass
@@ -119,7 +119,7 @@ def make_rawruntimeerrorproblem(source, target):
 
 def make_runtimeerrorproblem(source, target, tokenizer=None):
   raw = make_rawruntimeerrorproblem(source, target)
-  tokenizer = tokenizer or tokenize.load_tokenizer()
+  tokenizer = tokenizer or tokenization.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],
@@ -181,7 +181,7 @@ def demo_parse_code():
 print(any(set('47') >= set(str(i)) and n % i == 0 for i in range(1, n+1)) and 'YES' or 'NO')
 """
   raw = make_rawruntimeerrorproblem(source, 'n/a')
-  tokenizer = tokenize.load_tokenizer()
+  tokenizer = tokenization.load_tokenizer()
   data = tokenize_raw_with_spans(tokenizer, raw)
 
 
