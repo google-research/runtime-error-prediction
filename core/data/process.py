@@ -76,10 +76,6 @@ def make_rawruntimeerrorproblem(source, target):
 
     ast_node = node.instruction.node
     lineno, col_offset, end_lineno, end_col_offset = get_span(ast_node)
-    lineno = ast_node.lineno
-    col_offset = ast_node.col_offset
-    end_lineno = ast_node.end_lineno
-    end_col_offset = ast_node.end_col_offset
     node_span_start = get_character_index(source, lineno, col_offset)
     node_span_end = get_character_index(source, end_lineno, end_col_offset)
     node_span_starts.append(node_span_start)
