@@ -2,9 +2,12 @@ from core.data import codenet
 from core.data import process
 from core.data import tokenize
 
+import tensorflow as tf
+
 import fire
 
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/full.json'
+DEFAULT_DATASET_PATH = 'out/data/default.tfrecords'
 
 
 def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
@@ -15,6 +18,31 @@ def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
     if max_files and len(files) >= max_files:
       break
   return tokenize.generate_tokenizer(path=path, files=files)
+
+
+def _float_feature(value):
+  return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+
+def to_tf_example(problem):
+  return tf.train.Example(features=tf.train.Features(feature={
+      "tokens": _float_feature(problem.tokens),
+      "edge_sources": _float_feature(problem.edge_sources),
+      "edge_dests": _float_feature(problem.edge_dests),
+      "edge_types": _float_feature(problem.edge_types),
+      "node_token_span_starts": _float_feature(problem.node_token_span_starts),
+      "node_token_span_ends": _float_feature(problem.node_token_span_ends),
+      # "target": _float_feature(problem.target),
+  }))
+
+
+def generate_codenet_dataset(
+    tokenizer_path=DEFAULT_TOKENIZER_PATH,
+    dataset_path=DEFAULT_DATASET_PATH):
+  with tf.io.TFRecordWriter(dataset_path) as file_writer:
+    for problem in process_codenet(tokenizer_path=tokenizer_path):
+      record_bytes = to_tf_example(problem).SerializeToString()
+      file_writer.write(record_bytes)
 
 
 def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
@@ -33,7 +61,8 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
       target = python_path
 
     try:
-      raw = process.make_runtimeerrorproblem(source, target, tokenizer=tokenizer)
+      problem = process.make_runtimeerrorproblem(source, target, tokenizer=tokenizer)
+      yield problem
     except SyntaxError:
       print(f'SyntaxError: {python_path}')
     except IndexError:
@@ -51,7 +80,7 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
       print(f'Unexpected error: {python_path}')
       raise
 
-    if count % 10 == 0:
+    if count % 1000 == 0:
       print(count)
 
 
