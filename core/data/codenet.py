@@ -62,15 +62,20 @@ def run_for_errors(problem_id, submission_id):
   python_filepath = get_python_path(problem_id, submission_id)
   input_filepath = get_input_path(problem_id, submission_id)
   error_path = os.path.join(out_dir, 'error.txt')
+  timeout_path = os.path.join(out_dir, 'timeout.txt')
   stdout_path = os.path.join(out_dir, 'stdout.txt')
   stderr_path = os.path.join(out_dir, 'stderr.txt')
   command = [PYTHON3, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
-  p = subprocess.run(
-      command,
-      input=open(input_filepath, 'rb').read(),
-      stderr=open(stderr_path, 'wb'),
-      stdout=open(stdout_path, 'wb'),
-  )
+  try:
+    subprocess.run(
+        command,
+        input=open(input_filepath, 'rb').read(),
+        stderr=open(stderr_path, 'wb'),
+        stdout=open(stdout_path, 'wb'),
+    )
+  except subprocess.TimeoutExpired as e:
+    with open(timeout_path, 'w') as f:
+      f.write(str(e) + '\n')
   stdout = open(stdout_path, 'r').read()
   stderr = open(stderr_path, 'r').read()
   return stdout
