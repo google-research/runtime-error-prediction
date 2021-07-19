@@ -45,6 +45,9 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
     except AttributeError:
       print(f'AttributeError: {python_path}')
       raise
+    except:
+      print(f'Unexpected error: {python_path}')
+      raise
 
     if count % 10 == 0:
       print(count)
