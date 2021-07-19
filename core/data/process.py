@@ -2,9 +2,8 @@
 
 from typing import List, Text
 
-import ast
-
 import fire
+import gast as ast
 
 import dataclasses
 from python_graphs import control_flow
