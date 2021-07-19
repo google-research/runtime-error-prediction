@@ -63,6 +63,10 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   os.makedirs(out_dir)
   python_filepath = get_python_path(problem_id, submission_id)
   input_filepath = get_input_path(problem_id, submission_id)
+
+  if not os.path.exists(input_filepath):
+    return
+
   error_path = os.path.join(out_dir, 'error.txt')
   timeout_path = os.path.join(out_dir, 'timeout.txt')
   stdout_path = os.path.join(out_dir, 'stdout.txt')
