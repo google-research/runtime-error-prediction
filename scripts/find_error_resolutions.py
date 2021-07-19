@@ -16,7 +16,7 @@ def find_runtime_error_resolutions(problem_id):
   accepted = {}
   runtime_error = {}
   for submission_id, submission_metadata in metadata.items():
-    user_id = metadata['user_id']
+    user_id = submission_metadata['user_id']
     if submission_metadata['status'] == 'Accepted':
       accepted[user_id] = submission_id
     if submission_metadata['status'] == 'Runtime Error':
