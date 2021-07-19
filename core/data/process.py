@@ -38,6 +38,20 @@ def get_character_index(source, lineno, col_offset):
   return line_start + col_offset
 
 
+def get_span(ast_node):
+  try:
+    lineno = ast_node.lineno
+    col_offset = ast_node.col_offset
+    end_lineno = ast_node.end_lineno
+    end_col_offset = ast_node.end_col_offset
+  except AttributeError:
+    print(ast_node)
+    lineno = 0
+    col_offset = 0
+    end_lineno = 0
+    end_col_offset = 0
+  return lineno, col_offset, end_lineno, end_col_offset
+
 def make_rawruntimeerrorproblem(source, target):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
 
@@ -61,6 +75,7 @@ def make_rawruntimeerrorproblem(source, target):
     node_indexes[node.uuid] = node_index
 
     ast_node = node.instruction.node
+    lineno, col_offset, end_lineno, end_col_offset = get_span(ast_node)
     lineno = ast_node.lineno
     col_offset = ast_node.col_offset
     end_lineno = ast_node.end_lineno
