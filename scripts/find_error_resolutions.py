@@ -6,8 +6,8 @@ import fire
 def find_all_runtime_error_resolutions():
   """Finds runtime error resolutions for all problems."""
   for problem_id in codenet.get_all_problem_ids():
-    for (_, user_id, runtime_error[user_id], accepted[user_id]) in find_runtime_error_resolutions(problem_id):
-      yield problem_id, user_id, runtime_error[user_id], accepted[user_id]
+    for (_, user_id, runtime_error_submission, accepted_submission) in find_runtime_error_resolutions(problem_id):
+      yield problem_id, user_id, runtime_error_submission, accepted_submission
 
 
 def find_runtime_error_resolutions(problem_id):
