@@ -10,7 +10,7 @@ def process_codenet():
       python_path = codenet.get_python_path(problem_id, submission_id)
       with open(python_path, 'r') as f:
         source = f.read()
-        target = 'n/a'
+        target = python_path
 
       raw = process.make_rawruntimeerrorproblem(source, target)
 
