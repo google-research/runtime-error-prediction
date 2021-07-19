@@ -26,6 +26,14 @@ def find_runtime_error_resolutions(problem_id):
     yield (problem_id, user_id, runtime_error[user_id], accepted[user_id])
 
 
+def find_runtime_error_submissions(problem_id):
+  """Finds runtime error submissions for a particular problem."""
+  metadata = codenet.get_problem_metadata(problem_id)
+  for submission_id, submission_metadata in metadata.items():
+    if submission_metadata['status'] == 'Runtime Error':
+      yield submission_id
+
+
 def count_all_sessions():
   total = 0
   for problem_id in codenet.get_all_problem_ids():
