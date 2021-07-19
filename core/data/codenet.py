@@ -32,6 +32,12 @@ def get_all_submission_ids(problem_id):
     return []
 
 
+def get_all_problem_and_submission_ids():
+  for problem_id in codenet.get_all_problem_ids():
+    for submission_id in codenet.get_all_submission_ids(problem_id):
+      yield problem_id, submission_id
+
+
 def get_python_path(problem_id, submission_id):
   return os.path.join(DATA_ROOT, 'data', problem_id, 'Python', f'{submission_id}.py')
 
