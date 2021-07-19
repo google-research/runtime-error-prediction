@@ -85,8 +85,8 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
     except SyntaxError:
       print(f'SyntaxError: {python_path}')
     except IndexError:
-      # TODO(dbieber): Support programs with length-0 argument lists.
       print(f'IndexError: {python_path}')
+      raise
     except RuntimeError:
       # Could be "return occurs outside of a function frame".
       print(f'RuntimeError: {python_path}')
