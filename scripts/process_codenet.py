@@ -51,7 +51,8 @@ def to_tf_example(problem):
 
 def generate_codenet_dataset(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
-    dataset_path=DEFAULT_DATASET_PATH):
+    dataset_path=DEFAULT_DATASET_PATH,
+    max_files=None):
   """Generates a TFRecord dataset from the CodeNet data.
 
   Args:
@@ -59,7 +60,7 @@ def generate_codenet_dataset(
     dataset_path: The path to write the dataset to.
   """
   with tf.io.TFRecordWriter(dataset_path) as file_writer:
-    for problem in process_codenet(tokenizer_path=tokenizer_path):
+    for problem in itertools.islice(process_codenet(tokenizer_path=tokenizer_path), max_files):
       record_bytes = to_tf_example(problem).SerializeToString()
       file_writer.write(record_bytes)
 
