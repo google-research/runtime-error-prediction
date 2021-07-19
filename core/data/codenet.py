@@ -33,8 +33,8 @@ def get_all_submission_ids(problem_id):
 
 
 def get_all_problem_and_submission_ids():
-  for problem_id in codenet.get_all_problem_ids():
-    for submission_id in codenet.get_all_submission_ids(problem_id):
+  for problem_id in get_all_problem_ids():
+    for submission_id in get_all_submission_ids(problem_id):
       yield problem_id, submission_id
 
 
