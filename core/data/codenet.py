@@ -72,6 +72,7 @@ def run_for_errors(problem_id, submission_id):
         input=open(input_filepath, 'rb').read(),
         stderr=open(stderr_path, 'wb'),
         stdout=open(stdout_path, 'wb'),
+        timeout=1,
     )
   except subprocess.TimeoutExpired as e:
     with open(timeout_path, 'w') as f:
