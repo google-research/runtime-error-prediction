@@ -12,10 +12,15 @@ def process_codenet():
         source = f.read()
         target = python_path
 
-      raw = process.make_rawruntimeerrorproblem(source, target)
+      try:
+        raw = process.make_rawruntimeerrorproblem(source, target)
+      except SyntaxError:
+        print(f'SyntaxError: {python_path}')
+      except IndexError:
+        print(f'IndexError: {python_path}')
 
       count += 1
-      if count % 1000 == 0:
+      if count % 3000 == 0:
         return
 
 

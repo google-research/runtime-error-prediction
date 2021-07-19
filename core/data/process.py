@@ -67,11 +67,7 @@ def make_rawruntimeerrorproblem(source, target):
   - node_span_starts: A list of the source span start for each node in the program's graph representation.
   - node_span_ends: A list of the source span ends for each node in the program's graph representation.
   """
-  try:
-    graph = control_flow.get_control_flow_graph(source)
-  except SyntaxError:
-    print(f'Failed: {target}')
-    return
+  graph = control_flow.get_control_flow_graph(source)
 
   # node_span_starts and node_span_ends
   node_span_starts = []
