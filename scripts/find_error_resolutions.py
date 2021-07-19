@@ -26,5 +26,21 @@ def find_runtime_error_resolutions(problem_id):
     yield (problem_id, user_id, runtime_error[user_id], accepted[user_id])
 
 
+def count_all_sessions():
+  total = 0
+  for problem_id in codenet.get_all_problem_ids():
+    total += count_sessions(problem_id)
+
+
+def count_sessions(problem_id):
+  """Finds runtime error resolutions for a particular problem."""
+  metadata = codenet.get_problem_metadata(problem_id)
+  user_ids = set()
+  for submission_id, submission_metadata in metadata.items():
+    user_id = submission_metadata['user_id']
+    user_ids.add(user_id)
+  return len(user_ids)
+
+
 if __name__ == '__main__':
   fire.Fire()
