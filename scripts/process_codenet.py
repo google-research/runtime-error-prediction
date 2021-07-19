@@ -11,7 +11,7 @@ import tensorflow as tf
 import fire
 
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/full.json'
-DEFAULT_DATASET_PATH = 'out/data/default.tfrecords'
+DEFAULT_DATASET_PATH = 'out/data/default.tfrecord'
 
 
 def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
