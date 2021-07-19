@@ -55,7 +55,7 @@ def get_span(instruction):
     col_offset = parent.col_offset
     end_lineno = parent.end_lineno
     end_col_offset = parent.end_col_offset
-  elif isinstance(ast_node, ast.arguments):
+  elif instruction.source == instruction_module.ARGS:
     arg0 = ast_node.args[0]
     argN = ast_node.args[-1]
     lineno = arg0.lineno
