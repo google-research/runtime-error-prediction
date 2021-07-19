@@ -19,6 +19,7 @@ class RawRuntimeErrorProblem:
   edge_types: List[int]
   node_span_starts: List[int]
   node_span_ends: List[int]
+  target: Text
 
 
 @dataclasses.dataclass
@@ -30,6 +31,7 @@ class RuntimeErrorProblem:
   edge_types: List[int]
   node_token_span_starts: List[int]
   node_token_span_ends: List[int]
+  target: Text
 
 
 def get_character_index(source, lineno, col_offset):
@@ -100,6 +102,7 @@ def make_rawruntimeerrorproblem(source, target):
       edge_types=edge_types,
       node_span_starts=node_span_starts,
       node_span_ends=node_span_ends,
+      target=target,
   )
 
 
@@ -114,14 +117,15 @@ def make_runtimeerrorproblem(source, target, tokenizer=None):
       edge_types=raw.edge_types,
       node_token_span_starts=token_data['node_token_span_starts'],
       node_token_span_ends=token_data['node_token_span_ends'],
+      target=raw.target,
   )
 
 
 def tokenize_raw_with_spans(tokenizer, raw):
-  return tokenize_with_spans(tokenizer, raw.source, raw.node_span_starts, raw.node_span_ends)
+  return tokenize_with_spans(tokenizer, raw.source, raw.node_span_starts, raw.node_span_ends, raw.target)
 
 
-def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends):
+def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends, target):
   tokenized = tokenizer(source, return_offsets_mapping=True)
   tokens = tokenized['input_ids']
   offset_mapping = tokenized['offset_mapping']
@@ -138,6 +142,7 @@ def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends):
     except ValueError:
       print('ValueError debug info')
       print(source)
+      print(target)
       print(tokens)
       print(token_starts)
       print(node_span_start)
@@ -155,11 +160,11 @@ def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends):
 
 
 def demo_parse_code():
-  """Demonstration of making a processing a RuntimeErrorProblem."""
+  """Demonstration of making and processing a RuntimeErrorProblem."""
   source = """n = input()
 print(any(set('47') >= set(str(i)) and n % i == 0 for i in range(1, n+1)) and 'YES' or 'NO')
 """
-  raw = make_rawruntimeerrorproblem(source, '1')
+  raw = make_rawruntimeerrorproblem(source, 'n/a')
   tokenizer = tokenize.load_tokenizer()
   data = tokenize_raw_with_spans(tokenizer, raw)
 
