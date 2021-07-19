@@ -39,17 +39,18 @@ def get_character_index(source, lineno, col_offset):
 
 
 def get_span(ast_node):
-  try:
+  if isinstance(ast_node, ast.arguments):
+    arg0 = ast_node.args[0]
+    argN = ast_node.args[-1]
+    lineno = arg0.lineno
+    col_offset = arg0.col_offset
+    end_lineno = argN.end_lineno
+    end_col_offset = argN.end_col_offset
+  else:
     lineno = ast_node.lineno
     col_offset = ast_node.col_offset
     end_lineno = ast_node.end_lineno
     end_col_offset = ast_node.end_col_offset
-  except AttributeError:
-    print(ast_node)
-    lineno = 0
-    col_offset = 0
-    end_lineno = 0
-    end_col_offset = 0
   return lineno, col_offset, end_lineno, end_col_offset
 
 def make_rawruntimeerrorproblem(source, target):
