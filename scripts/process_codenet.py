@@ -45,6 +45,8 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
     except AttributeError:
       print(f'AttributeError: {python_path}')
       raise
+    except AssertionError:
+      print(f'AssertionError: {python_path}')
     except:
       print(f'Unexpected error: {python_path}')
       raise
