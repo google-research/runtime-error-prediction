@@ -236,5 +236,10 @@ def run_codenet_submissions(max_files=None):
     codenet.run_for_errors(problem_id, submission_id)
 
 
+def run_codenet_programs(max_files=None):
+  for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
+    codenet.run_for_errors(problem_id, submission_id)
+
+
 if __name__ == '__main__':
   fire.Fire()
