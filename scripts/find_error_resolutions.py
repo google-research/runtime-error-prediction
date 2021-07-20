@@ -41,6 +41,14 @@ def find_submissions_by_user(problem_id, user_id):
       yield submission_id
 
 
+def find_submissions_by_user(problem_id, user_id):
+  """Finds all submissions for a problem by a particular user."""
+  metadata = codenet.get_problem_metadata(problem_id)
+  for submission_id, submission_metadata in metadata.items():
+    if submission_metadata['user_id'] == user_id:
+      yield submission_id
+
+
 def count_all_sessions():
   """Counts the total number of sessions across the CodeNet dataset.
 
