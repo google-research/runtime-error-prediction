@@ -34,6 +34,14 @@ def find_runtime_error_submissions(problem_id):
       yield submission_id
 
 
+def find_submissions_by_user(problem_id, user_id):
+  """Finds all submissions for a problem by a particular user."""
+  metadata = codenet.get_problem_metadata(problem_id)
+  for submission_id, submission_metadata in metadata.items():
+    if submission_metadata['user_id'] == user_id:
+      yield submission_id
+
+
 def count_all_sessions():
   total = 0
   for problem_id in codenet.get_all_problem_ids():
