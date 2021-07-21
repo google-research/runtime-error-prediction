@@ -276,6 +276,7 @@ def get_submission_eval(problem_id, submission_id):
       'MemoryError',
       'ModuleNotFoundError',
       'NameError',
+      'OSError', # Bad file descriptor
       'OverflowError',
       'RecursionError',
       'RuntimeError',
