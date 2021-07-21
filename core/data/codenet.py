@@ -148,6 +148,7 @@ def get_submission_eval(problem_id, submission_id):
       'AttributeError',
       'MemoryError',
       'FileNotFoundError',
+      'ZeroDivisionError',
       # SyntaxError: invalid syntax
       # SyntaxError: invalid character
       # SyntaxError: import * only allowed at module level
