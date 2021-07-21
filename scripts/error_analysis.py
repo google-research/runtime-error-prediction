@@ -22,7 +22,7 @@ def get_full_eval_histogram():
     if problem_id != last_problem_id and last_total != total:
       last_problem_id = problem_id
       last_total = total
-      print(error_counts)
+      print(dict(error_counts))
       print()
     submission_eval = codenet.get_submission_eval(problem_id, submission_id)
     error_counts[submission_eval] += 1
