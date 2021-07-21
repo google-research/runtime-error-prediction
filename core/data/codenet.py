@@ -45,6 +45,24 @@ def get_all_problem_and_submission_ids():
       yield problem_id, submission_id
 
 
+def get_all_problem_ids_with_evals():
+  return os.listdir(EVALS_ROOT)
+
+
+def get_all_submission_ids_with_evals(problem_id):
+  evals_dir = os.path.join(EVALS_ROOT, problem_id)
+  if os.path.exists(evals_dir):
+    return os.listdir(evals_dir)
+  else:
+    return []
+
+
+def get_all_problem_and_submission_ids_with_evals():
+  for problem_id in get_all_problem_ids_with_evals():
+    for submission_id in get_all_submission_ids_with_evals(problem_id):
+      yield problem_id, submission_id
+
+
 def get_metadata_path(problem_id):
   return os.path.join(DATA_ROOT, 'metadata', f'{problem_id}.csv')
 
