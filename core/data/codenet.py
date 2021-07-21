@@ -285,6 +285,7 @@ def get_submission_eval(problem_id, submission_id):
       'UnboundLocalError',
       'ValueError',
       'ZeroDivisionError',
+      'numpy.AxisError',
       # 'Exception',
       # SyntaxError: invalid syntax
       # SyntaxError: invalid character
