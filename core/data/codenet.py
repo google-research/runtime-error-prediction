@@ -58,6 +58,18 @@ def get_output_path(problem_id, submission_id):
   return os.path.join(DATA_ROOT, 'derived', 'input_output', 'data', problem_id, 'input.txt')
 
 
+def get_evals_dir(problem_id, submission_id):
+  return os.path.join(EVALS_ROOT, problem_id, submission_id)
+
+
+def get_evals_paths(problem_id, submission_id):
+  evals_dir = get_evals_dir(problem_id, submission_id)
+  error_path = os.path.join(evals_dir, 'error.txt')
+  timeout_path = os.path.join(evals_dir, 'timeout.txt')
+  stdout_path = os.path.join(evals_dir, 'stdout.txt')
+  stderr_path = os.path.join(evals_dir, 'stderr.txt')
+
+
 def get_problem_metadata(problem_id):
   metadata_path = get_metadata_path(problem_id)
   with open(metadata_path, 'r') as f:
@@ -83,24 +95,49 @@ def get_submission_metadata(problem_id, submission_id):
   return metadata.get(submission_id)
 
 
+def read(path):
+  if os.path.exists(path):
+    with open(path, 'r') as f:
+      return f.read()
+
+
+@dataclasses.dataclass
+class SubmissionStatus:
+  """SubmissionStatus."""
+  runtime_error: Any
+
+
+def get_submission_output(problem_id, submission_id):
+  error_path, timeout_path, stdout_path, stderr_path = get_evals_paths(
+      problem_id, submission_id)
+  error_data = read(error_path)
+  timeout_data = read(timeout_path)
+  stdout_data = read(stdout_path)
+  stderr_data = read(stderr_path)
+
+  runtime_error = 'Timeout' if timeout_data else stderr_data
+
+  return SubmissionStatus(
+      runtime_error=runtime_error,
+  )
+
+
 def run_for_errors(problem_id, submission_id, skip_existing=True):
   """Runs the command in the error-checker subprocess."""
-  out_dir = os.path.join(EVALS_ROOT, problem_id, submission_id)
-  if os.path.exists(out_dir):
+  evals_dir = get_evals_dir(problem_id, submission_id)
+  if os.path.exists(evals_dir):
     if skip_existing:
       return
-    shutil.rmtree(out_dir)
-  os.makedirs(out_dir)
+    shutil.rmtree(evals_dir)
+  os.makedirs(evals_dir)
   python_filepath = get_python_path(problem_id, submission_id)
   input_filepath = get_input_path(problem_id, submission_id)
 
   if not os.path.exists(input_filepath):
     return
 
-  error_path = os.path.join(out_dir, 'error.txt')
-  timeout_path = os.path.join(out_dir, 'timeout.txt')
-  stdout_path = os.path.join(out_dir, 'stdout.txt')
-  stderr_path = os.path.join(out_dir, 'stderr.txt')
+  error_path, timeout_path, stdout_path, stderr_path = get_evals_paths(
+      problem_id, submission_id)
   command = [PYTHON3, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
   try:
     subprocess.run(
