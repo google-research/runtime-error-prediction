@@ -245,8 +245,6 @@ def get_submission_eval(problem_id, submission_id):
       problem_id, submission_id)
   if timeout_data:
     return 'Timeout'
-  if error_data:
-    return 'Error'
   error_kinds = [
       'ValueError',
       'RuntimeError',
@@ -256,11 +254,14 @@ def get_submission_eval(problem_id, submission_id):
       'UnboundLocalError',
       'NameError',
   ]
-  for error_kind in error_kinds:
-    if error_kind in stderr_data:
-      return error_kind
+  if stderr_data:
+    for error_kind in error_kinds:
+      if error_kind in stderr_data:
+        return error_kind
   if not stderr_data:
     return 'No error'
+  if error_data:
+    return 'Error'
   return 'Other'
 
 
