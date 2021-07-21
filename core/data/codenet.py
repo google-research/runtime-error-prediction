@@ -1,5 +1,6 @@
 import fire
 
+import dataclasses
 import os
 import shutil
 import socket
