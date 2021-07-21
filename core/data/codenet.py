@@ -118,7 +118,7 @@ def get_submission_eval(problem_id, submission_id):
       'TypeError',
       'UnboundLocalError',
       'NameError',
-      'SyntaxError'
+      'SyntaxError',
       'TabError',
       'IndentationError',
       # SyntaxError: invalid syntax
