@@ -265,11 +265,14 @@ def get_submission_eval(problem_id, submission_id):
     return 'Timeout'
   error_kinds = [
       'ImportError',
+      'IndexError',
       'ValueError',
       'RuntimeError',
       'MathDomainError',
       'OverflowError',
       'TypeError',
+      'KeyError',
+      'RecursionError',
       'UnboundLocalError',
       'NameError',
       'SyntaxError',
