@@ -196,6 +196,18 @@ def get_submission_eval_raw(problem_id, submission_id):
   return error_data, timeout_data, stdout_data, stderr_data
 
 
+def get_evals_dir(problem_id, submission_id):
+  return os.path.join(EVALS_ROOT, problem_id, submission_id)
+
+
+def get_evals_paths(problem_id, submission_id):
+  evals_dir = get_evals_dir(problem_id, submission_id)
+  error_path = os.path.join(evals_dir, 'error.txt')
+  timeout_path = os.path.join(evals_dir, 'timeout.txt')
+  stdout_path = os.path.join(evals_dir, 'stdout.txt')
+  stderr_path = os.path.join(evals_dir, 'stderr.txt')
+
+
 def get_problem_metadata(problem_id):
   metadata_path = get_metadata_path(problem_id)
   with open(metadata_path, 'r') as f:
@@ -219,6 +231,33 @@ def get_problem_metadata(problem_id):
 def get_submission_metadata(problem_id, submission_id):
   metadata = get_problem_metadata(problem_id)
   return metadata.get(submission_id)
+
+
+def read(path):
+  if os.path.exists(path):
+    with open(path, 'r') as f:
+      return f.read()
+
+
+@dataclasses.dataclass
+class SubmissionStatus:
+  """SubmissionStatus."""
+  runtime_error: Any
+
+
+def get_submission_output(problem_id, submission_id):
+  error_path, timeout_path, stdout_path, stderr_path = get_evals_paths(
+      problem_id, submission_id)
+  error_data = read(error_path)
+  timeout_data = read(timeout_path)
+  stdout_data = read(stdout_path)
+  stderr_data = read(stderr_path)
+
+  runtime_error = 'Timeout' if timeout_data else stderr_data
+
+  return SubmissionStatus(
+      runtime_error=runtime_error,
+  )
 
 
 def run_for_errors(problem_id, submission_id, skip_existing=True):
