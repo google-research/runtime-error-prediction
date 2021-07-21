@@ -257,6 +257,9 @@ def get_submission_eval(problem_id, submission_id):
       'SyntaxError',
       'TabError',
       'IndentationError',
+      'EOFError',
+      'ModuleNotFoundError',
+      'AttributeError',
       # SyntaxError: invalid syntax
       # SyntaxError: invalid character
       # SyntaxError: import * only allowed at module level
