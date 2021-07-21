@@ -137,7 +137,7 @@ def get_submission_eval(problem_id, submission_id):
   if not stderr_data:
     return 'No error'
   if error_data:
-    return 'Error'
+    return 'Error {problem_id} {submission_id}'
   other_error = stderr_data.strip().split('\n')[-1]
   return f'Other: {other_error} {problem_id} {submission_id}'
 
