@@ -105,25 +105,38 @@ def read(path):
       return f.read()
 
 
-@dataclasses.dataclass
-class SubmissionStatus:
-  """SubmissionStatus."""
-  runtime_error: Any
+def get_submission_eval(problem_id, submission_id):
+  error_data, timeout_data, stdout_data, stderr_data = get_submission_eval_raw(
+      problem_id, submission_id)
+  if timeout_data:
+    return 'Timeout'
+  if error_data:
+    return 'Error'
+  error_kinds = [
+      'ValueError',
+      'RuntimeError',
+      'MathDomainError',
+      'OverflowError',
+      'TypeError',
+      'UnboundLocalError',
+      'NameError',
+  ]
+  for error_kind in error_kinds:
+    if error_kind in stderr_data:
+      return error_kind
+  if not stderr_data:
+    return 'No error'
+  return 'Other'
 
 
-def get_submission_output(problem_id, submission_id):
+def get_submission_eval_raw(problem_id, submission_id):
   error_path, timeout_path, stdout_path, stderr_path = get_evals_paths(
       problem_id, submission_id)
   error_data = read(error_path)
   timeout_data = read(timeout_path)
   stdout_data = read(stdout_path)
   stderr_data = read(stderr_path)
-
-  runtime_error = 'Timeout' if timeout_data else stderr_data
-
-  return SubmissionStatus(
-      runtime_error=runtime_error,
-  )
+  return error_data, timeout_data, stdout_data, stderr_data
 
 
 def run_for_errors(problem_id, submission_id, skip_existing=True):
