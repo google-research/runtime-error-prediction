@@ -206,6 +206,7 @@ def get_evals_paths(problem_id, submission_id):
   timeout_path = os.path.join(evals_dir, 'timeout.txt')
   stdout_path = os.path.join(evals_dir, 'stdout.txt')
   stderr_path = os.path.join(evals_dir, 'stderr.txt')
+  return error_path, timeout_path, stdout_path, stderr_path
 
 
 def get_problem_metadata(problem_id):
