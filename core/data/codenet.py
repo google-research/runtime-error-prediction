@@ -246,6 +246,7 @@ def get_submission_eval(problem_id, submission_id):
   if timeout_data:
     return 'Timeout'
   error_kinds = [
+      'ImportError',
       'ValueError',
       'RuntimeError',
       'MathDomainError',
@@ -269,12 +270,13 @@ def get_submission_eval(problem_id, submission_id):
     for error_kind in error_kinds:
       if error_kind in stderr_data:
         return error_kind
-  if not stderr_data:
+  else:
     return 'No error'
+
   if error_data:
-    return f'Error {problem_id} {submission_id}'
-  other_error = stderr_data.strip().split('\n')[-1]
-  return f'Other: {other_error} {problem_id} {submission_id}'
+    other_error = stderr_data.strip().split('\n')[-1]
+    return f'Other: {other_error} {problem_id} {submission_id}'
+  return f'No Error (but using stderr anyway): {problem_id} {submission_id}'
 
 
 def get_submission_eval_raw(problem_id, submission_id):
