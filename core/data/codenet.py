@@ -118,6 +118,17 @@ def get_submission_eval(problem_id, submission_id):
       'TypeError',
       'UnboundLocalError',
       'NameError',
+      'SyntaxError'
+      'TabError',
+      'IndentationError',
+      # SyntaxError: invalid syntax
+      # SyntaxError: invalid character
+      # SyntaxError: import * only allowed at module level
+      # SyntaxError: closing parenthesis
+      # SyntaxError: cannot assign to operator
+      # SyntaxError: Missing parentheses in call to
+      # SyntaxError: from __future__ imports must occur at the beginning of the file
+      # SyntaxError: invalid non-printable character
   ]
   if stderr_data:
     for error_kind in error_kinds:
