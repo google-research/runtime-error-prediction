@@ -47,8 +47,6 @@ def generate_codenet_dataset(
   """
   with tf.io.TFRecordWriter(dataset_path) as file_writer:
     for problem in itertools.islice(process_codenet(tokenizer_path=tokenizer_path), max_files):
-      print(problem)
-      print(problem.node_token_span_starts)
       record_bytes = data_io.to_tf_example(problem).SerializeToString()
       file_writer.write(record_bytes)
 
