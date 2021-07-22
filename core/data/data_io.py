@@ -1,9 +1,9 @@
 import tensorflow as tf
 
 
-def _int_feature(value):
-  """Constructs a tf.train.Feature for the given int value list."""
-  return tf.train.Feature(int_list=tf.train.IntList(value=value))
+def _int64_feature(value):
+  """Constructs a tf.train.Feature for the given int64 value list."""
+  return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 
 def _float_feature(value):
@@ -14,13 +14,13 @@ def _float_feature(value):
 def to_tf_example(problem):
   """Constructs a tf.train.Example for the process.RuntimeErrorProblem."""
   return tf.train.Example(features=tf.train.Features(feature={
-      "tokens": _int_feature(problem.tokens),
-      "edge_sources": _int_feature(problem.edge_sources),
-      "edge_dests": _int_feature(problem.edge_dests),
-      "edge_types": _int_feature(problem.edge_types),
-      "node_token_span_starts": _int_feature(problem.node_token_span_starts),
-      "node_token_span_ends": _int_feature(problem.node_token_span_ends),
-      "target": _int_feature([problem.target]),
+      "tokens": _int64_feature(problem.tokens),
+      "edge_sources": _int64_feature(problem.edge_sources),
+      "edge_dests": _int64_feature(problem.edge_dests),
+      "edge_types": _int64_feature(problem.edge_types),
+      "node_token_span_starts": _int64_feature(problem.node_token_span_starts),
+      "node_token_span_ends": _int64_feature(problem.node_token_span_ends),
+      "target": _int64_feature([problem.target]),
   }))
 
 
