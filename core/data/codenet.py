@@ -129,7 +129,7 @@ def read(path):
 def get_submission_error_kind(problem_id, submission_id):
   error_data, timeout_data, stdout_data, stderr_data = get_submission_eval_raw(
       problem_id, submission_id)
-  if error_data, timeout_data, stdout_data, stderr_data == (None,) * 4:
+  if (error_data, timeout_data, stdout_data, stderr_data) == (None,) * 4:
     # The error-checker may not have been run for this submission yet.
     return error_kinds.NO_DATA
   if timeout_data:
