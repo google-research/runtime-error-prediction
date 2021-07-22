@@ -42,3 +42,10 @@ def decode_fn(record_bytes):
           "target": tf.io.FixedLenFeature([1], dtype=tf.int64),
       }
   )
+
+
+def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
+  return tf.data.TFRecordDataset(
+      [dataset_path],
+      compression_type=None, buffer_size=None, num_parallel_reads=None
+  ).map(decode_fn)
