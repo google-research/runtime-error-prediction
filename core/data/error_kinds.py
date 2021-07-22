@@ -45,6 +45,8 @@ SILENT_ERROR = 'Silent error. Nothing in stderr.'
 NO_ERROR_WITH_STDERR = 'No error (but using stderr anyway)'
 NO_ERROR = 'No error'
 
+NUM_CLASSES = 3 + len(ERROR_KINDS)
+
 
 def to_index(error_kind):
   if error_kind == NO_DATA:

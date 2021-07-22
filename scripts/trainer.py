@@ -6,12 +6,15 @@ from flax.training import train_state
 import jax
 import jax.numpy as jnp
 import optax
+import tensorflow_datasets as tfds
 
 from core.data import codenet_paths
 from core.data import data_io
+from core.data import error_kinds
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
+NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
 @jax.jit
@@ -24,7 +27,8 @@ def train_step(state, batch):
     )
     loss = jnp.mean(
         optax.softmax_cross_entropy(
-            logits=logits, labels=jax.nn.one_hot(batch['label'], 10)))
+            logits=logits,
+            labels=jax.nn.one_hot(batch['target'], NUM_CLASSES)))
     return loss, {
         'logits': logits,
     }
@@ -39,36 +43,38 @@ def train_step(state, batch):
 
 
 class MlpModel(nn.Module):
-  @nn.compact
 
+  @nn.compact
   def __call__(self, x):
     x = x['tokens']
     x = nn.Embed(num_embeddings=30000, features=128)(x)
-    x = nn.Dense(feature=30)(x[:30])
+    x = nn.Dense(features=30)(x[:30])
     x = nn.relu(x)
-    x = nn.Dense(feature=30)(x)
+    x = nn.Dense(features=30)(x)
     x = nn.relu(x)
-    x = nn.Dense(feature=30)(x)
+    x = nn.Dense(features=30)(x)
     return x
 
 
 def create_train_state(rng):
   """Creates initial TrainState."""
   model = MlpModel()
-  params = model.init(rng, {'tokens': jnp.ones([30])})['params']
+  variables = model.init(rng, {'tokens': jnp.ones([30], dtype=jnp.int64)})
+  params = variables['params']
   tx = optax.sgd(0.03)
   return train_state.TrainState.create(
       apply_fn=model.apply, params=params, tx=tx)
 
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
-  dataset = data_io.load_dataset().padded_batch(8)
+  # Run 100 epochs.
+  dataset = data_io.load_dataset(dataset_path).repeat(100).padded_batch(8)
   rng = jax.random.PRNGKey(0)
 
   rng, init_rng = jax.random.split(rng)
   state = create_train_state(init_rng)
 
-  for batch in dataset:
+  for batch in tfds.as_numpy(dataset):
     state, aux = train_step(state, batch)
     print(aux)
 
