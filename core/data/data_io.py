@@ -35,7 +35,6 @@ def to_tf_example(problem):
       'num_edges': _int64_feature([len(problem.edge_sources)]),
   }))
 
-
 def _int64_sequence_feature():
   return tf.io.FixedLenSequenceFeature(
       [], dtype=tf.int64, allow_missing=True, default_value=0)
