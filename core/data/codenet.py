@@ -7,18 +7,8 @@ import os
 import shutil
 import subprocess
 
-<<<<<<< HEAD
 from core.data import codenet_paths
 from core.data import error_kinds
-=======
-from core.data import error_kinds
-
-
-DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
-EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
-FILE_DIRNAME = os.path.dirname(__file__)
-ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
->>>>>>> 0285ec2... Reorganize error kinds
 
 DATA_ROOT = codenet_paths.DATA_ROOT
 EVALS_ROOT = codenet_paths.EVALS_ROOT

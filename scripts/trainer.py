@@ -182,6 +182,9 @@ class TrainState(train_state.TrainState):
   rng: Any
 
 
+DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
+
+
 @jax.jit
 def train_step(state, batch):
   """The on-device part of a train step."""
