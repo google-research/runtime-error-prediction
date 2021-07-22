@@ -3,6 +3,7 @@
 import itertools
 
 from core.data import codenet
+from core.data import data_io
 from core.data import error_kinds
 from core.data import process
 from core.data import tokenization
@@ -34,24 +35,6 @@ def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
   return tokenization.generate_tokenizer(path=path, files=files)
 
 
-def _float_feature(value):
-  """Constructs a tf.train.Feature for the given value list."""
-  return tf.train.Feature(float_list=tf.train.FloatList(value=value))
-
-
-def to_tf_example(problem):
-  """Constructs a tf.train.Example for the process.RuntimeErrorProblem."""
-  return tf.train.Example(features=tf.train.Features(feature={
-      "tokens": _float_feature(problem.tokens),
-      "edge_sources": _float_feature(problem.edge_sources),
-      "edge_dests": _float_feature(problem.edge_dests),
-      "edge_types": _float_feature(problem.edge_types),
-      "node_token_span_starts": _float_feature(problem.node_token_span_starts),
-      "node_token_span_ends": _float_feature(problem.node_token_span_ends),
-      "target": _float_feature([problem.target]),
-  }))
-
-
 def generate_codenet_dataset(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_DATASET_PATH,
@@ -64,7 +47,7 @@ def generate_codenet_dataset(
   """
   with tf.io.TFRecordWriter(dataset_path) as file_writer:
     for problem in itertools.islice(process_codenet(tokenizer_path=tokenizer_path), max_files):
-      record_bytes = to_tf_example(problem).SerializeToString()
+      record_bytes = data_io.to_tf_example(problem).SerializeToString()
       file_writer.write(record_bytes)
 
 
