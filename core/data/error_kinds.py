@@ -1,23 +1,38 @@
+<<<<<<< HEAD
 import fire
 
+=======
+>>>>>>> 0285ec2... Reorganize error kinds
 NO_DATA = 'No data'
 TIMEOUT = 'Timeout'
 
 ERROR_KINDS = [
+<<<<<<< HEAD
     'AssertionError',  # index = 4
+=======
+    'AssertionError',
+>>>>>>> 0285ec2... Reorganize error kinds
     'AttributeError',
     # bdb.BdbQuit p02702 s706694213
     'decimal.InvalidOperation',
     'EOFError',
     'FileNotFoundError',
     'ImportError',
+<<<<<<< HEAD
     'IndentationError',  # index = 10
+=======
+    'IndentationError',
+>>>>>>> 0285ec2... Reorganize error kinds
     'IndexError',
     'KeyError',
     'MathDomainError',
     'MemoryError',
     'ModuleNotFoundError',
+<<<<<<< HEAD
     'NameError',  # index = 16
+=======
+    'NameError',
+>>>>>>> 0285ec2... Reorganize error kinds
     'OSError', # Bad file descriptor
     'OverflowError',
     're.error',  # nothing to repeat at position 0
@@ -26,11 +41,19 @@ ERROR_KINDS = [
     'StopIteration',
     'SyntaxError',
     'TabError',
+<<<<<<< HEAD
     'TypeError',  # index = 25
     'UnboundLocalError',
     'ValueError',
     'ZeroDivisionError',
     'numpy.AxisError',  # index = 29
+=======
+    'TypeError',
+    'UnboundLocalError',
+    'ValueError',
+    'ZeroDivisionError',
+    'numpy.AxisError',
+>>>>>>> 0285ec2... Reorganize error kinds
     # 'Exception',
     # SyntaxError: invalid syntax
     # SyntaxError: invalid character
@@ -46,6 +69,7 @@ OTHER_ERROR = 'Other'
 SILENT_ERROR = 'Silent error. Nothing in stderr.'
 NO_ERROR_WITH_STDERR = 'No error (but using stderr anyway)'
 NO_ERROR = 'No error'
+<<<<<<< HEAD
 
 NUM_CLASSES = 3 + len(ERROR_KINDS)
 
@@ -87,3 +111,5 @@ TIER1_ERROR_IDS = [to_index(e) for e in TIER1_ERROR_KINDS]
 
 if __name__ == '__main__':
   fire.Fire()
+=======
+>>>>>>> 0285ec2... Reorganize error kinds
