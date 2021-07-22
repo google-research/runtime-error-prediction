@@ -1,6 +1,7 @@
 """An example of reading the CodeNet processed datasets from disk."""
 
 import fire
+import tensorflow as tf
 
 from core.data import data_io
 
