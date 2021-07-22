@@ -43,6 +43,18 @@ def find_submissions_by_user(problem_id, user_id):
 
 
 def count_all_sessions():
+  """Counts the total number of sessions across the CodeNet dataset.
+
+  A session is a unique (problem_id, user_id) pair. It corresponds to one or
+  more submissions from a single user on a single problem.
+
+  A session is termed a "runtime error resolution session" if the user submits
+  a submission with a runtime error, eventually followed by an Accepted
+  submission.
+
+  Returns:
+    (int) The total number of sessions in the dataset.
+  """
   total = 0
   for problem_id in codenet.get_all_problem_ids():
     total += count_sessions(problem_id)
