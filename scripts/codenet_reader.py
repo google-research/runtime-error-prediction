@@ -15,9 +15,9 @@ def load(
   dataset = tf.data.TFRecordDataset(
       [dataset_path],
       compression_type=None, buffer_size=None, num_parallel_reads=None
-  ).map(data_io.decode_fn).batch(8)
-  for batch in dataset:
-    print(batch)
+  ).map(data_io.decode_fn)
+  for example in dataset:
+    print(example)
 
 if __name__ == '__main__':
   fire.Fire()
