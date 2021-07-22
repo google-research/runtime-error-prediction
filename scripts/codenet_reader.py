@@ -2,6 +2,7 @@
 
 import fire
 import tensorflow as tf
+import tensorflow_datasets as tfds
 
 from core.data import data_io
 
@@ -16,7 +17,7 @@ def load(
       [dataset_path],
       compression_type=None, buffer_size=None, num_parallel_reads=None
   ).map(data_io.decode_fn).padded_batch(8)
-  for example in dataset.as_numpy():
+  for example in tfds.as_numpy(dataset):
     print(example)
 
 if __name__ == '__main__':

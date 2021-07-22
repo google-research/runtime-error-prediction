@@ -7,4 +7,5 @@ jax>=0.2.7
 jaxlib>=0.1.69
 python-graphs>=1.0.0
 tensorflow
+tensorflow_datasets
 transformers>=4.6.0
