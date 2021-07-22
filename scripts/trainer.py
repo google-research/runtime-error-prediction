@@ -20,6 +20,8 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 @jax.jit
 def train_step(state, batch):
   """The on-device part of a train step."""
+  model = MlpModel()
+
   def loss_fn(params):
     logits = model.apply(
         {'params': params},
