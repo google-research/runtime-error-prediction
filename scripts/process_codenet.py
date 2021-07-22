@@ -3,6 +3,7 @@
 import itertools
 
 from core.data import codenet
+from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
 from core.data import process
@@ -12,8 +13,8 @@ import tensorflow as tf
 
 import fire
 
-DEFAULT_TOKENIZER_PATH = 'out/tokenizers/full.json'
-DEFAULT_DATASET_PATH = 'out/data/default.tfrecord'
+DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
+DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
 
 
 def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):

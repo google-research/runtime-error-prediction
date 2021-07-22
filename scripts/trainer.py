@@ -7,7 +7,11 @@ import jax
 import jax.numpy as jnp
 import optax
 
+from core.data import codenet_paths
 from core.data import data_io
+
+
+DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 
 
 @jax.jit
@@ -57,7 +61,7 @@ def create_train_state(rng):
       apply_fn=model.apply, params=params, tx=tx)
 
 
-def run_train():
+def run_train(dataset_path=DEFAULT_DATASET_PATH):
   dataset = data_io.load_dataset().padded_batch(8)
   rng = jax.random.PRNGKey(0)
 

@@ -5,26 +5,16 @@ import fire
 import dataclasses
 import os
 import shutil
-import socket
 import subprocess
 
+from core.data import codenet_paths
 from core.data import error_kinds
 
-
-DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
-EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
-FILE_DIRNAME = os.path.dirname(__file__)
-ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
-
+DATA_ROOT = codenet_paths.DATA_ROOT
+EVALS_ROOT = codenet_paths.EVALS_ROOT
+PYTHON3 = codenet_paths.PYTHON3
+ERROR_CHECKER = codenet_paths.ERROR_CHECKER
 PIPE = subprocess.PIPE
-PYTHON3 = '/usr/bin/python3'
-HOSTNAME = socket.gethostname()
-if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
-  PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
-  DATA_ROOT = '/Users/dbieber/code/github/googleprivate/compressive-ipagnn/data/Project_CodeNet'
-elif HOSTNAME == 'code-executor-001':
-  PYTHON3 = '/home/dbieber/_39/bin/python'
-  DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 
 
 def get_all_problem_ids():
