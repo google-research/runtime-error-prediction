@@ -16,7 +16,7 @@ def load(
       [dataset_path],
       compression_type=None, buffer_size=None, num_parallel_reads=None
   ).map(data_io.decode_fn).padded_batch(8)
-  for example in dataset.numpy():
+  for example in dataset.as_numpy():
     print(example)
 
 if __name__ == '__main__':
