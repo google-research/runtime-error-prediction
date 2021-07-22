@@ -1,6 +1,7 @@
 absl-py>=0.11.0
 fire>=0.4.0
 flax
+gast
 ipython
 jax>=0.2.7
 jaxlib>=0.1.69
