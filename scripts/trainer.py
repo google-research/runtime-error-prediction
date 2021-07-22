@@ -1,5 +1,4 @@
 """Temporary train script."""
-
 import dataclasses
 from typing import Any
 
