@@ -1,3 +1,4 @@
+import os
 import socket
 
 DEFAULT_DATASET_PATH = 'out/data/default.tfrecord'
