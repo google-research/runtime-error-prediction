@@ -266,6 +266,8 @@ def get_submission_eval(problem_id, submission_id):
   error_kinds = [
       'AssertionError',
       'AttributeError',
+      # bdb.BdbQuit p02702 s706694213
+      'decimal.InvalidOperation',
       'EOFError',
       'FileNotFoundError',
       'ImportError',
@@ -278,8 +280,10 @@ def get_submission_eval(problem_id, submission_id):
       'NameError',
       'OSError', # Bad file descriptor
       'OverflowError',
+      're.error',  # nothing to repeat at position 0
       'RecursionError',
       'RuntimeError',
+      'StopIteration',
       'SyntaxError',
       'TabError',
       'TypeError',
