@@ -54,7 +54,7 @@ class MlpModel(nn.Module):
     x = nn.relu(x)
     x = nn.Dense(features=30)(x)
     x = nn.relu(x)
-    x = nn.Dense(features=30)(x)
+    x = nn.Dense(features=NUM_CLASSES)(x)
     return x
 
 
