@@ -80,7 +80,7 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
     python_path = codenet.get_python_path(problem_id, submission_id)
     with open(python_path, 'r') as f:
       source = f.read()
-      target = python_path
+      target = codenet.get_submission_error_kind(problem_id, submission_id)
 
     try:
       problem = process.make_runtimeerrorproblem(source, target, tokenizer=tokenizer)

@@ -34,7 +34,7 @@ class RuntimeErrorProblem:
   edge_types: List[int]
   node_token_span_starts: List[int]
   node_token_span_ends: List[int]
-  target: Text
+  target: List[int]
 
 
 def get_character_index(source, lineno, col_offset):

@@ -8,6 +8,9 @@ import shutil
 import socket
 import subprocess
 
+from core.data import error_kinds
+
+
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 FILE_DIRNAME = os.path.dirname(__file__)
@@ -123,60 +126,34 @@ def read(path):
       return f.read()
 
 
-def get_submission_eval(problem_id, submission_id):
+def get_submission_error_kind(problem_id, submission_id):
   error_data, timeout_data, stdout_data, stderr_data = get_submission_eval_raw(
       problem_id, submission_id)
+  if error_data, timeout_data, stdout_data, stderr_data == (None,) * 4:
+    # The error-checker may not have been run for this submission yet.
+    return error_kinds.NO_DATA
   if timeout_data:
-    return 'Timeout'
-  error_kinds = [
-      'AssertionError',
-      'AttributeError',
-      # bdb.BdbQuit p02702 s706694213
-      'decimal.InvalidOperation',
-      'EOFError',
-      'FileNotFoundError',
-      'ImportError',
-      'IndentationError',
-      'IndexError',
-      'KeyError',
-      'MathDomainError',
-      'MemoryError',
-      'ModuleNotFoundError',
-      'NameError',
-      'OSError', # Bad file descriptor
-      'OverflowError',
-      're.error',  # nothing to repeat at position 0
-      'RecursionError',
-      'RuntimeError',
-      'StopIteration',
-      'SyntaxError',
-      'TabError',
-      'TypeError',
-      'UnboundLocalError',
-      'ValueError',
-      'ZeroDivisionError',
-      'numpy.AxisError',
-      # 'Exception',
-      # SyntaxError: invalid syntax
-      # SyntaxError: invalid character
-      # SyntaxError: import * only allowed at module level
-      # SyntaxError: closing parenthesis
-      # SyntaxError: cannot assign to operator
-      # SyntaxError: Missing parentheses in call to
-      # SyntaxError: from __future__ imports must occur at the beginning of the file
-      # SyntaxError: invalid non-printable character
-  ]
-  if stderr_data:
-    for error_kind in error_kinds:
-      if error_kind in stderr_data:
-        return error_kind
-  else:
-    return 'No error'
-
+    # The error-checker execution reached the timeout.
+    return error_kinds.TIMEOUT
   if error_data:
-    other_error = stderr_data.strip().split('\n')[-1]
-    return f'Other: {other_error} {problem_id} {submission_id}'
-  return 'No Error (but using stderr anyway)'
+    if stderr_data:
+      for error_kind in error_kinds.ERROR_KINDS:
+        if error_kind in stderr_data:
+          # We've detected the error kind successfully.
+          return error_kind
+      # A new error kind occurred.
+      other_error = stderr_data.strip().split('\n')[-1]
+      return error_kinds.OTHER_ERROR
+    else:
+      # An error occurred but nothing is in stderr. This is unexpected.
+      return error_kinds.SILENT_ERROR
+  else:
+    if stderr_data:
+      # No error occurred, but the program used stderr anyway.
+      return error_kinds.NO_ERROR_WITH_STDERR
+    else:
+      # No error occurred.
+      return error_kinds.NO_ERROR
 
 
 def get_submission_eval_raw(problem_id, submission_id):
