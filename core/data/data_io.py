@@ -45,6 +45,11 @@ def _int64_sequence_feature():
       [], dtype=tf.int64, allow_missing=True, default_value=0)
 
 
+def _int64_sequence_feature():
+  return tf.io.FixedLenSequenceFeature(
+      [], dtype=tf.int64, allow_missing=True, default_value=0)
+
+
 def decode_fn(record_bytes):
   return tf.io.parse_single_example(
       record_bytes,
