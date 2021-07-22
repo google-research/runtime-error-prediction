@@ -30,7 +30,6 @@ def run_for_errors(python_filepath, out_path):
       + '\n'
       + 'main__errorchecker__()\n'
   )
-  # print(python_source)
   compiled = compile(python_source, python_filepath, 'exec')
   try:
     exec(compiled, {}, {})
