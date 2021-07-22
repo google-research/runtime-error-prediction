@@ -3,6 +3,7 @@
 import itertools
 
 from core.data import codenet
+from core.data import error_kinds
 from core.data import process
 from core.data import tokenization
 
@@ -47,7 +48,7 @@ def to_tf_example(problem):
       "edge_types": _float_feature(problem.edge_types),
       "node_token_span_starts": _float_feature(problem.node_token_span_starts),
       "node_token_span_ends": _float_feature(problem.node_token_span_ends),
-      # "target": _float_feature(problem.target),
+      "target": _float_feature([problem.target]),
   }))
 
 
@@ -72,7 +73,7 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
   count = 0
-  for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
+  for problem_id, submission_id in codenet.get_all_problem_and_submission_ids_with_evals():
     count += 1
     if count < start_at:
       continue
@@ -80,7 +81,8 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
     python_path = codenet.get_python_path(problem_id, submission_id)
     with open(python_path, 'r') as f:
       source = f.read()
-      target = codenet.get_submission_error_kind(problem_id, submission_id)
+      error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
+      target = error_kinds.to_index(error_kind)
 
     try:
       problem = process.make_runtimeerrorproblem(source, target, tokenizer=tokenizer)
@@ -106,28 +108,8 @@ def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
       print(count)
 
 
-def process_codenet_raw(max_files=None):
-  """For debugging purposes, makes RawRuntimeErrorProblem objects per submission."""
-  count = 0
-  for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
-    python_path = codenet.get_python_path(problem_id, submission_id)
-    with open(python_path, 'r') as f:
-      source = f.read()
-      target = python_path
-
-    try:
-      raw = process.make_rawruntimeerrorproblem(source, target)
-    except SyntaxError:
-      print(f'SyntaxError: {python_path}')
-    except IndexError:
-      print(f'IndexError: {python_path}')
-
-    count += 1
-    if max_files and count >= max_files:
-      break
-
-
-def run_codenet_programs(max_files=None):
+def run_codenet_submissions(max_files=None):
+  """Runs all CodeNet Python submissions, recording output and errors."""
   last_problem_id = None
   for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
     if problem_id != last_problem_id:
