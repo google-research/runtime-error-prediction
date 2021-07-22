@@ -183,6 +183,7 @@ class TrainState(train_state.TrainState):
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
+NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
 @jax.jit
