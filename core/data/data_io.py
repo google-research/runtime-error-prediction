@@ -24,16 +24,21 @@ def to_tf_example(problem):
   }))
 
 
+def _int64_sequence_feature():
+  return tf.io.FixedLenSequenceFeature(
+      [], dtype=tf.int64, allow_missing=True, default_value=0)
+
+
 def decode_fn(record_bytes):
   return tf.io.parse_single_example(
       record_bytes,
       {
-          "tokens": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
-          "edge_sources": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
-          "edge_dests": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
-          "edge_types": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
-          "node_token_span_starts": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
-          "node_token_span_ends": tf.io.FixedLenSequenceFeature([], dtype=tf.int64),
+          "tokens": _int64_sequence_feature(),
+          "edge_sources": _int64_sequence_feature(),
+          "edge_dests": _int64_sequence_feature(),
+          "edge_types": _int64_sequence_feature(),
+          "node_token_span_starts": _int64_sequence_feature(),
+          "node_token_span_ends": _int64_sequence_feature(),
           "target": tf.io.FixedLenFeature([1], dtype=tf.int64),
       }
   )
