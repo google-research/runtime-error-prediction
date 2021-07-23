@@ -4,15 +4,13 @@ import fire
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
+from core.data import codenet_paths
 from core.data import data_io
 
-DEFAULT_TOKENIZER_PATH = 'out/tokenizers/full.json'
-DEFAULT_DATASET_PATH = 'out/data/default.tfrecord'
+DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 
 
-def load(
-    dataset_path=DEFAULT_DATASET_PATH,
-    tokenizer_path=DEFAULT_TOKENIZER_PATH):
+def load(dataset_path=DEFAULT_DATASET_PATH):
   dataset = tf.data.TFRecordDataset(
       [dataset_path],
       compression_type=None, buffer_size=None, num_parallel_reads=None

@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+from core.data import codenet_paths
+
 
 def _int64_feature(value):
   """Constructs a tf.train.Feature for the given int64 value list."""
@@ -42,3 +44,10 @@ def decode_fn(record_bytes):
           "target": tf.io.FixedLenFeature([1], dtype=tf.int64),
       }
   )
+
+
+def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH):
+  return tf.data.TFRecordDataset(
+      [dataset_path],
+      compression_type=None, buffer_size=None, num_parallel_reads=None
+  ).map(decode_fn)

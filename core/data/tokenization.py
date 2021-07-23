@@ -10,8 +10,9 @@ from tokenizers.trainers import BpeTrainer
 from tokenizers.pre_tokenizers import Whitespace
 from transformers import PreTrainedTokenizerFast
 
+from core.data import codenet_paths
 
-DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
+DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
 SAMPLE_FILES = [
     'data/handcrafted-10/122_A_1122406.txt',
     'data/handcrafted-10/427_E_6564337.txt',
