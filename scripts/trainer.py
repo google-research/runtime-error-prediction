@@ -73,7 +73,7 @@ def create_train_state(rng):
   fake_input = {'tokens': jnp.ones((8, 30,), dtype=jnp.int64)}
   variables = model.init(rng, fake_input)
   params = variables['params']
-  tx = optax.sgd(0.03)
+  tx = optax.sgd(0.01)
   return train_state.TrainState.create(
       apply_fn=model.apply, params=params, tx=tx)
 
