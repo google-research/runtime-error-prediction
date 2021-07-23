@@ -3,6 +3,7 @@ from typing import Any, List, Text
 import fire
 
 import dataclasses
+
 import os
 import shutil
 import socket
@@ -174,6 +175,7 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
       return
     shutil.rmtree(evals_dir)
   os.makedirs(evals_dir)
+
   python_filepath = get_python_path(problem_id, submission_id)
   input_filepath = get_input_path(problem_id, submission_id)
 
