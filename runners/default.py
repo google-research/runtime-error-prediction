@@ -22,6 +22,7 @@ from absl import app
 from absl import flags
 
 import jax
+import jax.numpy as jnp
 
 from ml_collections.config_flags import config_flags
 
