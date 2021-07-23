@@ -86,9 +86,9 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
   rng, init_rng = jax.random.split(rng)
   state = create_train_state(init_rng)
 
-  for batch in tfds.as_numpy(dataset):
+  for step, batch in enumerate(tfds.as_numpy(dataset)):
     state, aux = train_step(state, batch)
-    print('---')
+    print(f'--- Step {step}')
     print(f"Loss: {aux['loss']}")
     print(f"Predictions: {jnp.argmax(aux['logits'], axis=-1)}")
     print(f"Targets: {batch['target'][:, 0]}")
