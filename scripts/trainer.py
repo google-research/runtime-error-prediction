@@ -89,8 +89,8 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
   for batch in tfds.as_numpy(dataset):
     state, aux = train_step(state, batch)
     print('---')
-    print(loss)
-    print(jnp.argmax(state['logits'], axis=-1))
+    print(aux['loss'])
+    print(jnp.argmax(aux['logits'], axis=-1))
     print(batch['target'])
 
 
