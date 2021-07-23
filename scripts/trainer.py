@@ -41,6 +41,7 @@ def train_step(state, batch):
   # TODO(dbieber): Optionally compute on-device metrics here.
   return state, {
       'logits': aux['logits'],
+      'loss': loss,
   }
 
 
@@ -49,8 +50,6 @@ class MlpModel(nn.Module):
   @nn.compact
   def __call__(self, x):
     x = x['tokens']
-    print('x.shape')
-    print(x.shape)
     # x.shape: batch_size, length
     batch_size = x.shape[0]
     x = nn.Embed(num_embeddings=30000, features=128)(x[:, :30])
@@ -89,8 +88,10 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
 
   for batch in tfds.as_numpy(dataset):
     state, aux = train_step(state, batch)
-    print(aux)
-    print(aux['logits'].shape)  # 8, 801, 29
+    print('---')
+    print(loss)
+    print(jnp.argmax(state['logits'], axis=-1))
+    print(batch['target'])
 
 
 if __name__ == '__main__':
