@@ -71,7 +71,7 @@ class MlpModel(nn.Module):
 def create_train_state(rng):
   """Creates initial TrainState."""
   model = MlpModel()
-  fake_input = {'tokens': jnp.ones((30,), dtype=jnp.int64)}
+  fake_input = {'tokens': jnp.ones((8, 30,), dtype=jnp.int64)}
   variables = model.init(rng, fake_input)
   params = variables['params']
   tx = optax.sgd(0.03)
