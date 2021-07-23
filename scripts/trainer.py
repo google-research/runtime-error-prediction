@@ -80,7 +80,7 @@ def create_train_state(rng):
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
   # Run 100 epochs.
-  dataset = data_io.load_dataset(dataset_path).repeat(100).padded_batch(8)
+  dataset = data_io.load_dataset(dataset_path).repeat(1000).padded_batch(8)
   rng = jax.random.PRNGKey(0)
 
   rng, init_rng = jax.random.split(rng)
@@ -89,9 +89,9 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
   for batch in tfds.as_numpy(dataset):
     state, aux = train_step(state, batch)
     print('---')
-    print(aux['loss'])
-    print(jnp.argmax(aux['logits'], axis=-1))
-    print(batch['target'])
+    print(f"Loss: {aux['loss']}")
+    print(f"Predictions: {jnp.argmax(aux['logits'], axis=-1)}")
+    print(f"Targets: {batch['target']}")
 
 
 if __name__ == '__main__':
