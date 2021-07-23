@@ -36,7 +36,7 @@ def train_step(state, batch):
     }
 
   grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
-  (_, aux), grads = grad_fn(state.params)
+  (loss, aux), grads = grad_fn(state.params)
   state = state.apply_gradients(grads=grads)
   # TODO(dbieber): Optionally compute on-device metrics here.
   return state, {
