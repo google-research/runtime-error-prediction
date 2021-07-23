@@ -3,4 +3,8 @@ description2code_current.zip
 out
 
 .DS_Store
+__MACOSX
+
 *~
+__pycache__
+.pytest_cache
