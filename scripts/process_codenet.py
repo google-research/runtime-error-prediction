@@ -4,7 +4,7 @@ import itertools
 
 from core.data import codenet
 from core.data import process
-from core.data import tokenize
+from core.data import tokenization
 
 import tensorflow as tf
 
@@ -30,7 +30,7 @@ def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
     files.append(python_path)
     if max_files and len(files) >= max_files:
       break
-  return tokenize.generate_tokenizer(path=path, files=files)
+  return tokenization.generate_tokenizer(path=path, files=files)
 
 
 def _float_feature(value):
@@ -69,7 +69,7 @@ def generate_codenet_dataset(
 
 def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
-  tokenizer = tokenize.load_tokenizer(path=tokenizer_path)
+  tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
   count = 0
   for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
@@ -125,6 +125,15 @@ def process_codenet_raw(max_files=None):
     count += 1
     if max_files and count >= max_files:
       break
+
+
+def run_codenet_programs(max_files=None):
+  last_problem_id = None
+  for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
+    if problem_id != last_problem_id:
+      print(problem_id)
+      last_problem_id = problem_id
+    codenet.run_for_errors(problem_id, submission_id)
 
 
 if __name__ == '__main__':

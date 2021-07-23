@@ -3,13 +3,13 @@
 import unittest
 
 from core.data import process
-from core.data import tokenize
+from core.data import tokenization
 
 
 class ProcessTest(unittest.TestCase):
 
   def setUp(self):
-    tokenize.generate_tokenizer()
+    tokenization.generate_tokenizer()
 
   def test_make_runtimeerrorproblem(self):
     source = """n = input()
