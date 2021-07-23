@@ -80,6 +80,7 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
   for batch in tfds.as_numpy(dataset):
     state, aux = train_step(state, batch)
     print(aux)
+    print(aux['logits'].shape)
 
   return state
 
