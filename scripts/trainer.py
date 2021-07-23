@@ -91,7 +91,7 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
     print('---')
     print(f"Loss: {aux['loss']}")
     print(f"Predictions: {jnp.argmax(aux['logits'], axis=-1)}")
-    print(f"Targets: {batch['target']}")
+    print(f"Targets: {batch['target'][:, 0]}")
 
 
 if __name__ == '__main__':
