@@ -1,5 +1,8 @@
 """Temporary train script."""
 
+import dataclasses
+from typing import Any
+
 import fire
 from flax import linen as nn
 from flax.training import train_state
@@ -11,38 +14,11 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.models import transformer_modules
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 NUM_CLASSES = error_kinds.NUM_CLASSES
-
-
-@jax.jit
-def train_step(state, batch):
-  """The on-device part of a train step."""
-  model = MlpModel()
-
-  def loss_fn(params):
-    logits = model.apply(
-        {'params': params},
-        batch,
-    )
-    loss = jnp.mean(
-        optax.softmax_cross_entropy(
-            logits=logits,
-            labels=jax.nn.one_hot(batch['target'], NUM_CLASSES)))
-    return loss, {
-        'logits': logits,
-    }
-
-  grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
-  (loss, aux), grads = grad_fn(state.params)
-  state = state.apply_gradients(grads=grads)
-  # TODO(dbieber): Optionally compute on-device metrics here.
-  return state, {
-      'logits': aux['logits'],
-      'loss': loss,
-  }
 
 
 class MlpModel(nn.Module):
@@ -67,15 +43,83 @@ class MlpModel(nn.Module):
     return x
 
 
+class TransformerEncoder(nn.Module):
+
+  def setup(self):
+    # tokenizer = tokenization.load_tokenizer()
+    # vocab_size = tokenizer.vocab_size
+    vocab_size = 30000
+    transformer_config = transformer_modules.TransformerConfig(
+        vocab_size=vocab_size,
+        output_vocab_size=vocab_size,
+    )
+    self.encoder = transformer_modules.Encoder(transformer_config)
+
+  @nn.compact
+  def __call__(self, x):
+    encoding = self.encoder(x['tokens'])
+    # encoding.shape: batch_size, length, emb_dim
+    x = encoding[:, 0, :]
+    # x.shape: batch_size, emb_dim
+    x = nn.Dense(features=NUM_CLASSES)(x)
+    # x.shape: batch_size, NUM_CLASSES
+    return x
+
+
+def make_model():
+  # model = MlpModel()
+  model = TransformerEncoder()
+  return model
+
+model = make_model()
+
+
+class TrainState(train_state.TrainState):
+  rng: Any
+
+
+@jax.jit
+def train_step(state, batch):
+  """The on-device part of a train step."""
+
+  new_rng, dropout_rng = jax.random.split(state.rng, 2)
+  state = dataclasses.replace(state, rng=new_rng)
+
+  def loss_fn(params):
+    logits = model.apply(
+        {'params': params},
+        batch,
+        rngs={'dropout': dropout_rng}
+    )
+    loss = jnp.mean(
+        optax.softmax_cross_entropy(
+            logits=logits,
+            labels=jax.nn.one_hot(batch['target'], NUM_CLASSES)))
+    return loss, {
+        'logits': logits,
+    }
+
+  grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
+  (loss, aux), grads = grad_fn(state.params)
+  state = state.apply_gradients(grads=grads)
+  # TODO(dbieber): Optionally compute on-device metrics here.
+  return state, {
+      'logits': aux['logits'],
+      'loss': loss,
+  }
+
+
 def create_train_state(rng):
   """Creates initial TrainState."""
-  model = MlpModel()
   fake_input = {'tokens': jnp.ones((8, 30,), dtype=jnp.int64)}
-  variables = model.init(rng, fake_input)
+  rng, params_rng, dropout_rng = jax.random.split(rng, 3)
+  variables = model.init(
+      {'params': params_rng, 'dropout': dropout_rng},
+      fake_input)
   params = variables['params']
   tx = optax.sgd(0.01)
-  return train_state.TrainState.create(
-      apply_fn=model.apply, params=params, tx=tx)
+  return TrainState.create(
+      apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
