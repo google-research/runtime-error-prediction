@@ -22,6 +22,7 @@ from absl import app
 from absl import flags
 from absl import logging
 
+import numpy as np
 import jax
 import jax.numpy as jnp
 
@@ -88,15 +89,45 @@ def save_checkpoint(state, workdir):
   step = int(state.step)
   checkpoints.save_checkpoint(workdir, state, step, keep=3)
 
+def evaluate(dataset, state, config):
+  predictions = []
+  ground_truth = []
+  loss = []
+  model = models_lib.ModelFactory()(config.model.name)(vocab_size=config.dataset.vocab_size, emb_dim=config.model.hidden_size)
+  for batch in tfds.as_numpy(dataset):
+    logits = model.apply({'params': state.params}, batch, config)
+    predictions.append(jnp.argmax(logits, -1))
+    ground_truth.append(batch['target'])
+    loss.append(jnp.sum(
+        optax.softmax_cross_entropy(
+            logits=logits,
+            labels=jax.nn.one_hot(batch['target'], NUM_CLASSES))))
+  predictions = np.array(jnp.concatenate(predictions))
+  ground_truth = np.array(jnp.concatenate(ground_truth)).flatten()
+  eval_loss = sum(loss)/predictions.shape[0]
+  assert predictions.shape[0] == ground_truth.shape[0]
+  classification_score = evaluation.evaluate(ground_truth, predictions, config.eval_metric)
+  return eval_loss, classification_score
+
 def trainer(train_state, train_dataset, eval_dataset, config):
   #TODO
   iter_id = 0
   logging.info("Starting the training loop.")
-  # import pdb;pdb.set_trace()
+
   for batch in tfds.as_numpy(train_dataset):
     train_state, aux = train_step(train_state, batch, config)
+    
     if iter_id % config.logging.save_freq == 0:
       save_checkpoint(train_state, config.checkpoint.path)
+    
+    if iter_id % config.eval_steps == 0:
+      if eval_dataset is None:
+        logging.info("Validation dataset unspecified. Using train dataset for evaluation.")
+        eval_loss, eval_f1_score = evaluate(train_dataset, train_state, config)
+      else:
+        eval_loss, eval_classification_score = evaluate(eval_dataset, train_state, config)
+      logging.info(f"Validation loss: {eval_loss}\n Validation {config.eval_metric}: {eval_classification_score}")
+    
     iter_id+=1
     
 
