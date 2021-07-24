@@ -20,17 +20,22 @@ import os
 
 from absl import app
 from absl import flags
+from absl import logging
 
 import jax
 import jax.numpy as jnp
 
+import optax
+from flax.training import checkpoints
 from ml_collections.config_flags import config_flags
 
-from lib import setup
+from lib import setup, evaluation
 from models import models_lib
 
 import tensorflow_datasets as tfds
+from core.data import error_kinds
 
+NUM_CLASSES = error_kinds.NUM_CLASSES
 DEFAULT_DATA_DIR = 'data'
 DEFAULT_CONFIG = 'config/default.py'
 
@@ -51,14 +56,15 @@ def main(argv):
   trainer(train_state, train_dataset, eval_dataset, config)
 
 
-@jax.jit
-def train_step(state, batch, model_name):
+# @jax.jit
+def train_step(state, batch, config):
   """The on-device part of a train step."""
-  model = models_lib.ModelFactory()(model_name)()
+  model = models_lib.ModelFactory()(config.model.name)(vocab_size=config.dataset.vocab_size, emb_dim=config.model.hidden_size)
   def loss_fn(params):
     logits = model.apply(
         {'params': params},
         batch,
+        config,
     )
     loss = jnp.mean(
         optax.softmax_cross_entropy(
@@ -66,6 +72,7 @@ def train_step(state, batch, model_name):
             labels=jax.nn.one_hot(batch['target'], NUM_CLASSES)))
     return loss, {
         'logits': logits,
+        'loss' : loss
     }
 
   grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
@@ -73,11 +80,24 @@ def train_step(state, batch, model_name):
   state = state.apply_gradients(grads=grads)
   return state, {
       'logits': aux['logits'],
+      'loss': aux['loss'],
   }
+
+def save_checkpoint(state, workdir):
+  os.makedirs(workdir, exist_ok=True)
+  step = int(state.step)
+  checkpoints.save_checkpoint(workdir, state, step, keep=3)
 
 def trainer(train_state, train_dataset, eval_dataset, config):
   #TODO
-  pass
+  iter_id = 0
+  logging.info("Starting the training loop.")
+  # import pdb;pdb.set_trace()
+  for batch in tfds.as_numpy(train_dataset):
+    train_state, aux = train_step(train_state, batch, config)
+    if iter_id % config.logging.save_freq == 0:
+      save_checkpoint(train_state, config.checkpoint.path)
+    iter_id+=1
     
 
 if __name__ == '__main__':
