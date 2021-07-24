@@ -20,6 +20,8 @@ import json
 import os
 import random
 
+from absl import logging
+
 import numpy as np
 
 import jax
@@ -27,6 +29,7 @@ import jax.numpy as jnp
 
 from flax import linen as nn
 from flax.training import train_state
+from flax.training import checkpoints
 
 import optax
 
@@ -40,6 +43,13 @@ from models import models_lib
 
 NUM_CLASSES = error_kinds.NUM_CLASSES
 Config = ml_collections.ConfigDict
+
+def restore_checkpoint(state, workdir):
+  if os.path.exists(workdir):
+    logging.info("Found an existing checkpoint. Loading from the last checkpoint ...")
+    return checkpoints.restore_checkpoint(workdir, state)
+  logging.info("No checkpoint found.")
+  return state
 
 def seed(seed_id):
   random.seed(seed_id)
@@ -78,5 +88,6 @@ def setup(config):
 
   fake_input =  create_fake_inputs(config.dataset.batch_size, config.dataset.max_tokens, config.dataset.max_length, config.model.name)
   train_state = create_train_state(init_rng, model, fake_input, config)
+  train_state = restore_checkpoint(train_state, config.checkpoint.path)
   return train_state, train_dataset, eval_dataset
 
