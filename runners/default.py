@@ -28,6 +28,8 @@ import jax.numpy as jnp
 
 import optax
 from flax.training import checkpoints
+from flax.training import early_stopping
+
 from ml_collections.config_flags import config_flags
 
 from lib import setup, evaluation
@@ -110,8 +112,9 @@ def evaluate(dataset, state, config):
   return eval_loss, classification_score
 
 def trainer(train_state, train_dataset, eval_dataset, config):
-  #TODO
   iter_id = 0
+  #TODO rishab: store the state of the early stopping.
+  es = early_stopping.EarlyStopping(min_delta=config.runner.early_stopping_delta, patience=config.runner.early_stopping_threshold)
   logging.info("Starting the training loop.")
 
   for batch in tfds.as_numpy(train_dataset):
@@ -123,11 +126,14 @@ def trainer(train_state, train_dataset, eval_dataset, config):
     if iter_id % config.eval_steps == 0:
       if eval_dataset is None:
         logging.info("Validation dataset unspecified. Using train dataset for evaluation.")
-        eval_loss, eval_f1_score = evaluate(train_dataset, train_state, config)
+        eval_loss, eval_classification_score = evaluate(train_dataset, train_state, config)
       else:
         eval_loss, eval_classification_score = evaluate(eval_dataset, train_state, config)
       logging.info(f"Validation loss: {eval_loss}\n Validation {config.eval_metric}: {eval_classification_score}")
-    
+      did_improve, es = es.update(-1*eval_loss)
+      if es.should_stop:
+        logging.info("Early stopping triggered.")
+        break
     iter_id+=1
     
 
