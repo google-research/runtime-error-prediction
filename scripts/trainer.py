@@ -122,9 +122,27 @@ def create_train_state(rng):
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
 
+def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
+  epochs = 1000
+  max_tokens = 1024
+  max_num_nodes = 80
+  max_num_edges = 160
+  return (
+      data_io.load_dataset(dataset_path)
+      .repeat(epochs)
+      .padded_batch(8, padded_shapes={
+          'tokens': [max_tokens],
+          'edge_sources': [max_num_edges],
+          'edge_dests': [max_num_edges],
+          'edge_types': [max_num_edges],
+          'node_token_span_starts': [max_num_nodes],
+          'node_token_span_ends': [max_num_nodes],
+          'target': [1],
+      })
+  )
+
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
-  # Run 100 epochs.
-  dataset = data_io.load_dataset(dataset_path).repeat(1000).padded_batch(8)
+  dataset = load_dataset(dataset_path)
   rng = jax.random.PRNGKey(0)
 
   rng, init_rng = jax.random.split(rng)

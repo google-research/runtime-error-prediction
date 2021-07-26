@@ -36,7 +36,7 @@ class NodeSpanEncoder(nn.Module):
     encoding = self.transformer(tokens)
     # encoding.shape: batch_size, length, hidden_size
 
-    span_encodings = jax.vmap(lambda e, i: e[i])(encoding, node_span_starts)
+    span_encodings = jax.vmap(lambda a, b: a[b])(encoding, node_span_starts)
     # span_encodings.shape: batch_size, num_nodes, hidden_size
     return span_encodings
 
