@@ -22,6 +22,7 @@ def to_tf_example(problem):
       "edge_types": _int64_feature(problem.edge_types),
       "node_token_span_starts": _int64_feature(problem.node_token_span_starts),
       "node_token_span_ends": _int64_feature(problem.node_token_span_ends),
+      "token_node_indexes": _int64_feature(problem.token_node_indexes),
       "target": _int64_feature([problem.target]),
   }))
 
@@ -41,6 +42,7 @@ def decode_fn(record_bytes):
           "edge_types": _int64_sequence_feature(),
           "node_token_span_starts": _int64_sequence_feature(),
           "node_token_span_ends": _int64_sequence_feature(),
+          "token_node_indexes": _int64_sequence_feature(),
           "target": tf.io.FixedLenFeature([1], dtype=tf.int64),
       }
   )

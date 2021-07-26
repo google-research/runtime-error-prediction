@@ -34,6 +34,7 @@ class RuntimeErrorProblem:
   edge_types: List[int]
   node_token_span_starts: List[int]
   node_token_span_ends: List[int]
+  token_node_indexes: List[int]
   target: int
 
 
@@ -128,6 +129,7 @@ def make_runtimeerrorproblem(source, target, tokenizer=None):
       edge_types=raw.edge_types,
       node_token_span_starts=token_data['node_token_span_starts'],
       node_token_span_ends=token_data['node_token_span_ends'],
+      token_node_indexes=token_data['token_node_indexes'],
       target=raw.target,
   )
 
@@ -147,31 +149,25 @@ def tokenize_with_spans(tokenizer, source, node_span_starts, node_span_ends, tar
 
   node_token_span_starts = []
   node_token_span_ends = []
+  token_node_indexes = [-1] * len(tokens)
   for i, (node_span_start, node_span_end) in enumerate(zip(node_span_starts, node_span_ends)):
-    try:
-      # Want first token starting before or at node_span_start
-      node_token_span_start = bisect.bisect_left(token_starts, node_span_start)
-      while token_starts[node_token_span_start] > node_span_start:
-        node_token_span_start -= 1
-      # Want first token starting after or at node_span_end
-      node_token_span_end = bisect.bisect_left(token_ends, node_span_end)
-    except ValueError:
-      print('ValueError debug info')
-      print(source)
-      print(target)
-      print(tokens)
-      print(token_starts)
-      print(node_span_start)
-      print(token_ends)
-      print(node_span_end)
-      raise
+    # First token starting before or at node_span_start:
+    node_token_span_start = bisect.bisect_left(token_starts, node_span_start)
+    while token_starts[node_token_span_start] > node_span_start:
+      node_token_span_start -= 1
+    # First token starting after or at node_span_end:
+    node_token_span_end = bisect.bisect_left(token_ends, node_span_end)
+
     node_token_span_starts.append(node_token_span_start)
     node_token_span_ends.append(node_token_span_end)
+    token_node_indexes[node_token_span_start:node_token_span_end] = (
+        [i] * (node_token_span_end - node_token_span_start))
 
   return {
       'tokens': tokens,
       'node_token_span_starts': node_token_span_starts,
       'node_token_span_ends': node_token_span_ends,
+      'token_node_indexes': token_node_indexes,
   }
 
 

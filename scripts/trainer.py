@@ -57,7 +57,9 @@ class TransformerEncoder(nn.Module):
 
   @nn.compact
   def __call__(self, x):
-    encoding = self.encoder(x['tokens'])
+    encoder_mask = nn.make_attention_mask(
+        x['tokens'] > 0, x['tokens'] > 0, dtype=jnp.float32)
+    encoding = self.encoder(x['tokens'], encoder_mask=encoder_mask)
     # encoding.shape: batch_size, length, emb_dim
     x = encoding[:, 0, :]
     # x.shape: batch_size, emb_dim
@@ -124,7 +126,7 @@ def create_train_state(rng):
 
 def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
   epochs = 1000
-  max_tokens = 1024
+  max_tokens = 512
   max_num_nodes = 80
   max_num_edges = 160
   return (
@@ -137,6 +139,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
           'edge_types': [max_num_edges],
           'node_token_span_starts': [max_num_nodes],
           'node_token_span_ends': [max_num_nodes],
+          'token_node_indexes': [max_tokens],
           'target': [1],
       })
   )
