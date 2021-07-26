@@ -30,6 +30,8 @@ import optax
 from flax.training import checkpoints
 from flax.training import early_stopping
 
+from flax.metrics import tensorboard
+
 from ml_collections.config_flags import config_flags
 
 from lib import setup, evaluation
@@ -55,8 +57,7 @@ def main(argv):
 
   data_dir = FLAGS.data_dir
   config = FLAGS.config
-  train_state, train_dataset, eval_dataset = setup.setup(config)
-  trainer(train_state, train_dataset, eval_dataset, config)
+  trainer(config)
 
 
 # @jax.jit
@@ -91,13 +92,29 @@ def save_checkpoint(state, workdir):
   step = int(state.step)
   checkpoints.save_checkpoint(workdir, state, step, keep=3)
 
+def compute_metrics(logits, ground_truth, eval_metric):
+  predictions = np.array(jnp.argmax(logits, -1))
+  ground_truth = np.array(ground_truth)
+  metric = evaluation.evaluate(ground_truth, predictions, eval_metric)
+  loss = jnp.mean(
+        optax.softmax_cross_entropy(
+            logits=logits,
+            labels=jax.nn.one_hot(ground_truth, NUM_CLASSES)))
+  return loss, metric
+
+def evaluate_batch(batch, state, config):
+  model = models_lib.ModelFactory()(config.model.name)(vocab_size=config.dataset.vocab_size, emb_dim=config.model.hidden_size)
+  logits = model.apply({'params': state.params}, batch, config)
+  loss, metric = compute_metrics(logits, batch['target'], config.eval_metric)
+  return logits, loss, metric
+
 def evaluate(dataset, state, config):
   predictions = []
   ground_truth = []
   loss = []
-  model = models_lib.ModelFactory()(config.model.name)(vocab_size=config.dataset.vocab_size, emb_dim=config.model.hidden_size)
   for batch in tfds.as_numpy(dataset):
-    logits = model.apply({'params': state.params}, batch, config)
+    # logits = model.apply({'params': state.params}, batch, config)
+    logits, _, _ = evaluate_batch(batch, state, config)
     predictions.append(jnp.argmax(logits, -1))
     ground_truth.append(batch['target'])
     loss.append(jnp.sum(
@@ -111,10 +128,14 @@ def evaluate(dataset, state, config):
   classification_score = evaluation.evaluate(ground_truth, predictions, config.eval_metric)
   return eval_loss, classification_score
 
-def trainer(train_state, train_dataset, eval_dataset, config):
+def trainer(config):
+  train_state, train_dataset, eval_dataset = setup.setup(config)
   iter_id = 0
   #TODO rishab: store the state of the early stopping.
   es = early_stopping.EarlyStopping(min_delta=config.runner.early_stopping_delta, patience=config.runner.early_stopping_threshold)
+  summary_writer = tensorboard.SummaryWriter(config.checkpoint.path)
+  summary_writer.hparams(config.to_dict())
+
   logging.info("Starting the training loop.")
 
   for batch in tfds.as_numpy(train_dataset):
@@ -130,10 +151,17 @@ def trainer(train_state, train_dataset, eval_dataset, config):
       else:
         eval_loss, eval_classification_score = evaluate(eval_dataset, train_state, config)
       logging.info(f"Validation loss: {eval_loss}\n Validation {config.eval_metric}: {eval_classification_score}")
+      _, batch_loss, batch_classification_score = evaluate_batch(batch, train_state, config)
+      summary_writer.scalar('train_loss', batch_loss, iter_id)
+      summary_writer.scalar('train_metric', batch_classification_score, iter_id)
+      summary_writer.scalar('eval_loss', eval_loss, iter_id)
+      summary_writer.scalar('eval_metric', eval_classification_score, iter_id)
+
       did_improve, es = es.update(-1*eval_loss)
       if es.should_stop:
         logging.info("Early stopping triggered.")
         break
+    
     iter_id+=1
     
 

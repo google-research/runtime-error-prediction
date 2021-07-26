@@ -46,7 +46,6 @@ Config = ml_collections.ConfigDict
 
 def restore_checkpoint(state, workdir):
   if os.path.exists(workdir):
-    logging.info("Found an existing checkpoint. Loading from the last checkpoint ...")
     return checkpoints.restore_checkpoint(workdir, state)
   logging.info("No checkpoint found.")
   return state
@@ -71,17 +70,20 @@ def create_fake_inputs(batch_size, max_tokens, max_length, model_name):
     return fake_inputs
   raise ValueError(f"{model_name} not implemented.")
 
+def create_model(config):
+  models_factory = models_lib.ModelFactory()
+  model = models_factory(config.model.name)(vocab_size=config.dataset.vocab_size, emb_dim=config.model.hidden_size)
+  return model
 
 def setup(config):
   seed(config.seed_id)
-  train_dataset = data_io.load_dataset(config.dataset.train_path).repeat(config.runner.epochs).padded_batch(8)
+  train_dataset = data_io.load_dataset(config.dataset.train_path).repeat(config.runner.epochs).padded_batch(config.dataset.batch_size)
   eval_dataset = None
 
   if config.runner.experiment_kind=="train + eval":
-    eval_dataset = data_io.load_dataset(config.dataset.eval_path).repeat(1).padded_batch(8)
+    eval_dataset = data_io.load_dataset(config.dataset.eval_path).repeat(config.runner.epochs).padded_batch(config.dataset.batch_size)
 
-  models_factory = models_lib.ModelFactory()
-  model = models_factory(config.model.name)(vocab_size=config.dataset.vocab_size, emb_dim=config.model.hidden_size)
+  model = create_model(config)
   
   rng = jax.random.PRNGKey(config.seed_id)
   rng, init_rng = jax.random.split(rng)
