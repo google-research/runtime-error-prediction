@@ -59,10 +59,6 @@ class SpanIndexEncoder(nn.Module):
       # span_end: scalar
       return add_at_span(zeros, embedding, span_start, span_end)
     # vmap across the node dimension.
-    print('embeddings.shape')
-    print(embeddings.shape)
-    print(node_span_starts.shape)
-    print(node_span_ends.shape)
     per_node_contributions = jax.vmap(get_node_contribution)(
         embeddings, node_span_starts, node_span_ends)
     # per_node_contributions.shape: num_nodes, max_tokens, features
