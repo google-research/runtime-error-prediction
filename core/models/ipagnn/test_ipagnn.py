@@ -53,6 +53,39 @@ class NodeSpanEncoderTest(unittest.TestCase):
     self.assertEqual(encodings_shape, (2, 3, 512))
 
 
+class SpanIndexEncoderTest(unittest.TestCase):
+
+  def test_call(self):
+    node_span_starts = jnp.array([0, 2])
+    node_span_ends = jnp.array([2, 4])
+
+    encoder = ipagnn.SpanIndexEncoder(
+        max_tokens=5,
+        max_num_nodes=2,
+        features=3,
+    )
+    rng = jax.random.PRNGKey(0)
+    rng, params_rng = jax.random.split(rng, 2)
+    variables = encoder.init(
+        {'params': params_rng},
+        node_span_starts,
+        node_span_ends
+    )
+    params = variables['params']
+
+    encodings = encoder.apply(
+        {'params': params},
+        node_span_starts, node_span_ends,
+    )
+    # encodings.shape: num_tokens, features
+    encodings_shape = encodings.shape
+    self.assertEqual(encodings_shape, (5, 3))
+
+    self.assertTrue(jnp.all(encodings[0] == encodings[1]))
+    self.assertFalse(jnp.all(encodings[1] == encodings[2]))
+    self.assertFalse(jnp.all(encodings[2] == encodings[3]))
+    self.assertTrue(jnp.all(encodings[3] == encodings[4]))
+
 
 if __name__ == '__main__':
   unittest.main()

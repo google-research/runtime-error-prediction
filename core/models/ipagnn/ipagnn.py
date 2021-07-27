@@ -14,7 +14,64 @@ class Info:
   vocab_size: int
 
 
+def add_at_span(x, value, start, end):
+  # Inclusive [start, end]
+  # x.shape: length, features
+  # value.shape: features,
+  arange = jnp.arange(x.shape[0])
+  # arange.shape: length
+  mask = jnp.logical_and(start <= arange, arange <= end)
+  # mask.shape: length
+  return jnp.where(~mask[:, None], x, x + value[None, :])
+
+
+class SpanIndexEncoder(nn.Module):
+  """A "position encoder" for span indexes.
+
+  Computes an embedding for each token indicating the nodes that the token is
+  part of the span of. E.g. If token t is in the spans of nodes with index n_1
+  and n_2, then the encoding of token t returned by the span index encoder is
+  Embed(n_1) + Embed(n_2).
+
+  The token contents themselves are not considered, only the node spans.
+  """
+
+  max_tokens: int
+  max_num_nodes: int
+  features: int
+
+  def setup(self):
+    self.embed = nn.Embed(
+        num_embeddings=self.max_num_nodes,
+        features=self.features,
+        embedding_init=nn.initializers.normal(stddev=1.0),
+    )
+
+  def __call__(self, node_span_starts, node_span_ends):
+    """Assume no batch dimension."""
+    zeros = jnp.zeros((self.max_tokens, self.features))
+    # zeros.shape: tokens, features
+    indexes = jnp.arange(self.max_num_nodes)
+    # indexes.shape: num_nodes,
+    embeddings = self.embed(indexes)
+    # embeddings.shape: num_nodes, features
+
+    def get_node_contribution(embedding, span_start, span_end):
+      # embeddings.shape: features,
+      # span_start: scalar
+      # span_end: scalar
+      return add_at_span(zeros, embedding, span_start, span_end)
+    # vmap across the node dimension.
+    per_node_contributions = jax.vmap(get_node_contribution)(
+        embeddings, node_span_starts, node_span_ends)
+    # per_node_contributions.shape: num_nodes, max_tokens, features
+
+    # Sum across the node dimension.
+    return jnp.sum(per_node_contributions, axis=0)
+
+
 class NodeSpanEncoder(nn.Module):
+  """Given tokens, nodes, and node spans in token space, encode each node."""
 
   info: Any
   config: Any
