@@ -105,7 +105,10 @@ class IPAGNN(nn.Module):
   config: Any
 
   @nn.compact
-  def __call__(self, inputs, info, config):
+  def __call__(self, inputs):
+    info = self.info
+    config = self.config
+
     # Inputs
     true_indexes = inputs['true_branch_nodes']
     false_indexes = inputs['false_branch_nodes']
@@ -128,18 +131,18 @@ class IPAGNN(nn.Module):
           -config.initialization.maxval,
           config.initialization.maxval)
 
-    embed = Embed.shared(num_embeddings=vocab_size,
-                         features=hidden_size,
-                         emb_init=emb_init,
-                         name='embed')
-    branch_decide_dense = nn.Dense.shared(
+    embed = nn.Embed(num_embeddings=vocab_size,
+                     features=hidden_size,
+                     emb_init=emb_init,
+                     name='embed')
+    branch_decide_dense = nn.Dense(
         name='branch_decide_dense',
         features=2,
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
-    cells = create_lstm_cells(config.model.rnn_cell.layers)
-    lstm = StackedRNNCell.shared(cells=cells)
-    output_dense = nn.Dense.shared(
+    cells = nn.create_lstm_cells(config.model.rnn_cell.layers)
+    lstm = nn.StackedRNNCell(cells=cells)
+    output_dense = nn.Dense(
         name='output_dense',
         features=output_token_vocabulary_size,
         kernel_init=nn.initializers.xavier_uniform(),
