@@ -74,7 +74,7 @@ class SpanIndexEncoder(nn.Module):
 class NodeAwareTokenEmbedder(nn.Module):
   """Sums learned token-content embeddings and node span index embeddings.
 
-  This does not include adding position embeddings.
+  This includes adding position embeddings too.
   """
 
   transformer_config: transformer_modules.TransformerConfig
