@@ -7,6 +7,7 @@ import jax.numpy as jnp
 
 import ml_collections
 from core.models.ipagnn import ipagnn
+from core.models.ipagnn import spans
 
 
 Config = ml_collections.ConfigDict
@@ -34,7 +35,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     info = ipagnn.Info(vocab_size=500)
     config = make_sample_config()
 
-    encoder = ipagnn.NodeSpanEncoder(info, config)
+    encoder = spans.NodeSpanEncoder(info, config)
     rng = jax.random.PRNGKey(0)
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = encoder.init(
@@ -59,7 +60,7 @@ class SpanIndexEncoderTest(unittest.TestCase):
     node_span_starts = jnp.array([0, 2])
     node_span_ends = jnp.array([2, 4])
 
-    encoder = ipagnn.SpanIndexEncoder(
+    encoder = spans.SpanIndexEncoder(
         max_tokens=5,
         max_num_nodes=2,
         features=3,
