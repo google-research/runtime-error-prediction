@@ -16,13 +16,11 @@ class TransformerEncoder(nn.Module):
   @nn.compact
   def __call__(self,
                encoded_inputs,
-               inputs_positions=None,
                encoder_mask=None):
     """Applies Transformer model on the encoded inputs.
 
     Args:
       encoded_inputs: pre-encoded input data.
-      inputs_positions: input subsequence positions for packed examples.
       encoder_mask: decoder self-attention mask.
 
     Returns:
@@ -36,8 +34,7 @@ class TransformerEncoder(nn.Module):
 
     # Input Encoder
     for lyr in range(cfg.num_layers):
-      x = Encoder1DBlock(config=cfg, name=f'encoderblock_{lyr}')(
-          x, encoder_mask)
+      x = Encoder1DBlock(config=cfg, name=f'encoderblock_{lyr}')(x, encoder_mask)
 
     encoded = nn.LayerNorm(dtype=cfg.dtype, name='encoder_norm')(x)
 

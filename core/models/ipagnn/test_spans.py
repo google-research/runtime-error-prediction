@@ -27,6 +27,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
         66, 31, 99, 84, 125, 10, 377, 10, 214, 223, 315, 222, 237, 214, 10,
         166, 10, 61, 95, 148, 66, 8, 61, 79, 18, 89, 61, 80, 104, 10, 19, 14,
         66, 13, 19, 95, 148, 9, 240, 9, 82, 9, 239, 222]
+    num_tokens = len(tokens_list)
     tokens = jnp.array([tokens_list, tokens_list])
     # tokens.shape: batch_size=2, length
     node_span_starts = jnp.array([[3, 7, 10], [4, 7, 11]])
@@ -35,7 +36,8 @@ class NodeSpanEncoderTest(unittest.TestCase):
     info = ipagnn.Info(vocab_size=500)
     config = make_sample_config()
 
-    encoder = spans.NodeSpanEncoder(info, config)
+    encoder = spans.NodeSpanEncoder(
+        info, config, max_tokens=num_tokens, max_num_nodes=3)
     rng = jax.random.PRNGKey(0)
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = encoder.init(
@@ -51,7 +53,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     )
     # encodings.shape: batch_size, num_nodes, hidden_size
     encodings_shape = encodings.shape
-    self.assertEqual(encodings_shape, (2, 3, 512))
+    self.assertEqual(encodings_shape, (2, 3, 10))
 
 
 class SpanIndexEncoderTest(unittest.TestCase):
