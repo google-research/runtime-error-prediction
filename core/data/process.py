@@ -22,6 +22,8 @@ class RawRuntimeErrorProblem:
   edge_types: List[int]
   node_span_starts: List[int]
   node_span_ends: List[int]
+  branch_list: List[List[int]]
+  exit_index: int
   target: int
 
 
@@ -35,6 +37,9 @@ class RuntimeErrorProblem:
   node_token_span_starts: List[int]
   node_token_span_ends: List[int]
   token_node_indexes: List[int]
+  true_branch_nodes: List[int]
+  false_branch_nodes: List[int]
+  exit_index: int
   target: int
 
 
@@ -83,12 +88,17 @@ def make_rawruntimeerrorproblem(source, target):
   - node_span_ends: A list of the source span ends for each node in the program's graph representation.
   """
   graph = control_flow.get_control_flow_graph(source)
+  nodes = graph.nodes
+
+  # cfg.nodes does not include an exit node, so we add 1.
+  num_nodes = len(nodes) + 1
+  exit_index = len(nodes)
 
   # node_span_starts and node_span_ends
   node_span_starts = []
   node_span_ends = []
   node_indexes = {}
-  for node_index, node in enumerate(graph.nodes):
+  for node_index, node in enumerate(nodes):
     node_indexes[node.uuid] = node_index
 
     lineno, col_offset, end_lineno, end_col_offset = get_span(node.instruction)
@@ -101,11 +111,13 @@ def make_rawruntimeerrorproblem(source, target):
   edge_sources = []
   edge_dests = []
   edge_types = []
-  for node_index, node in enumerate(graph.nodes):
+  for node_index, node in enumerate(nodes):
     for next_node in node.next:
       edge_sources.append(node_index)
       edge_dests.append(node_indexes[next_node.uuid])
       edge_types.append(0)
+
+  branch_list = get_branch_list(nodes, exit_index)
 
   return RawRuntimeErrorProblem(
       source=source,
@@ -114,8 +126,49 @@ def make_rawruntimeerrorproblem(source, target):
       edge_types=edge_types,
       node_span_starts=node_span_starts,
       node_span_ends=node_span_ends,
+      branch_list=branch_list,
+      exit_index=exit_index,
       target=target,
   )
+
+
+def get_branch_list(nodes, exit_index):
+  """Computes the branch list for the control flow graph.
+
+  Args:
+    nodes: A list of control_flow.ControlFlowNodes.
+    exit_index: The index of the exit node.
+  Returns:
+    A Python list representing the branch options available from each node. Each
+    entry in the list corresponds to a node in the control flow graph, with the
+    final entry corresponding to the exit node (not present in the cfg). Each
+    entry is a 2-tuple indicating the next node reached by the True and False
+    branch respectively (these may be the same.) The exit node leads to itself
+    along both branches.
+  """
+  indexes_by_id = {
+      id(node): index for index, node in enumerate(nodes)
+  }
+  indexes_by_id[id(None)] = exit_index
+  branches = []
+  for node in nodes:
+    node_branches = node.branches
+    if node_branches:
+      branches.append([indexes_by_id[id(node_branches[True])],
+                       indexes_by_id[id(node_branches[False])]])
+    else:
+      try:
+        next_node = next(iter(node.next))
+        next_index = indexes_by_id[id(next_node)]
+      except StopIteration:
+        next_index = exit_index
+      branches.append([next_index, next_index])
+
+  # Finally we add branches from the exit node to itself.
+  # Omit this if running on BasicBlocks rather than ControlFlowNodes, because
+  # ControlFlowGraphs have an exit BasicBlock, but no exit ControlFlowNodes.
+  branches.append([exit_index, exit_index])
+  return branches
 
 
 def make_runtimeerrorproblem(source, target, tokenizer=None):
@@ -130,6 +183,9 @@ def make_runtimeerrorproblem(source, target, tokenizer=None):
       node_token_span_starts=token_data['node_token_span_starts'],
       node_token_span_ends=token_data['node_token_span_ends'],
       token_node_indexes=token_data['token_node_indexes'],
+      true_branch_nodes=raw.branch_list[:, 0],
+      false_branch_nodes=raw.branch_list[:, 1],
+      exit_index=raw.exit_index,
       target=raw.target,
   )
 

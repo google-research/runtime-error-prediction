@@ -8,6 +8,10 @@ Encoder1DBlock = transformer_modules.Encoder1DBlock
 class TransformerEncoder(nn.Module):
   """Transformer Model Encoder for sequence to sequence translation.
 
+  Unlike transformer_modules.Encoder, this Encoder does not encode the input
+  tokens itself. It assumes the tokens have already been encoded, and any
+  desired positional embeddings have already been aded.
+
   Attributes:
     config: TransformerConfig dataclass containing hyperparameters.
   """

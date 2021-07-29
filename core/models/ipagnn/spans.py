@@ -112,7 +112,7 @@ class NodeSpanEncoder(nn.Module):
   info: Any
   config: Any
 
-  max_tokens: int  # TODO(dbieber): Move these info info or config.
+  max_tokens: int  # TODO(dbieber): Move these into info or config.
   max_num_nodes: int
 
   def setup(self):

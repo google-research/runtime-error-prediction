@@ -18,82 +18,60 @@ class IPAGNN(nn.Module):
   info: Any
   config: Any
 
-  @nn.compact
-  def __call__(self, inputs):
+  rnn: Any
+  max_steps: int
+
+  def setup(self):
     info = self.info
     config = self.config
+    output_token_vocabulary_size = info.vocab_size
 
-    # Inputs
-    true_indexes = inputs['true_branch_nodes']
-    false_indexes = inputs['false_branch_nodes']
-    start_indexes = inputs['start_index']  # pylint: disable=unused-variable
-    exit_indexes = inputs['exit_index']
-    steps_all = inputs['steps']
-    vocab_size = info.vocab_size
-    output_token_vocabulary_size = info.output_vocab_size
-    hidden_size = config.model.hidden_size
-    data = inputs['data'].astype('int32')
-    batch_size, num_nodes, unused_statement_length = data.shape
-
-    # An upper bound on the number of steps to take.
-    max_steps = int(1.5 * info.max_diameter)
-
-    # Init parameters
-    def emb_init(key, shape, dtype=jnp.float32):
-      return jax.random.uniform(
-          key, shape, dtype,
-          -config.initialization.maxval,
-          config.initialization.maxval)
-
-    embed = nn.Embed(num_embeddings=vocab_size,
-                     features=hidden_size,
-                     emb_init=emb_init,
-                     name='embed')
-    branch_decide_dense = nn.Dense(
+    self.branch_decide_dense = nn.Dense(
         name='branch_decide_dense',
         features=2,
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
-    cells = nn.create_lstm_cells(config.model.rnn_cell.layers)
-    lstm = nn.StackedRNNCell(cells=cells)
-    output_dense = nn.Dense(
+    self.output_dense = nn.Dense(
         name='output_dense',
         features=output_token_vocabulary_size,
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
 
-    # Init state
-    def _create_hidden_states():
-      rng = jax.random.PRNGKey(0)
-      return nn.StackedRNNCell.initialize_carry(
-          rng, cells, (batch_size, num_nodes,), hidden_size)
+  def __call__(
+      self,
+      node_embeddings,
+      edge_sources,
+      edge_dests,
+      edge_types,
+      exit_indexes,
+      all_steps,
+  ):
+    info = self.info
+    config = self.config
 
-    def _create_instruction_pointer():
-      return jax.ops.index_add(
-          jnp.zeros((batch_size, num_nodes,)),
-          jax.ops.index[:, 0],  # TODO(dbieber): Use "start_index" instead of 0.
-          1
-      )
+    # Inputs.
+    vocab_size = info.vocab_size
+    output_token_vocabulary_size = info.vocab_size
+    hidden_size = config.model.hidden_size
+    batch_size, num_nodes, unused_hidden_size = node_embeddings.shape
 
-    hidden_states = _create_hidden_states()
+    # Initialize hidden states and soft instruction pointer.
+    hidden_states = self.rnn.initialize_carry(
+        jax.random.PRNGKey(0),
+        (batch_size, num_nodes,), hidden_size)
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
-    instruction_pointer = _create_instruction_pointer()
+    instruction_pointer = jax.ops.index_add(
+        jnp.zeros((batch_size, num_nodes,)),
+        jax.ops.index[:, 0],  # TODO(dbieber): Use "start_indexes" instead of 0.
+        1
+    )
     # instruction_pointer.shape: batch_size, num_nodes,
-    node_embeddings = embed(data)
-    # node_embeddings.shape:
-    #     batch_size, num_nodes, statement_length, hidden_size
-
-    # Apply
-    def execute_single_node(hidden_state, node_embedding):
-      carry, _ = lax.scan(lstm, hidden_state, node_embedding)
-      return carry
-    execute = jax.vmap(execute_single_node)
 
     def branch_decide_single_node(hidden_state):
       # leaves(hidden_state).shape: hidden_size
       hidden_state_concat = jnp.concatenate(
           jax.tree_leaves(hidden_state), axis=0)
-      return branch_decide_dense(hidden_state_concat)
+      return self.branch_decide_dense(hidden_state_concat)
     branch_decide = jax.vmap(branch_decide_single_node)
 
     def update_instruction_pointer(
@@ -143,13 +121,22 @@ class IPAGNN(nn.Module):
 
       return jax.tree_map(aggregate_component, hidden_states)
 
+    def execute_single_node(hidden_state, node_embedding):
+      # leaves(hidden_state).shape: hidden_size
+      # node_embedding.shape: hidden_size
+      # lstm outputs: (new_c, new_h), new_h
+      # Recall new_h is derived from new_c.
+      hidden_state, _ = self.rnn(hidden_state, node_embedding)
+      return hidden_state
+    execute = jax.vmap(execute_single_node)
+
     def step_single_example(hidden_states, instruction_pointer,
                             node_embeddings, true_indexes, false_indexes,
                             exit_index):
       # Execution (e.g. apply RNN)
       # leaves(hidden_states).shape: num_nodes, hidden_size
       # instruction_pointer.shape: num_nodes,
-      # node_embeddings.shape: num_nodes, statement_length, hidden_size
+      # node_embeddings.shape: num_nodes, hidden_size
       hidden_state_contributions = execute(hidden_states, node_embeddings)
       # leaves(hidden_state_contributions).shape: num_nodes, hidden_size
 
@@ -223,7 +210,7 @@ class IPAGNN(nn.Module):
                               in_axes=(0, 0, 0, 0, 0, 0, 0))
 
     logits, aux = compute_logits(
-        hidden_states, instruction_pointer, exit_indexes, steps_all,
+        hidden_states, instruction_pointer, exit_indexes, all_steps,
         node_embeddings, true_indexes, false_indexes)
     logits = jnp.expand_dims(logits, axis=1)
     return logits
