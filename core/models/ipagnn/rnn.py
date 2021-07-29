@@ -40,4 +40,3 @@ class StackedRNNCell(nn.Module):
         cell.initialize_carry(key, batch_dims, size, init_fn=init_fn)
         for key, cell in zip(keys, cells)
     ]
-

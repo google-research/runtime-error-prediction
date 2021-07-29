@@ -23,6 +23,9 @@ def to_tf_example(problem):
       "node_token_span_starts": _int64_feature(problem.node_token_span_starts),
       "node_token_span_ends": _int64_feature(problem.node_token_span_ends),
       "token_node_indexes": _int64_feature(problem.token_node_indexes),
+      "true_branch_nodes": _int64_feature(problem.true_branch_nodes),
+      "false_branch_nodes": _int64_feature(problem.false_branch_nodes),
+      "exit_index": _int64_feature([problem.exit_index]),
       "target": _int64_feature([problem.target]),
   }))
 
@@ -43,6 +46,9 @@ def decode_fn(record_bytes):
           "node_token_span_starts": _int64_sequence_feature(),
           "node_token_span_ends": _int64_sequence_feature(),
           "token_node_indexes": _int64_sequence_feature(),
+          "true_branch_nodes": _int64_sequence_feature(),
+          "false_branch_nodes": _int64_sequence_feature(),
+          "exit_index": tf.io.FixedLenFeature([1], dtype=tf.int64),
           "target": tf.io.FixedLenFeature([1], dtype=tf.int64),
       }
   )
