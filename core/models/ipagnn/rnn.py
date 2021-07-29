@@ -27,7 +27,7 @@ class StackedRNNCell(nn.Module):
 
   def __call__(self, carry, inputs):
     new_carry = []
-    for c, cell in zip(carry, cells):
+    for c, cell in zip(carry, self.cells):
       new_c, inputs = cell(c, inputs)
       new_carry.append(new_c)
     return new_carry, inputs

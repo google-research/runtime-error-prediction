@@ -43,6 +43,8 @@ class IPAGNN(nn.Module):
       edge_sources,
       edge_dests,
       edge_types,
+      true_indexes,
+      false_indexes,
       exit_indexes,
       all_steps,
   ):
@@ -195,12 +197,12 @@ class IPAGNN(nn.Module):
 
       carry = (hidden_states, instruction_pointer, jnp.array([0]))
       (hidden_states, instruction_pointer, _), aux = lax.scan(
-          step_, carry, None, length=max_steps)
+          step_, carry, None, length=self.max_steps)
 
       final_state = jax.tree_map(lambda hs: hs[exit_index], hidden_states)
       # leaves(final_state).shape: hidden_size
       final_state_concat = jnp.concatenate(jax.tree_leaves(final_state), axis=0)
-      logits = output_dense(final_state_concat)
+      logits = self.output_dense(final_state_concat)
       aux.update({
           'instruction_pointer_final': instruction_pointer,
           'hidden_states_final': hidden_states,
