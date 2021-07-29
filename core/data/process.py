@@ -7,6 +7,7 @@ import dataclasses
 
 import fire
 import gast as ast
+import numpy as np
 from python_graphs import control_flow
 from python_graphs import instruction as instruction_module
 
@@ -175,6 +176,7 @@ def make_runtimeerrorproblem(source, target, tokenizer=None):
   raw = make_rawruntimeerrorproblem(source, target)
   tokenizer = tokenizer or tokenization.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
+  branch_list = np.array(raw.branch_list)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],
       edge_sources=raw.edge_sources,
@@ -183,8 +185,8 @@ def make_runtimeerrorproblem(source, target, tokenizer=None):
       node_token_span_starts=token_data['node_token_span_starts'],
       node_token_span_ends=token_data['node_token_span_ends'],
       token_node_indexes=token_data['token_node_indexes'],
-      true_branch_nodes=raw.branch_list[:, 0],
-      false_branch_nodes=raw.branch_list[:, 1],
+      true_branch_nodes=branch_list[:, 0],
+      false_branch_nodes=branch_list[:, 1],
       exit_index=raw.exit_index,
       target=raw.target,
   )
