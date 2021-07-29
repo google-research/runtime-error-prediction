@@ -17,7 +17,6 @@ from core.data import data_io
 from core.data import error_kinds
 from core.models.ipagnn import encoder
 from core.models.ipagnn import ipagnn
-from core.models.ipagnn import rnn
 from core.models.ipagnn import spans
 from third_party.flax_examples import transformer_modules
 
@@ -117,13 +116,9 @@ class IPAGNN(nn.Module):
         max_num_nodes=max_num_nodes,
     )
 
-    cells = rnn.create_lstm_cells(config.model.rnn_layers)
-    lstm = rnn.StackedRNNCell(cells)
-
     self.ipagnn = ipagnn.IPAGNN(
         info=info,
         config=config,
-        rnn=lstm,
         max_steps=2,
     )
 
@@ -131,16 +126,21 @@ class IPAGNN(nn.Module):
   def __call__(self, x):
     tokens = x['tokens']
     # tokens.shape: batch_size, max_tokens
+    batch_size = tokens.shape[0]
     encoded_inputs = self.node_span_encoder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'])
     # encoded_inputs.shape: batch_size, max_num_nodes, hidden_size
+    # TODO(dbieber): Compute number of steps in dataset.
+    all_steps = jnp.array([10] * batch_size)
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
         edge_sources=x['edge_sources'],
         edge_dests=x['edge_dests'],
         edge_types=x['edge_types'],
-        exit_indexes=0,  # TODO(dbieber): Include exit indexes in dataset.
-        all_steps=10,  # TODO(dbieber): Compute number of steps in dataset.
+        true_indexes=x['true_branch_nodes'],
+        false_indexes=x['false_branch_nodes'],
+        exit_indexes=x['exit_index'],
+        all_steps=all_steps,
     )
     # ipagnn_output['node_embeddings'].shape: batch_size, max_num_nodes, hidden_size
     # ipagnn_output['instruction_pointer'].shape: batch_size, max_num_nodes
@@ -160,6 +160,7 @@ def make_sample_config():
   config.model = Config()
   config.model.hidden_size = 10
   config.model.rnn_layers = 2
+  config.model.checkpoint = False
   return config
 
 
@@ -214,42 +215,30 @@ def create_train_state(rng):
   max_tokens = 896
   max_num_nodes = 80
   max_num_edges = 160
-  fake_input = {
-      'tokens': jnp.ones((batch_size, max_tokens), dtype=jnp.int32),
-      'edge_sources': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
-      'edge_dests': jnp.ones((batch_size, max_num_edges), dtype=jnp.int32),
-      'edge_types': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
-      'node_token_span_starts': jnp.zeros((batch_size, max_num_nodes), dtype=jnp.int32),
-      'node_token_span_ends': jnp.ones((batch_size, max_num_nodes), dtype=jnp.int32),
-  }
+  fake_input = data_io.get_fake_input(
+      batch_size, max_tokens, max_num_nodes, max_num_edges)
   rng, params_rng, dropout_rng = jax.random.split(rng, 3)
   variables = model.init(
       {'params': params_rng, 'dropout': dropout_rng},
       fake_input)
   params = variables['params']
-  tx = optax.sgd(0.01)
+  tx = optax.sgd(0.1)
   return TrainState.create(
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
 
 def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
   epochs = 1000
+  batch_size = 8
   max_tokens = 896
   max_num_nodes = 80
   max_num_edges = 160
+  padded_shapes = data_io.get_padded_shapes(
+      max_tokens, max_num_nodes, max_num_edges)
   return (
       data_io.load_dataset(dataset_path)
       .repeat(epochs)
-      .padded_batch(8, padded_shapes={
-          'tokens': [max_tokens],
-          'edge_sources': [max_num_edges],
-          'edge_dests': [max_num_edges],
-          'edge_types': [max_num_edges],
-          'node_token_span_starts': [max_num_nodes],
-          'node_token_span_ends': [max_num_nodes],
-          'token_node_indexes': [max_tokens],
-          'target': [1],
-      })
+      .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
