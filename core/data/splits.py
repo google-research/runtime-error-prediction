@@ -2,6 +2,7 @@ import random
 
 import fire
 
+from core.data import codenet
 from core.data import codenet_paths
 
 
@@ -9,7 +10,7 @@ DEFAULT_SPLITS_PATH = codenet_paths.DEFAULT_SPLITS_PATH
 
 
 def make_splits(valid=0.1, test=0.1):
-  problem_ids = get_all_problem_ids()
+  problem_ids = codenet.get_all_problem_ids()
   random.shuffle(problem_ids)
   num_problems = len(problem_ids)
   num_valid_problems = valid * num_problems
