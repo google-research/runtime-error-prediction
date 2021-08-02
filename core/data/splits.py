@@ -21,9 +21,9 @@ def make_splits(valid=0.1, test=0.1):
   valid_problem_ids = problem_ids[num_train_problems:num_train_problems + num_valid_problems]
   test_problem_ids = problem_ids[num_train_problems + num_valid_problems:]
   return {
-      'train': train_problem_ids,
-      'valid': valid_problem_ids,
-      'test': test_problem_ids,
+      'train': sorted(train_problem_ids),
+      'valid': sorted(valid_problem_ids),
+      'test': sorted(test_problem_ids),
   }
 
 
