@@ -13,8 +13,8 @@ def make_splits(valid=0.1, test=0.1):
   problem_ids = codenet.get_all_problem_ids()
   random.shuffle(problem_ids)
   num_problems = len(problem_ids)
-  num_valid_problems = valid * num_problems
-  num_test_problems = test * num_problems
+  num_valid_problems = int(valid * num_problems)
+  num_test_problems = int(test * num_problems)
   num_train_problems = num_problems - (num_valid_problems + num_test_problems)
   train_problem_ids = problem_ids[:num_train_problems]
   valid_problem_ids = problem_ids[num_train_problems:num_train_problems + num_valid_problems]
