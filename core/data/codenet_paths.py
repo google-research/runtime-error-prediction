@@ -3,6 +3,7 @@ import socket
 
 DEFAULT_DATASET_PATH = 'out/data/default.tfrecord'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
+DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
