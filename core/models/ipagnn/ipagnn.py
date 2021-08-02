@@ -193,7 +193,7 @@ class IPAGNN(nn.Module):
 
       # current_step.shape: batch_size
       # all_steps.shape: batch_size
-      hidden_states_new, instruction_pointer_new = keep_old_if_done(
+      hidden_states, instruction_pointer = keep_old_if_done(
           (hidden_states, instruction_pointer),
           (hidden_states_new, instruction_pointer_new),
           current_step,
@@ -206,7 +206,7 @@ class IPAGNN(nn.Module):
       # exit_index.shape: scalar.
       return jax.tree_map(lambda hs: hs[exit_index], hidden_states)
     # exit_indexes.shape: batch_size
-    exit_node_hidden_states = jax.vmap(get_final_state)(hidden_states_new, exit_indexes)
+    exit_node_hidden_states = jax.vmap(get_final_state)(hidden_states, exit_indexes)
     # leaves(exit_node_hidden_states).shape: batch_size, hidden_size
     exit_node_embeddings = jax.vmap(_rnn_state_to_embedding)(exit_node_hidden_states)
     # exit_node_embeddings.shape: batch_size, full_hidden_size

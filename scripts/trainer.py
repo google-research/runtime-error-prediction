@@ -104,6 +104,7 @@ class IPAGNN(nn.Module):
     max_tokens = 896
     max_num_nodes = 80
     max_num_edges = 160
+    max_steps = 80
     info = ipagnn.Info(vocab_size=vocab_size)
     transformer_config = transformer_modules.TransformerConfig(
         vocab_size=vocab_size,
@@ -119,7 +120,7 @@ class IPAGNN(nn.Module):
     self.ipagnn = ipagnn.IPAGNN(
         info=info,
         config=config,
-        max_steps=2,
+        max_steps=max_steps,
     )
 
   @nn.compact
@@ -131,7 +132,7 @@ class IPAGNN(nn.Module):
         tokens, x['node_token_span_starts'], x['node_token_span_ends'])
     # encoded_inputs.shape: batch_size, max_num_nodes, hidden_size
     # TODO(dbieber): Compute number of steps in dataset.
-    all_steps = jnp.array([10] * batch_size)
+    all_steps = jnp.array([70] * batch_size)
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
         edge_sources=x['edge_sources'],
@@ -148,11 +149,14 @@ class IPAGNN(nn.Module):
     # ipagnn_output['exception_node_embeddings'].shape: batch_size, hidden_size
 
     # TODO(dbieber): Reevaluate how to go from transformer encodings to output.
-    x = ipagnn_output['exit_node_embeddings']
-    # x.shape: batch_size, emb_dim
-    x = nn.Dense(features=NUM_CLASSES)(x)
-    # x.shape: batch_size, NUM_CLASSES
-    return x
+    exit_node_embeddings = ipagnn_output['exit_node_embeddings']
+    print("x['exit_index']")
+    print(x['exit_index'])
+    print(exit_node_embeddings)
+    # exit_node_embeddings.shape: batch_size, emb_dim
+    logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
+    # logits.shape: batch_size, NUM_CLASSES
+    return logits
 
 
 def make_sample_config():
@@ -222,7 +226,7 @@ def create_train_state(rng):
       {'params': params_rng, 'dropout': dropout_rng},
       fake_input)
   params = variables['params']
-  tx = optax.sgd(0.1)
+  tx = optax.sgd(0)
   return TrainState.create(
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
