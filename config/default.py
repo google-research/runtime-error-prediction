@@ -37,19 +37,20 @@ def default_config():
 
   config.logging = Config()
   config.logging.summary_freq = 500
-  config.logging.save_freq = 500
+  config.logging.save_freq = 2
 
   config.runner = Config()
   config.runner.mode = 'train'
   config.runner.method = 'supervised'
   config.runner.experiment_kind = 'train + eval'
   config.runner.restart_behavior = 'restore'  # abort or restore
-  config.runner.early_stopping_threshold = 10
+  config.runner.early_stopping_threshold = 1
+  config.runner.early_stopping_delta = 0.0
   config.runner.epochs = 8
 
   config.checkpoint = Config()
   config.checkpoint.run_dir = ''
-  config.checkpoint.path = 'checkpoints'
+  config.checkpoint.path = 'checkpoints/'
   config.checkpoint.id = 0
 
   config.dataset = Config()
@@ -60,8 +61,8 @@ def default_config():
   config.dataset.split = 'default'
   config.dataset.representation = 'code'  # code, trace
   config.dataset.max_length = 10000
-  config.dataset.max_tokens = 10000
-  config.dataset.batch_size = 128
+  config.dataset.max_tokens = 71
+  config.dataset.batch_size = 8
   config.dataset.vocab_size = 20000
   config.dataset.batch = True
   config.dataset.in_memory = False
@@ -81,10 +82,10 @@ def default_config():
 
   # Other configs.
   config.eval_name = ''
-  config.eval_steps = 1000
+  config.eval_steps = 2
   # Number of seconds to wait without receiving checkpoint before timing out.
   config.eval_timeout = 30 * 60  # 30 minutes.
-
+  config.eval_metric = "F1-score"
 
 
   config.index = 0
