@@ -18,31 +18,28 @@
 
 import os
 
-from absl import app
-from absl import flags
-from absl import logging
-
+from absl import app, flags, logging
 from ml_collections.config_flags import config_flags
 
 from trainers import default_trainer
 
-DEFAULT_DATA_DIR = 'data'
-DEFAULT_CONFIG = 'config/default.py'
+DEFAULT_DATA_DIR = "data"
+DEFAULT_CONFIG = "config/default.py"
 
-flags.DEFINE_string('data_dir', DEFAULT_DATA_DIR, 'Where to place the data.')
+flags.DEFINE_string("data_dir", DEFAULT_DATA_DIR, "Where to place the data.")
 config_flags.DEFINE_config_file(
-  name='config',
-  default=DEFAULT_CONFIG,
-  help_string='config file')
+    name="config", default=DEFAULT_CONFIG, help_string="config file"
+)
 FLAGS = flags.FLAGS
 
 
 def main(argv):
-  del argv  # Unused.
+    del argv  # Unused.
 
-  data_dir = FLAGS.data_dir
-  config = FLAGS.config
-  default_trainer.trainer(config)
+    data_dir = FLAGS.data_dir
+    config = FLAGS.config
+    default_trainer.trainer(config)
 
-if __name__ == '__main__':
-  app.run(main)
+
+if __name__ == "__main__":
+    app.run(main)
