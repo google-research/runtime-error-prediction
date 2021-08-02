@@ -7,6 +7,7 @@ from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
 from core.data import process
+from core.data import splits
 from core.data import tokenization
 
 import tensorflow as tf
@@ -14,7 +15,30 @@ import tensorflow as tf
 import fire
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
+DEFAULT_SPLITS_PATH = codenet_paths.DEFAULT_SPLITS_PATH
 DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
+
+
+def generate_train_tokenizer(
+    path=DEFAULT_TOKENIZER_PATH,
+    splits_path=DEFAULT_SPLITS_PATH):
+  """Generates a tokenizer for the CodeNet data using only the train split.
+
+  Args:
+    path: The location to write the tokenizer data to.
+    max_files: (optional) The maximum number of submissions to use for
+      generating the tokenizer.
+  Returns:
+    The generated Tokenizer.
+  """
+  splits_dict = splits.load_splits(path=splits_path)
+  train_problem_ids = splits_dict['train']
+
+  files = []
+  for problem_id, submission_id in splits.get_all_problem_and_submission_ids(train_problem_ids):
+    python_path = codenet.get_python_path(problem_id, submission_id)
+    files.append(python_path)
+  return tokenization.generate_tokenizer(path=path, files=files)
 
 
 def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):

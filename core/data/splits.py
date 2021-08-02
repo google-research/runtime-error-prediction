@@ -32,7 +32,7 @@ def save_splits(splits, path=DEFAULT_SPLITS_PATH):
     json.dump(splits, f, ensure_ascii=False, indent=2)
 
 
-def load_splits(splits, path=DEFAULT_SPLITS_PATH):
+def load_splits(path=DEFAULT_SPLITS_PATH):
   with open(path, 'r') as f:
     return json.load(f)
 
@@ -40,6 +40,13 @@ def load_splits(splits, path=DEFAULT_SPLITS_PATH):
 def make_and_save_splits(valid=0.1, test=0.1, path=DEFAULT_SPLITS_PATH):
   splits = make_splits(valid=valid, test=test)
   save_splits(splits, path=path)
+
+
+def get_all_problem_and_submission_ids(problem_ids):
+  """Yields all problem and submission ids for the provided split."""
+  for problem_id in problem_ids:
+    for submission_id in codenet.get_all_submission_ids(problem_id):
+      yield problem_id, submission_id
 
 
 if __name__ == '__main__':
