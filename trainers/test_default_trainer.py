@@ -27,7 +27,7 @@ import tensorflow_datasets as tfds
 
 # Local imports.
 import models
-from runners import default
+from trainers import default_trainer
 from config import default as default_lib
 from lib import setup
 from core.data import error_kinds
