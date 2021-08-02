@@ -9,3 +9,4 @@ python-graphs>=1.0.0
 tensorflow
 tensorflow_datasets
 transformers>=4.6.0
+ml-collections==0.1.0
