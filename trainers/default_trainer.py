@@ -34,7 +34,8 @@ from flax.metrics import tensorboard
 
 from ml_collections.config_flags import config_flags
 
-from lib import setup, evaluation
+from lib import setup, misc_utils
+from evaluators import default_evaluator
 from models import models_lib
 
 import tensorflow_datasets as tfds
@@ -43,22 +44,6 @@ from core.data import error_kinds
 NUM_CLASSES = error_kinds.NUM_CLASSES
 DEFAULT_DATA_DIR = 'data'
 DEFAULT_CONFIG = 'config/default.py'
-
-flags.DEFINE_string('data_dir', DEFAULT_DATA_DIR, 'Where to place the data.')
-config_flags.DEFINE_config_file(
-  name='config',
-  default=DEFAULT_CONFIG,
-  help_string='config file')
-FLAGS = flags.FLAGS
-
-
-def main(argv):
-  del argv  # Unused.
-
-  data_dir = FLAGS.data_dir
-  config = FLAGS.config
-  trainer(config)
-
 
 # @jax.jit
 def train_step(state, batch, config):
@@ -87,47 +72,6 @@ def train_step(state, batch, config):
       'loss': aux['loss'],
   }
 
-def save_checkpoint(state, workdir):
-  os.makedirs(workdir, exist_ok=True)
-  step = int(state.step)
-  checkpoints.save_checkpoint(workdir, state, step, keep=3)
-
-def compute_metrics(logits, ground_truth, eval_metric):
-  predictions = np.array(jnp.argmax(logits, -1))
-  ground_truth = np.array(ground_truth)
-  metric = evaluation.evaluate(ground_truth, predictions, eval_metric)
-  loss = jnp.mean(
-        optax.softmax_cross_entropy(
-            logits=logits,
-            labels=jax.nn.one_hot(ground_truth, NUM_CLASSES)))
-  return loss, metric
-
-def evaluate_batch(batch, state, config):
-  model = models_lib.ModelFactory()(config.model.name)(vocab_size=config.dataset.vocab_size, emb_dim=config.model.hidden_size)
-  logits = model.apply({'params': state.params}, batch, config)
-  loss, metric = compute_metrics(logits, batch['target'], config.eval_metric)
-  return logits, loss, metric
-
-def evaluate(dataset, state, config):
-  predictions = []
-  ground_truth = []
-  loss = []
-  for batch in tfds.as_numpy(dataset):
-    # logits = model.apply({'params': state.params}, batch, config)
-    logits, _, _ = evaluate_batch(batch, state, config)
-    predictions.append(jnp.argmax(logits, -1))
-    ground_truth.append(batch['target'])
-    loss.append(jnp.sum(
-        optax.softmax_cross_entropy(
-            logits=logits,
-            labels=jax.nn.one_hot(batch['target'], NUM_CLASSES))))
-  predictions = np.array(jnp.concatenate(predictions))
-  ground_truth = np.array(jnp.concatenate(ground_truth)).flatten()
-  eval_loss = sum(loss)/predictions.shape[0]
-  assert predictions.shape[0] == ground_truth.shape[0]
-  classification_score = evaluation.evaluate(ground_truth, predictions, config.eval_metric)
-  return eval_loss, classification_score
-
 def trainer(config):
   train_state, train_dataset, eval_dataset = setup.setup(config)
   iter_id = 0
@@ -142,16 +86,16 @@ def trainer(config):
     train_state, aux = train_step(train_state, batch, config)
     
     if iter_id % config.logging.save_freq == 0:
-      save_checkpoint(train_state, config.checkpoint.path)
+      misc_utils.save_checkpoint(train_state, config.checkpoint.path)
     
     if iter_id % config.eval_steps == 0:
       if eval_dataset is None:
         logging.info("Validation dataset unspecified. Using train dataset for evaluation.")
-        eval_loss, eval_classification_score = evaluate(train_dataset, train_state, config)
+        eval_loss, eval_classification_score = default_evaluator.evaluate(train_dataset, train_state, config)
       else:
-        eval_loss, eval_classification_score = evaluate(eval_dataset, train_state, config)
+        eval_loss, eval_classification_score = default_evaluator.evaluate(eval_dataset, train_state, config)
       logging.info(f"Validation loss: {eval_loss}\n Validation {config.eval_metric}: {eval_classification_score}")
-      _, batch_loss, batch_classification_score = evaluate_batch(batch, train_state, config)
+      _, batch_loss, batch_classification_score = default_evaluator.evaluate_batch(batch, train_state, config)
       summary_writer.scalar('train_loss', batch_loss, iter_id)
       summary_writer.scalar('train_metric', batch_classification_score, iter_id)
       summary_writer.scalar('eval_loss', eval_loss, iter_id)
