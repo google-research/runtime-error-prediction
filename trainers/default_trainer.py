@@ -107,7 +107,3 @@ def trainer(config):
         break
     
     iter_id+=1
-    
-
-if __name__ == '__main__':
-  app.run(main)
