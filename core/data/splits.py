@@ -1,6 +1,9 @@
 import random
 
+import fire
+
 from core.data import codenet_paths
+
 
 DEFAULT_SPLITS_PATH = codenet_paths.DEFAULT_SPLITS_PATH
 
@@ -35,3 +38,7 @@ def load_splits(splits, path=DEFAULT_SPLITS_PATH):
 def make_and_save_splits(valid=0.1, test=0.1, path=DEFAULT_SPLITS_PATH):
   splits = make_splits(valid=valid, test=test)
   save_splits(splits, path=path)
+
+
+if __name__ == '__main__':
+  fire.Fire()
