@@ -53,8 +53,9 @@ def generate_tokenizer(
   for problem_id, submission_id in problem_and_submission_ids:
     python_path = codenet.get_python_path(problem_id, submission_id)
     files.append(python_path)
-    if max_files and len(files) >= max_files:
-      break
+  random.shuffle(files)
+  if max_files:
+    files = files[:max_files]
   return tokenization.generate_tokenizer(path=path, files=files)
 
 
