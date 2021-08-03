@@ -1,6 +1,7 @@
 """Parsing, tokenizing, and generating datasets from the CodeNet data."""
 
 import itertools
+import random
 
 from core.data import codenet
 from core.data import codenet_paths
