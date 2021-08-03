@@ -19,40 +19,38 @@ DEFAULT_SPLITS_PATH = codenet_paths.DEFAULT_SPLITS_PATH
 DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
 
 
-def generate_train_tokenizer(
+def generate_tokenizer(
     path=DEFAULT_TOKENIZER_PATH,
-    splits_path=DEFAULT_SPLITS_PATH):
+    splits_path=DEFAULT_SPLITS_PATH,
+    require_evals=True,
+    max_files=None):
   """Generates a tokenizer for the CodeNet data using only the train split.
 
   Args:
     path: The location to write the tokenizer data to.
+    splits_path: The path to the split data. Only train problems will be used.
     max_files: (optional) The maximum number of submissions to use for
       generating the tokenizer.
   Returns:
     The generated Tokenizer.
   """
-  splits_dict = splits.load_splits(path=splits_path)
-  train_problem_ids = splits_dict['train']
+  if splits_path:
+    splits_dict = splits.load_splits(path=splits_path)
+    train_problem_ids = splits_dict['train']
+    if require_evals:
+      problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
+          train_problem_ids)
+    else:
+      problem_and_submission_ids = codenet.get_split_problem_and_submission_ids(
+          train_problem_ids)
+  else:
+    if require_evals:
+      problem_and_submission_ids = codenet.get_all_problem_and_submission_ids_with_evals()
+    else:
+      problem_and_submission_ids = codenet.get_all_problem_and_submission_ids()
 
   files = []
-  for problem_id, submission_id in splits.get_all_problem_and_submission_ids(train_problem_ids):
-    python_path = codenet.get_python_path(problem_id, submission_id)
-    files.append(python_path)
-  return tokenization.generate_tokenizer(path=path, files=files)
-
-
-def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
-  """Generates a tokenizer for the CodeNet data.
-
-  Args:
-    path: The location to write the tokenizer data to.
-    max_files: (optional) The maximum number of submissions to use for
-      generating the tokenizer.
-  Returns:
-    The generated Tokenizer.
-  """
-  files = []  
-  for problem_id, submission_id in codenet.get_all_problem_and_submission_ids():
+  for problem_id, submission_id in problem_and_submission_ids:
     python_path = codenet.get_python_path(problem_id, submission_id)
     files.append(python_path)
     if max_files and len(files) >= max_files:
@@ -63,25 +61,53 @@ def generate_tokenizer(path=DEFAULT_TOKENIZER_PATH, max_files=None):
 def generate_codenet_dataset(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_DATASET_PATH,
+    splits_path=DEFAULT_SPLITS_PATH,
     max_files=None):
   """Generates a TFRecord dataset from the CodeNet data.
 
   Args:
     tokenizer_path: The tokenizer data to use when generating the dataset.
     dataset_path: The path to write the dataset to.
+    splits_path: The path to the split data.
+    max_files: (optional) The maximum number of submissions to use for
+      generating the tokenizer.
   """
-  with tf.io.TFRecordWriter(dataset_path) as file_writer:
-    for problem in itertools.islice(process_codenet(tokenizer_path=tokenizer_path), max_files):
+  splits_dict = splits.load_splits(path=splits_path)
+  train_problems_gen = process_codenet(
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['train'])
+
+  train_path = codenet_paths.make_split_path(dataset_path, 'train')
+  valid_path = codenet_paths.make_split_path(dataset_path, 'valid')
+  test_path = codenet_paths.make_split_path(dataset_path, 'test')
+
+  save_codenet_tfrecord(train_path, train_problems_gen, max_files=max_files)
+  valid_problems_gen = process_codenet(
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['valid'])
+  save_codenet_tfrecord(valid_path, valid_problems_gen, max_files=max_files)
+  test_problems_gen = process_codenet(
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['test'])
+  save_codenet_tfrecord(test_path, test_problems_gen, max_files=max_files)
+
+
+def save_codenet_tfrecord(tfrecord_path, problems_gen, max_files=None):
+  with tf.io.TFRecordWriter(tfrecord_path) as file_writer:
+    for problem in itertools.islice(problems_gen, max_files):
       record_bytes = data_io.to_tf_example(problem).SerializeToString()
       file_writer.write(record_bytes)
 
 
-def process_codenet(tokenizer_path=DEFAULT_TOKENIZER_PATH, start_at=0):
+def process_codenet(
+    tokenizer_path=DEFAULT_TOKENIZER_PATH,
+    problem_ids=None,
+    start_at=0):
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
+  problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
+      problem_ids)
+
   count = 0
-  for problem_id, submission_id in codenet.get_all_problem_and_submission_ids_with_evals():
+  for problem_id, submission_id in problem_and_submission_ids():
     count += 1
     if count < start_at:
       continue

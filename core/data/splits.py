@@ -42,12 +42,5 @@ def make_and_save_splits(valid=0.1, test=0.1, path=DEFAULT_SPLITS_PATH):
   save_splits(splits, path=path)
 
 
-def get_all_problem_and_submission_ids(problem_ids):
-  """Yields all problem and submission ids for the provided split."""
-  for problem_id in problem_ids:
-    for submission_id in codenet.get_all_submission_ids(problem_id):
-      yield problem_id, submission_id
-
-
 if __name__ == '__main__':
   fire.Fire()

@@ -18,3 +18,11 @@ if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
 elif HOSTNAME == 'code-executor-001':
   PYTHON3 = '/home/dbieber/_39/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+
+
+def make_split_path(dataset_path, split):
+  dataset_basename = os.path.basename(dataset_path)
+  dataset_dir = os.path.dirname(dataset_path)
+  split_dir = os.path.join(dataset_dir, split)
+  os.makedirs(split_dir, exist_ok=True)
+  return os.path.join(split_dir, dataset_basename)
