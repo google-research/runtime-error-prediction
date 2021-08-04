@@ -1,7 +1,7 @@
 import os
 import socket
 
-DEFAULT_DATASET_PATH = 'out/data/default.tfrecord'
+DEFAULT_DATASET_PATH = 'out/data/default'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 
@@ -21,8 +21,4 @@ elif HOSTNAME == 'code-executor-001':
 
 
 def make_split_path(dataset_path, split):
-  dataset_basename = os.path.basename(dataset_path)
-  dataset_dir = os.path.dirname(dataset_path)
-  split_dir = os.path.join(dataset_dir, split)
-  os.makedirs(split_dir, exist_ok=True)
-  return os.path.join(split_dir, dataset_basename)
+  return os.path.join(dataset_path, f'{split}.tfrecord')
