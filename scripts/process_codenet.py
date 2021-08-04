@@ -60,10 +60,18 @@ def generate_tokenizer(
   return tokenization.generate_tokenizer(path=path, files=files)
 
 
+def keep_fraction(l, f):
+  """Return fraction `f` of list `l`. Shuffles `l`."""
+  random.shuffle(l)
+  count = int(f * len(l))
+  return l[:count]
+
+
 def generate_codenet_dataset(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_DATASET_PATH,
     splits_path=DEFAULT_SPLITS_PATH,
+    fraction=1.0,
     max_files=None):
   """Generates a TFRecord dataset from the CodeNet data.
 
@@ -74,14 +82,19 @@ def generate_codenet_dataset(
     max_files: (optional) The maximum number of submissions to use for
       generating the tokenizer.
   """
+  random.seed(0)
   splits_dict = splits.load_splits(path=splits_path)
-  train_problems_gen = process_codenet(
-      tokenizer_path=tokenizer_path, problem_ids=splits_dict['train'])
+  if fraction != 1.0:
+    splits_dict['train'] = keep_fraction(splits_dict['train'], fraction)
+    splits_dict['valid'] = keep_fraction(splits_dict['valid'], fraction)
+    splits_dict['test'] = keep_fraction(splits_dict['test'], fraction)
 
   train_path = codenet_paths.make_split_path(dataset_path, 'train')
   valid_path = codenet_paths.make_split_path(dataset_path, 'valid')
   test_path = codenet_paths.make_split_path(dataset_path, 'test')
 
+  train_problems_gen = process_codenet(
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['train'])
   save_codenet_tfrecord(train_path, train_problems_gen, max_files=max_files)
   valid_problems_gen = process_codenet(
       tokenizer_path=tokenizer_path, problem_ids=splits_dict['valid'])
