@@ -92,7 +92,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
 
 def load_tfrecord_dataset(tfrecord_path):
   return tf.data.TFRecordDataset(
-      [dataset_path],
+      [tfrecord_path],
       compression_type=None, buffer_size=None, num_parallel_reads=None
   ).map(decode_fn)
 
