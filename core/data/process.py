@@ -27,6 +27,7 @@ class RawRuntimeErrorProblem:
   node_span_ends: List[int]
   branch_list: List[List[int]]
   exit_index: int
+  step_limit: int
   target: int
 
 
@@ -45,6 +46,7 @@ class RuntimeErrorProblem:
   true_branch_nodes: List[int]
   false_branch_nodes: List[int]
   exit_index: int
+  step_limit: int
   target: int
 
 
@@ -93,6 +95,7 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
   - node_span_ends: A list of the source span ends for each node in the program's graph representation.
   """
   graph = control_flow.get_control_flow_graph(source)
+  lines = source.strip().split('\n')
   nodes = graph.nodes
 
   # cfg.nodes does not include an exit node, so we add 1.
@@ -123,6 +126,7 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
       edge_types.append(0)
 
   branch_list = get_branch_list(nodes, exit_index)
+  step_limit = get_step_limit(lines)
 
   return RawRuntimeErrorProblem(
       source=source,
@@ -135,8 +139,27 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
       node_span_ends=node_span_ends,
       branch_list=branch_list,
       exit_index=exit_index,
+      step_limit=step_limit,
       target=target,
   )
+
+
+def get_step_limit(lines):
+  """Computes the maximum number of IPA-GNN steps allowed for a program."""
+  step_limit = 1  # Start with one step for reaching exit.
+  indents = []
+  for line in lines:
+    indent = len(line) - len(line.lstrip())
+    while indents and indent <= indents[-1]:
+      indents.pop()
+    step_limit += 2 ** len(indents)
+    if (line.lstrip().startswith('for') or line.lstrip().startswith('while')):
+      indents.append(indent)
+      # We add steps at both levels of indentation for loops.
+      # Before for the initial condition check, after for subsequent condition
+      # checks.
+      step_limit += 2 ** len(indents)
+  return step_limit
 
 
 def get_branch_list(nodes, exit_index):
@@ -198,6 +221,7 @@ def make_runtimeerrorproblem(source, target, tokenizer=None,
       true_branch_nodes=branch_list[:, 0],
       false_branch_nodes=branch_list[:, 1],
       exit_index=raw.exit_index,
+      step_limit=raw.step_limit,
       target=raw.target,
   )
 

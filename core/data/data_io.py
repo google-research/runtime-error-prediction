@@ -27,6 +27,7 @@ def to_tf_example(problem):
       'true_branch_nodes': _int64_feature(problem.true_branch_nodes),
       'false_branch_nodes': _int64_feature(problem.false_branch_nodes),
       'exit_index': _int64_feature([problem.exit_index]),
+      'step_limit': _int64_feature([problem.step_limit]),
       'target': _int64_feature([problem.target]),
   }))
 
@@ -50,6 +51,7 @@ def decode_fn(record_bytes):
           'true_branch_nodes': _int64_sequence_feature(),
           'false_branch_nodes': _int64_sequence_feature(),
           'exit_index': tf.io.FixedLenFeature([1], dtype=tf.int64),
+          'step_limit': tf.io.FixedLenFeature([1], dtype=tf.int64),
           'target': tf.io.FixedLenFeature([1], dtype=tf.int64),
       }
   )
@@ -66,6 +68,7 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       'true_branch_nodes': jnp.ones((batch_size, max_num_nodes), dtype=jnp.int32),
       'false_branch_nodes': jnp.ones((batch_size, max_num_nodes), dtype=jnp.int32),
       'exit_index': jnp.full((batch_size, 1), max_num_nodes - 1, dtype=jnp.int32),
+      'step_limit': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
       'target': jnp.zeros((batch_size, 1), dtype=jnp.int32),
   }
 
@@ -82,6 +85,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
       'true_branch_nodes': [max_num_nodes],
       'false_branch_nodes': [max_num_nodes],
       'exit_index': [1],
+      'step_limit': [1],
       'target': [1],
   }
 

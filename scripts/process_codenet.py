@@ -154,7 +154,7 @@ def process_codenet(
       print(f'SyntaxError: {python_path}')
     except IndexError:
       print(f'IndexError: {python_path}')
-      raise
+      # raise
     except RuntimeError:
       # Could be "return occurs outside of a function frame".
       print(f'RuntimeError: {python_path}')
@@ -164,7 +164,7 @@ def process_codenet(
       print(f'AssertionError: {python_path}')
     except:
       print(f'Unexpected error: {python_path}')
-      raise
+      # raise
 
     if count % 1000 == 0:
       print(count)
