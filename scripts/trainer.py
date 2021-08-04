@@ -240,7 +240,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
   return (
-      data_io.load_dataset(dataset_path)
+      data_io.load_dataset(dataset_path, split='train')
       .repeat(epochs)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )

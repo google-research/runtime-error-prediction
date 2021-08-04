@@ -90,8 +90,13 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
   }
 
 
-def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH):
+def load_tfrecord_dataset(tfrecord_path):
   return tf.data.TFRecordDataset(
       [dataset_path],
       compression_type=None, buffer_size=None, num_parallel_reads=None
   ).map(decode_fn)
+
+
+def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train'):
+  tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
+  return load_tfrecord_dataset(tfrecord_path)
