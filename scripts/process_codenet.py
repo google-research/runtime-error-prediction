@@ -109,7 +109,7 @@ def process_codenet(
       problem_ids)
 
   count = 0
-  for problem_id, submission_id in problem_and_submission_ids():
+  for problem_id, submission_id in problem_and_submission_ids:
     count += 1
     if count < start_at:
       continue
