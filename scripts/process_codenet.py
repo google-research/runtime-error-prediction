@@ -123,6 +123,8 @@ def process_codenet(
     try:
       problem = process.make_runtimeerrorproblem(source, target, tokenizer=tokenizer)
       yield problem
+    except ValueError as e:
+      print(f'ValueError: {python_path} - {e}')
     except SyntaxError:
       print(f'SyntaxError: {python_path}')
     except IndexError:
