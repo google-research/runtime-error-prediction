@@ -85,9 +85,9 @@ def generate_codenet_dataset(
   random.seed(0)
   splits_dict = splits.load_splits(path=splits_path)
 
-  train_path = codenet_paths.make_split_path(dataset_path, 'train')
-  valid_path = codenet_paths.make_split_path(dataset_path, 'valid')
-  test_path = codenet_paths.make_split_path(dataset_path, 'test')
+  train_path = codenet_paths.make_tfrecord_path(dataset_path, 'train')
+  valid_path = codenet_paths.make_tfrecord_path(dataset_path, 'valid')
+  test_path = codenet_paths.make_tfrecord_path(dataset_path, 'test')
 
   train_problems_gen = process_codenet(
       tokenizer_path=tokenizer_path, problem_ids=splits_dict['train'],
@@ -104,10 +104,16 @@ def generate_codenet_dataset(
 
 
 def save_codenet_tfrecord(tfrecord_path, problems_gen, max_files=None):
+  ids = []
   with tf.io.TFRecordWriter(tfrecord_path) as file_writer:
     for problem in itertools.islice(problems_gen, max_files):
+      ids.append((problem.problem_id, problem.submission_id))
       record_bytes = data_io.to_tf_example(problem).SerializeToString()
       file_writer.write(record_bytes)
+
+  ids_path = codenet_paths.make_ids_path(tfrecord_path)
+  with open(ids_path, 'w') as f:
+    json.dump(ids, f, ensure_ascii=False, indent=2)
 
 
 def process_codenet(

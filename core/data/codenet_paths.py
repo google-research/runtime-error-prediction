@@ -20,5 +20,9 @@ elif HOSTNAME == 'code-executor-001':
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 
 
-def make_split_path(dataset_path, split):
+def make_tfrecord_path(dataset_path, split):
   return os.path.join(dataset_path, f'{split}.tfrecord')
+
+
+def make_ids_path(tfrecord_path):
+  return tfrecord_path.replace('.tfrecord', '-ids.json')

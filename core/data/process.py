@@ -1,6 +1,6 @@
 """Dataset preprocessing."""
 
-from typing import List, Text
+from typing import List, Optional, Text
 
 import bisect
 import dataclasses
@@ -18,6 +18,8 @@ from core.data import tokenization
 class RawRuntimeErrorProblem:
   """RawRuntimeErrorProblem."""
   source: Text
+  problem_id: Optional[Text]
+  submission_id: Optional[Text]
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -32,6 +34,8 @@ class RawRuntimeErrorProblem:
 class RuntimeErrorProblem:
   """RuntimeErrorProblem for use on an accelerator."""
   tokens: List[int]
+  problem_id: Text
+  submission_id: Text
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -77,7 +81,7 @@ def get_span(instruction):
   return lineno, col_offset, end_lineno, end_col_offset
 
 
-def make_rawruntimeerrorproblem(source, target):
+def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
 
   Fields:
@@ -122,6 +126,8 @@ def make_rawruntimeerrorproblem(source, target):
 
   return RawRuntimeErrorProblem(
       source=source,
+      problem_id=problem_id,
+      submission_id=submission_id,
       edge_sources=edge_sources,
       edge_dests=edge_dests,
       edge_types=edge_types,
@@ -172,13 +178,17 @@ def get_branch_list(nodes, exit_index):
   return branches
 
 
-def make_runtimeerrorproblem(source, target, tokenizer=None):
-  raw = make_rawruntimeerrorproblem(source, target)
+def make_runtimeerrorproblem(source, target, tokenizer=None,
+                             problem_id=None, submission_id=None):
+  raw = make_rawruntimeerrorproblem(
+        source, target, problem_id=problem_id, submission_id=submission_id)
   tokenizer = tokenizer or tokenization.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
   branch_list = np.array(raw.branch_list)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],
+      problem_id=raw.problem_id,
+      submission_id=raw.submission_id,
       edge_sources=raw.edge_sources,
       edge_dests=raw.edge_dests,
       edge_types=raw.edge_types,
