@@ -84,23 +84,22 @@ def generate_codenet_dataset(
   """
   random.seed(0)
   splits_dict = splits.load_splits(path=splits_path)
-  if fraction != 1.0:
-    splits_dict['train'] = keep_fraction(splits_dict['train'], fraction)
-    splits_dict['valid'] = keep_fraction(splits_dict['valid'], fraction)
-    splits_dict['test'] = keep_fraction(splits_dict['test'], fraction)
 
   train_path = codenet_paths.make_split_path(dataset_path, 'train')
   valid_path = codenet_paths.make_split_path(dataset_path, 'valid')
   test_path = codenet_paths.make_split_path(dataset_path, 'test')
 
   train_problems_gen = process_codenet(
-      tokenizer_path=tokenizer_path, problem_ids=splits_dict['train'])
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['train'],
+      fraction=fraction)
   save_codenet_tfrecord(train_path, train_problems_gen, max_files=max_files)
   valid_problems_gen = process_codenet(
-      tokenizer_path=tokenizer_path, problem_ids=splits_dict['valid'])
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['valid'],
+      fraction=fraction)
   save_codenet_tfrecord(valid_path, valid_problems_gen, max_files=max_files)
   test_problems_gen = process_codenet(
-      tokenizer_path=tokenizer_path, problem_ids=splits_dict['test'])
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['test'],
+      fraction=fraction)
   save_codenet_tfrecord(test_path, test_problems_gen, max_files=max_files)
 
 
@@ -114,6 +113,7 @@ def save_codenet_tfrecord(tfrecord_path, problems_gen, max_files=None):
 def process_codenet(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     problem_ids=None,
+    fraction=1.0,
     start_at=0):
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
@@ -123,6 +123,9 @@ def process_codenet(
 
   count = 0
   for problem_id, submission_id in problem_and_submission_ids:
+    if random.random() > fraction:
+      # Only use a random `fraction` of the submissions.
+      continue
     count += 1
     if count < start_at:
       continue
