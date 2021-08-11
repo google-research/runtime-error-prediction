@@ -38,6 +38,12 @@ def get_all_problem_and_submission_ids():
       yield problem_id, submission_id
 
 
+def get_split_problem_and_submission_ids(problem_ids):
+  for problem_id in problem_ids:
+    for submission_id in get_all_submission_ids(problem_id):
+      yield problem_id, submission_id
+
+
 def get_all_problem_ids_with_evals():
   return os.listdir(EVALS_ROOT)
 
@@ -52,6 +58,12 @@ def get_all_submission_ids_with_evals(problem_id):
 
 def get_all_problem_and_submission_ids_with_evals():
   for problem_id in get_all_problem_ids_with_evals():
+    for submission_id in get_all_submission_ids_with_evals(problem_id):
+      yield problem_id, submission_id
+
+
+def get_split_problem_and_submission_ids_with_evals(problem_ids):
+  for problem_id in problem_ids:
     for submission_id in get_all_submission_ids_with_evals(problem_id):
       yield problem_id, submission_id
 

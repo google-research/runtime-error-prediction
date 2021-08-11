@@ -1,6 +1,6 @@
 """Dataset preprocessing."""
 
-from typing import List, Text
+from typing import List, Optional, Text
 
 import bisect
 import dataclasses
@@ -18,6 +18,8 @@ from core.data import tokenization
 class RawRuntimeErrorProblem:
   """RawRuntimeErrorProblem."""
   source: Text
+  problem_id: Optional[Text]
+  submission_id: Optional[Text]
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -25,6 +27,7 @@ class RawRuntimeErrorProblem:
   node_span_ends: List[int]
   branch_list: List[List[int]]
   exit_index: int
+  step_limit: int
   target: int
 
 
@@ -32,6 +35,8 @@ class RawRuntimeErrorProblem:
 class RuntimeErrorProblem:
   """RuntimeErrorProblem for use on an accelerator."""
   tokens: List[int]
+  problem_id: Text
+  submission_id: Text
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -41,6 +46,7 @@ class RuntimeErrorProblem:
   true_branch_nodes: List[int]
   false_branch_nodes: List[int]
   exit_index: int
+  step_limit: int
   target: int
 
 
@@ -77,7 +83,7 @@ def get_span(instruction):
   return lineno, col_offset, end_lineno, end_col_offset
 
 
-def make_rawruntimeerrorproblem(source, target):
+def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
 
   Fields:
@@ -89,6 +95,7 @@ def make_rawruntimeerrorproblem(source, target):
   - node_span_ends: A list of the source span ends for each node in the program's graph representation.
   """
   graph = control_flow.get_control_flow_graph(source)
+  lines = source.strip().split('\n')
   nodes = graph.nodes
 
   # cfg.nodes does not include an exit node, so we add 1.
@@ -119,9 +126,12 @@ def make_rawruntimeerrorproblem(source, target):
       edge_types.append(0)
 
   branch_list = get_branch_list(nodes, exit_index)
+  step_limit = get_step_limit(lines)
 
   return RawRuntimeErrorProblem(
       source=source,
+      problem_id=problem_id,
+      submission_id=submission_id,
       edge_sources=edge_sources,
       edge_dests=edge_dests,
       edge_types=edge_types,
@@ -129,8 +139,27 @@ def make_rawruntimeerrorproblem(source, target):
       node_span_ends=node_span_ends,
       branch_list=branch_list,
       exit_index=exit_index,
+      step_limit=step_limit,
       target=target,
   )
+
+
+def get_step_limit(lines):
+  """Computes the maximum number of IPA-GNN steps allowed for a program."""
+  step_limit = 1  # Start with one step for reaching exit.
+  indents = []
+  for line in lines:
+    indent = len(line) - len(line.lstrip())
+    while indents and indent <= indents[-1]:
+      indents.pop()
+    step_limit += 2 ** len(indents)
+    if (line.lstrip().startswith('for') or line.lstrip().startswith('while')):
+      indents.append(indent)
+      # We add steps at both levels of indentation for loops.
+      # Before for the initial condition check, after for subsequent condition
+      # checks.
+      step_limit += 2 ** len(indents)
+  return step_limit
 
 
 def get_branch_list(nodes, exit_index):
@@ -172,13 +201,17 @@ def get_branch_list(nodes, exit_index):
   return branches
 
 
-def make_runtimeerrorproblem(source, target, tokenizer=None):
-  raw = make_rawruntimeerrorproblem(source, target)
+def make_runtimeerrorproblem(source, target, tokenizer=None,
+                             problem_id=None, submission_id=None):
+  raw = make_rawruntimeerrorproblem(
+        source, target, problem_id=problem_id, submission_id=submission_id)
   tokenizer = tokenizer or tokenization.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
   branch_list = np.array(raw.branch_list)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],
+      problem_id=raw.problem_id,
+      submission_id=raw.submission_id,
       edge_sources=raw.edge_sources,
       edge_dests=raw.edge_dests,
       edge_types=raw.edge_types,
@@ -188,6 +221,7 @@ def make_runtimeerrorproblem(source, target, tokenizer=None):
       true_branch_nodes=branch_list[:, 0],
       false_branch_nodes=branch_list[:, 1],
       exit_index=raw.exit_index,
+      step_limit=raw.step_limit,
       target=raw.target,
   )
 

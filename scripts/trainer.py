@@ -171,11 +171,9 @@ def make_sample_config():
 def make_model():
   config = make_sample_config()
   # model = MlpModel()
-  # model = Transformer(config=config)
-  model = IPAGNN(config=config)
+  model = Transformer(config=config)
+  # model = IPAGNN(config=config)
   return model
-
-model = make_model()
 
 
 class TrainState(train_state.TrainState):
@@ -185,6 +183,7 @@ class TrainState(train_state.TrainState):
 @jax.jit
 def train_step(state, batch):
   """The on-device part of a train step."""
+  model = make_model()
 
   new_rng, dropout_rng = jax.random.split(state.rng, 2)
   state = dataclasses.replace(state, rng=new_rng)
@@ -213,7 +212,7 @@ def train_step(state, batch):
   }
 
 
-def create_train_state(rng):
+def create_train_state(rng, model):
   """Creates initial TrainState."""
   batch_size = 8
   max_tokens = 896
@@ -240,6 +239,20 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
   return (
+      data_io.load_dataset(dataset_path, split='train')
+      .repeat(epochs)
+      .padded_batch(batch_size, padded_shapes=padded_shapes)
+  )
+
+def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
+  epochs = 1000
+  batch_size = 8
+  max_tokens = 896
+  max_num_nodes = 80
+  max_num_edges = 160
+  padded_shapes = data_io.get_padded_shapes(
+      max_tokens, max_num_nodes, max_num_edges)
+  return (
       data_io.load_dataset(dataset_path)
       .repeat(epochs)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
@@ -250,7 +263,8 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
   rng = jax.random.PRNGKey(0)
 
   rng, init_rng = jax.random.split(rng)
-  state = create_train_state(init_rng)
+  model = make_model()
+  state = create_train_state(init_rng, model)
 
   for step, batch in enumerate(tfds.as_numpy(dataset)):
     state, aux = train_step(state, batch)
