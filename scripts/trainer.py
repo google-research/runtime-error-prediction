@@ -244,6 +244,19 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
+def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
+  epochs = 1000
+  batch_size = 8
+  max_tokens = 896
+  max_num_nodes = 80
+  max_num_edges = 160
+  padded_shapes = data_io.get_padded_shapes(
+      max_tokens, max_num_nodes, max_num_edges)
+  return (
+      data_io.load_dataset(dataset_path)
+      .repeat(epochs)
+      .padded_batch(batch_size, padded_shapes=padded_shapes)
+  )
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
   dataset = load_dataset(dataset_path)
