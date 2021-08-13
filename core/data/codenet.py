@@ -81,7 +81,7 @@ def get_input_path(problem_id, submission_id):
 
 
 def get_output_path(problem_id, submission_id):
-  return os.path.join(DATA_ROOT, 'derived', 'input_output', 'data', problem_id, 'input.txt')
+  return os.path.join(DATA_ROOT, 'derived', 'input_output', 'data', problem_id, 'output.txt')
 
 
 def get_evals_dir(problem_id, submission_id):
