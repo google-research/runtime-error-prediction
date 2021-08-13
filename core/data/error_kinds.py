@@ -65,3 +65,7 @@ def to_index(error_kind):
 def to_error(index):
   error_kinds_list = [NO_DATA, NO_ERROR, SILENT_ERROR, OTHER_ERROR] + ERROR_KINDS
   return error_kinds_list[index]
+
+
+if __name__ == '__main__':
+  fire.Fire()
