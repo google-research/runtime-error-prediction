@@ -260,6 +260,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
   )
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
+  print(f'Training on data: {dataset_path}')
   dataset = load_dataset(dataset_path)
   rng = jax.random.PRNGKey(0)
 
