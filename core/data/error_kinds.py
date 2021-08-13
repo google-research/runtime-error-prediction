@@ -1,3 +1,5 @@
+import fire
+
 NO_DATA = 'No data'
 TIMEOUT = 'Timeout'
 
