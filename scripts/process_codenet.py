@@ -142,6 +142,8 @@ def process_codenet(
       source = f.read()
       error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
       target = error_kinds.to_index(error_kind)
+      if target == 0:
+        raise RuntimeError()
 
     try:
       problem = process.make_runtimeerrorproblem(
