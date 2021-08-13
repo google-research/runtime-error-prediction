@@ -51,7 +51,10 @@ def get_all_problem_ids_with_evals():
 def get_all_submission_ids_with_evals(problem_id):
   evals_dir = os.path.join(EVALS_ROOT, problem_id)
   if os.path.exists(evals_dir):
-    return os.listdir(evals_dir)
+    return [
+        submission_id for submission_id in os.listdir(evals_dir)
+        if os.listdir(os.path.join(evals_dir, submission_id))
+    ]
   else:
     return []
 
