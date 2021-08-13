@@ -143,6 +143,7 @@ def process_codenet(
       error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
       target = error_kinds.to_index(error_kind)
       if target == 0:
+        print(python_path)
         raise RuntimeError()
 
     try:
