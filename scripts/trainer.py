@@ -225,7 +225,8 @@ def create_train_state(rng, model):
       {'params': params_rng, 'dropout': dropout_rng},
       fake_input)
   params = variables['params']
-  tx = optax.sgd(0)
+  learning_rate = 0.03
+  tx = optax.sgd(learning_rate)
   return TrainState.create(
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
