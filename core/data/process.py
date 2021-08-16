@@ -92,7 +92,13 @@ def examine_udfs(graph, problem_id, submission_id):
       ast_node.name: ast_node
       for ast_node in ast_nodes if isinstance(ast_node, ast.FunctionDef)
   }
+
+  # Split instructions that call user defined functions
+  # into multiple nodes. Don't do this for FunctionDef, ClassDef.
   for node in nodes:
+    if not isinstance(node, instruction_module.INSTRUCTION_AST_NODES):
+      continue
+
     num_func_calls = 0
     for ast_node in ast.walk(node.instruction.node):
       if isinstance(ast_node, ast.Call):
