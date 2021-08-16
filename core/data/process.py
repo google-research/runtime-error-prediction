@@ -4,6 +4,7 @@ import builtins
 from typing import List, Optional, Text
 
 import bisect
+import collections
 import dataclasses
 
 import fire
@@ -98,7 +99,9 @@ def examine_udfs(graph, problem_id, submission_id):
 
   # Split instructions that call user defined functions
   # into multiple nodes. Don't do this for FunctionDef, ClassDef.
+  # If it's a class, point to the init function.
   total_function_calls = 0
+  calls_by_function_name = collections.defaultdict(int)
   for node in nodes:
     if not isinstance(node.instruction.node, instruction_module.INSTRUCTION_AST_NODES):
       continue
@@ -119,6 +122,7 @@ def examine_udfs(graph, problem_id, submission_id):
         if function_name in nodes_by_function_name:
           print(f'Calling udf {function_name}')
           num_func_calls += 1
+          calls_by_function_name[function_name] += 1
         elif function_name in dir(builtins):
           pass
         else:
@@ -126,6 +130,12 @@ def examine_udfs(graph, problem_id, submission_id):
           pass
     if num_func_calls > 3:
       print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
+    if max(calls_by_function_name.values()) > 1:
+      n = max(calls_by_function_name.values())
+      for f in calls_by_function_name:
+        if calls_by_function_name[f] == n:
+          break
+      print(f'Calling function {f} {n} times')
     total_function_calls += num_func_calls
   print(f'{problem_id} {submission_id}: {total_function_calls} calls')
 
