@@ -1,5 +1,6 @@
 """Dataset preprocessing."""
 
+import builtins
 from typing import List, Optional, Text
 
 import bisect
@@ -83,6 +84,27 @@ def get_span(instruction):
   return lineno, col_offset, end_lineno, end_col_offset
 
 
+def examine_udfs(graph, problem_id, submission_id):
+  nodes = graph.nodes
+  ast_nodes = [n.instruction.node for n in nodes]
+
+  nodes_by_function_name = {
+      ast_node.name: ast_node
+      for ast_node in ast_nodes if isinstance(ast_node, ast.FunctionDef)
+  }
+  for node in nodes:
+    ast_node = node.instruction.node
+    if isinstance(ast_node, ast.Call):
+      if isinstance(ast_node.func, ast.Name):
+        function_name = ast_node.func.id
+        if function_name in nodes_by_function_name:
+          print(f'Calling {function_name}')
+        elif function_name in dir(builtins):
+          print(f'Calling builtin {function_name}')
+        else:
+          print(f'Calling unknown func {function_name}')
+
+
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
 
@@ -95,6 +117,7 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
   - node_span_ends: A list of the source span ends for each node in the program's graph representation.
   """
   graph = control_flow.get_control_flow_graph(source)
+  examine_udfs(graph, problem_id, submission_id)
   lines = source.strip().split('\n')
   nodes = graph.nodes
 
