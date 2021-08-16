@@ -125,8 +125,12 @@ def process_codenet(
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
-  problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
-      problem_ids)
+  if problem_ids:
+    problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
+        problem_ids)
+  else:
+    print('Using all problem_ids')
+    problem_and_submission_ids = codenet.get_all_problem_and_submission_ids_with_evals()
 
   count = 0
   for problem_id, submission_id in problem_and_submission_ids:
