@@ -123,6 +123,7 @@ def examine_udfs(graph, problem_id, submission_id):
           # print(f'Calling udf {function_name}')
           num_func_calls += 1
           calls_by_function_name[function_name] += 1
+          total_function_calls += num_func_calls
         elif function_name in dir(builtins):
           pass
         else:
@@ -136,7 +137,6 @@ def examine_udfs(graph, problem_id, submission_id):
       if calls_by_function_name[f] == n:
         break
     print(f'Calling function {f} {n} times')
-    total_function_calls += num_func_calls
     return 'Function called more than once'
   elif total_function_calls == 0:
     return 'No UDFs called'
