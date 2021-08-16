@@ -108,7 +108,7 @@ def examine_udfs(graph, problem_id, submission_id):
             print(f'Calling unknown func {function_name}')
             num_func_calls += 1
     if num_func_calls > 3:
-      print(num_func_calls, type(node.instruction.node))
+      print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
 
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
