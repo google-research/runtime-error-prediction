@@ -109,15 +109,14 @@ def examine_udfs(graph, problem_id, submission_id):
             print(f'Calling udf {function_name}')
             num_func_calls += 1
           elif function_name in dir(builtins):
-            # print(f'Calling builtin {function_name}')
-            num_func_calls += 1
+            pass
           else:
             print(f'Calling unknown func {function_name}')
-            num_func_calls += 1
+            pass
     if num_func_calls > 3:
       print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
     total_function_calls += num_func_calls
-  print(f'{problem_id}, {submission_id}: {total_function_calls} calls')
+  print(f'{problem_id} {submission_id}: {total_function_calls} calls')
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
