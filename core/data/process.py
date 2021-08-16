@@ -95,6 +95,7 @@ def examine_udfs(graph, problem_id, submission_id):
 
   # Split instructions that call user defined functions
   # into multiple nodes. Don't do this for FunctionDef, ClassDef.
+  total_function_calls = 0
   for node in nodes:
     if not isinstance(node.instruction.node, instruction_module.INSTRUCTION_AST_NODES):
       continue
@@ -115,7 +116,8 @@ def examine_udfs(graph, problem_id, submission_id):
             num_func_calls += 1
     if num_func_calls > 3:
       print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
-
+    total_function_calls += num_func_calls
+  print(f'{problem_id}, {submission_id}: {total_function_calls} calls')
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
