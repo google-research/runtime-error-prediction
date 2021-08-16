@@ -88,6 +88,8 @@ def examine_udfs(graph, problem_id, submission_id):
   nodes = graph.nodes
   ast_nodes = [n.instruction.node for n in nodes]
 
+  # TODO(dbieber): This doesn't consider the scope of a function, such as if
+  # it is defined inside a class.
   nodes_by_function_name = {
       ast_node.name: ast_node
       for ast_node in ast_nodes if isinstance(ast_node, ast.FunctionDef)
@@ -102,17 +104,25 @@ def examine_udfs(graph, problem_id, submission_id):
 
     num_func_calls = 0
     for ast_node in ast.walk(node.instruction.node):
+      # TODO(dbieber): See why method calls aren't captured here.
       if isinstance(ast_node, ast.Call):
         if isinstance(ast_node.func, ast.Name):
+          # e.g. "func_name()"
           function_name = ast_node.func.id
-          if function_name in nodes_by_function_name:
-            print(f'Calling udf {function_name}')
-            num_func_calls += 1
-          elif function_name in dir(builtins):
-            pass
-          else:
-            print(f'Calling unknown func {function_name}')
-            pass
+        elif isinstance(ast_node.func, ast.Attribute):
+          # e.g. "o.func_name()"
+          function_name = ast_node.func.attr
+        else:
+          # e.g. o[0]() (ast.Subscript)
+          continue
+        if function_name in nodes_by_function_name:
+          print(f'Calling udf {function_name}')
+          num_func_calls += 1
+        elif function_name in dir(builtins):
+          pass
+        else:
+          print(f'Calling unknown func {function_name}')
+          pass
     if num_func_calls > 3:
       print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
     total_function_calls += num_func_calls
