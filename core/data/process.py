@@ -92,7 +92,8 @@ def examine_udfs(graph, problem_id, submission_id):
   # it is defined inside a class.
   nodes_by_function_name = {
       ast_node.name: ast_node
-      for ast_node in ast_nodes if isinstance(ast_node, ast.FunctionDef)
+      for ast_node in ast_nodes
+      if isinstance(ast_node, (ast.FunctionDef, ast.ClassDef))
   }
 
   # Split instructions that call user defined functions
