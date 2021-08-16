@@ -93,16 +93,22 @@ def examine_udfs(graph, problem_id, submission_id):
       for ast_node in ast_nodes if isinstance(ast_node, ast.FunctionDef)
   }
   for node in nodes:
-    ast_node = node.instruction.node
-    if isinstance(ast_node, ast.Call):
-      if isinstance(ast_node.func, ast.Name):
-        function_name = ast_node.func.id
-        if function_name in nodes_by_function_name:
-          print(f'Calling {function_name}')
-        elif function_name in dir(builtins):
-          print(f'Calling builtin {function_name}')
-        else:
-          print(f'Calling unknown func {function_name}')
+    num_func_calls = 0
+    for ast_node in ast.walk(node.instruction.node):
+      if isinstance(ast_node, ast.Call):
+        if isinstance(ast_node.func, ast.Name):
+          function_name = ast_node.func.id
+          if function_name in nodes_by_function_name:
+            print(f'Calling udf {function_name}')
+            num_func_calls += 1
+          elif function_name in dir(builtins):
+            # print(f'Calling builtin {function_name}')
+            num_func_calls += 1
+          else:
+            print(f'Calling unknown func {function_name}')
+            num_func_calls += 1
+    if num_func_calls > 3:
+      print(num_func_calls, type(node.instruction.node))
 
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
