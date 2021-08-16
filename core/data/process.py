@@ -120,24 +120,29 @@ def examine_udfs(graph, problem_id, submission_id):
           # e.g. o[0]() (ast.Subscript)
           continue
         if function_name in nodes_by_function_name:
-          print(f'Calling udf {function_name}')
+          # print(f'Calling udf {function_name}')
           num_func_calls += 1
           calls_by_function_name[function_name] += 1
         elif function_name in dir(builtins):
           pass
         else:
-          print(f'Calling unknown func {function_name}')
+          # print(f'Calling unknown func {function_name}')
           pass
-    if num_func_calls > 3:
-      print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
-    if max(calls_by_function_name.values()) > 1:
-      n = max(calls_by_function_name.values())
-      for f in calls_by_function_name:
-        if calls_by_function_name[f] == n:
-          break
-      print(f'Calling function {f} {n} times')
+    # if num_func_calls > 3:
+    #   print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
+  if max(calls_by_function_name.values()) > 1:
+    n = max(calls_by_function_name.values())
+    for f in calls_by_function_name:
+      if calls_by_function_name[f] == n:
+        break
+    print(f'Calling function {f} {n} times')
     total_function_calls += num_func_calls
-  print(f'{problem_id} {submission_id}: {total_function_calls} calls')
+    return 'Function called more than once'
+  elif total_function_calls == 0:
+    return 'No UDFs called'
+  else:
+    return 'UDFs called at most once'
+  # print(f'{problem_id} {submission_id}: {total_function_calls} calls')
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
@@ -151,7 +156,6 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
   - node_span_ends: A list of the source span ends for each node in the program's graph representation.
   """
   graph = control_flow.get_control_flow_graph(source)
-  examine_udfs(graph, problem_id, submission_id)
   lines = source.strip().split('\n')
   nodes = graph.nodes
 
