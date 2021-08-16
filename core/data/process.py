@@ -96,7 +96,7 @@ def examine_udfs(graph, problem_id, submission_id):
   # Split instructions that call user defined functions
   # into multiple nodes. Don't do this for FunctionDef, ClassDef.
   for node in nodes:
-    if not isinstance(node, instruction_module.INSTRUCTION_AST_NODES):
+    if not isinstance(node.instruction.node, instruction_module.INSTRUCTION_AST_NODES):
       continue
 
     num_func_calls = 0
