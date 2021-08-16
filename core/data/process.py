@@ -130,7 +130,7 @@ def examine_udfs(graph, problem_id, submission_id):
           pass
     # if num_func_calls > 3:
     #   print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
-  if max(calls_by_function_name.values()) > 1:
+  if calls_by_function_name.values() and max(calls_by_function_name.values()) > 1:
     n = max(calls_by_function_name.values())
     for f in calls_by_function_name:
       if calls_by_function_name[f] == n:

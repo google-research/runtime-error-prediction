@@ -225,7 +225,7 @@ def investigate_udf_usage(problem_ids=None, start_at=0):
 
     if count % 1000 == 0:
       print(count)
-      print(dict(udf_usage))
+      print(dict(udf_usages))
 
 
 def run_codenet_submissions(max_files=None):
