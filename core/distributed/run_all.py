@@ -18,7 +18,7 @@ def clone_args(index):
   hostname = _hostname(index)
   zone = _zone(index)
   return ['gcloud', 'compute', 'ssh', hostname, '--command',
-          f'git clone {repo_url} && cd compressive-ipagnn && git checkout {branch}',
+          f'apt install git && git clone {repo_url} && cd compressive-ipagnn && git checkout {branch}',
           '--zone', zone]
 
 

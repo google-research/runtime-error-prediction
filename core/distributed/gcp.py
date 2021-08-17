@@ -123,7 +123,7 @@ def down_args(index):
   hostname = _hostname(index)
   zone = _zone(index)
   return (
-      f'gcloud beta compute instances delete {hostname} --zone={zone}'.split()
+      f'gcloud beta compute instances delete {hostname} --zone={zone} --quiet'.split()
   )
 
 
