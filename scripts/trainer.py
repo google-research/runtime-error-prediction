@@ -231,7 +231,7 @@ def create_train_state(rng, model):
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
 
-def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
+def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   epochs = 1000
   batch_size = 8
   max_tokens = 896
@@ -239,25 +239,14 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
   max_num_edges = 160
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
+  filter_fn = data_io.make_filter(max_tokens, max_num_nodes, max_num_edges)
   return (
-      data_io.load_dataset(dataset_path, split='train')
+      data_io.load_dataset(dataset_path, split=split)
       .repeat(epochs)
+      .filter(filter_fn)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
-def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
-  epochs = 1000
-  batch_size = 8
-  max_tokens = 896
-  max_num_nodes = 80
-  max_num_edges = 160
-  padded_shapes = data_io.get_padded_shapes(
-      max_tokens, max_num_nodes, max_num_edges)
-  return (
-      data_io.load_dataset(dataset_path)
-      .repeat(epochs)
-      .padded_batch(batch_size, padded_shapes=padded_shapes)
-  )
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
   print(f'Training on data: {dataset_path}')
