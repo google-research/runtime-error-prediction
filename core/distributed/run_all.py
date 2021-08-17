@@ -2,6 +2,7 @@ import getpass
 
 from core.distributed import gcp
 
+call = gcp.call
 wait = gcp.wait
 parallel = gcp.parallel
 _hostname = gcp._hostname
