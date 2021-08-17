@@ -110,9 +110,9 @@ def make_filter(max_tokens, max_num_nodes, max_num_edges):
   def fn(example):
     # An on-device predicate for filtering out too-large examples.
     return (
-        (example['num_tokens'] > max_tokens)
-        | (example['num_nodes'] > max_num_nodes)
-        | (example['num_edges'] > max_num_edges)
+        (example['num_tokens'] <= max_tokens)
+        & (example['num_nodes'] <= max_num_nodes)
+        & (example['num_edges'] <= max_num_edges)
     )
   return fn
 
