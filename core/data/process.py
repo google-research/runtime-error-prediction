@@ -97,9 +97,9 @@ def examine_udfs(graph, problem_id, submission_id):
       if isinstance(ast_node, (ast.FunctionDef, ast.ClassDef))
   }
 
-  # Split instructions that call user defined functions
-  # into multiple nodes. Don't do this for FunctionDef, ClassDef.
-  # If it's a class, point to the init function.
+  # We're interested in splitting instructions that call user defined functions
+  # into multiple nodes. We won't do this for FunctionDef, ClassDef.
+  # If it's a class, we'll point to the init function.
   total_function_calls = 0
   calls_by_function_name = collections.defaultdict(int)
   for node in nodes:
@@ -108,7 +108,6 @@ def examine_udfs(graph, problem_id, submission_id):
 
     num_func_calls = 0
     for ast_node in ast.walk(node.instruction.node):
-      # TODO(dbieber): See why method calls aren't captured here.
       if isinstance(ast_node, ast.Call):
         if isinstance(ast_node.func, ast.Name):
           # e.g. "func_name()"
@@ -120,17 +119,14 @@ def examine_udfs(graph, problem_id, submission_id):
           # e.g. o[0]() (ast.Subscript)
           continue
         if function_name in nodes_by_function_name:
-          # print(f'Calling udf {function_name}')
           num_func_calls += 1
           calls_by_function_name[function_name] += 1
           total_function_calls += num_func_calls
         elif function_name in dir(builtins):
+          # Builtin function called.
           pass
-        else:
-          # print(f'Calling unknown func {function_name}')
+        else:  # Unknown function called
           pass
-    # if num_func_calls > 3:
-    #   print(f'Called {num_func_calls} funcs, {type(node.instruction.node)}')
   if calls_by_function_name.values() and max(calls_by_function_name.values()) > 1:
     n = max(calls_by_function_name.values())
     for f in calls_by_function_name:
@@ -142,7 +138,7 @@ def examine_udfs(graph, problem_id, submission_id):
     return 'No UDFs called'
   else:
     return 'UDFs called at most once'
-  # print(f'{problem_id} {submission_id}: {total_function_calls} calls')
+
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.

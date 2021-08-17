@@ -90,6 +90,17 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
   }
 
 
+def make_filter(max_tokens, max_num_nodes, max_num_edges):
+  def fn(example):
+    # An on-device predicate for filtering out too-large examples.
+    return (
+        example['tokens'].shape[0] > max_tokens
+        | example['node_token_span_starts'].shape[0] > max_num_nodes
+        | example['edge_sources'].shape[0] > max_num_edges
+    )
+  return fn
+
+
 def load_tfrecord_dataset(tfrecord_path):
   return tf.data.TFRecordDataset(
       [tfrecord_path],
