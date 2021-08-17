@@ -9,6 +9,9 @@ import fire
 import termcolor
 
 
+WORKER_PREFIX = 'runner'
+
+
 def call(args):
   """Uses subprocess to call the command given by the args."""
   shell_str = as_shell_string(args)
@@ -31,7 +34,7 @@ def wait(processes):
 
 
 def _hostname(index):
-  return 'worker-{index:03d}'.format(index=index)
+  return f'{WORKER_PREFIX}-{index:03d}'
 
 
 def _zone(index):
@@ -167,8 +170,7 @@ def run_command(command, n):
   for index in range(n):
     hostname = _hostname(index)
     zone = _zone(index)
-    worker_command = 'echo {hostname} && {command}'.format(hostname=hostname,
-                                                           command=command)
+    worker_command = f'echo {hostname} && {command}'
     calls.append(call(['gcloud', 'compute', 'ssh', hostname, '--command',
                        worker_command, '--zone', zone]))
   wait(calls)
