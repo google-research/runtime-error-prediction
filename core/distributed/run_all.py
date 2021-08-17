@@ -42,6 +42,7 @@ def setup(index):
 
 n = 2
 gcp.up_n(n)
+gcp.fix_firewall().wait()
 
 wait(parallel(clone, n=n))
 # wait(parallel(setup, n=n))

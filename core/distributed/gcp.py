@@ -76,7 +76,7 @@ def as_shell_string(args):
 
 def up_args(
     index,
-    project='dbieber-playground',
+    project='runtime-error-problems',
     machine_type='c2-standard-4',
 ):
   """Starts a single worker."""
