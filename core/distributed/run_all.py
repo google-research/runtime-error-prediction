@@ -18,7 +18,7 @@ def clone_args(index):
   hostname = _hostname(index)
   zone = _zone(index)
   return ['gcloud', 'compute', 'ssh', hostname, '--command',
-          f'apt install git && git clone {repo_url} && cd compressive-ipagnn && git checkout {branch}',
+          f'sudo apt install git -y && git clone {repo_url} && cd compressive-ipagnn && git checkout {branch}',
           '--zone', zone]
 
 
@@ -44,6 +44,6 @@ n = 2
 gcp.up_n(n)
 gcp.fix_firewall().wait()
 
-wait(parallel(clone, n=n))
-# wait(parallel(setup, n=n))
-gcp.down_n(n)
+# wait(parallel(clone, n=n))
+# # wait(parallel(setup, n=n))
+# gcp.down_n(n)
