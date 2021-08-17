@@ -4,6 +4,8 @@ from core.distributed import gcp
 
 wait = gcp.wait
 parallel = gcp.parallel
+_hostname = gcp._hostname
+_zone = gcp._zone
 
 
 access_token = getpass.getpass('Personal access token: ')
