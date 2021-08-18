@@ -77,8 +77,9 @@ class Transformer(nn.Module):
   def __call__(self, x):
     tokens = x['tokens']
     # tokens.shape: batch_size, max_tokens
-    encoder_mask = nn.make_attention_mask(
-        tokens > 0, tokens > 0, dtype=jnp.float32)
+    tokens_mask = tokens > 0
+    # tokens_mask.shape: batch_size, max_tokens
+    encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoded_inputs = self.token_embedder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'])
@@ -86,8 +87,52 @@ class Transformer(nn.Module):
     encoding = self.encoder(encoded_inputs, encoder_mask=encoder_mask)
     # encoding.shape: batch_size, max_tokens, hidden_size
 
-    # TODO(dbieber): Reevaluate how to go from transformer encodings to output.
-    x = encoding[:, 0, :]
+    # Mean pooling.
+    tokens_mask_ext = tokens_mask[:, :, None]
+    x = (
+        jnp.sum(encoding * tokens_mask_ext, axis=1)
+        / jnp.maximum(1, jnp.sum(tokens_mask_ext, axis=1))
+    )
+    # x.shape: batch_size, hidden_size
+    x = nn.Dense(features=NUM_CLASSES)(x)
+    # x.shape: batch_size, NUM_CLASSES
+    return x
+
+
+class TransformerBaseline(nn.Module):
+
+  config: Any
+
+  def setup(self):
+    config = self.config
+    vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
+    max_tokens = 896
+    max_num_nodes = 80
+    max_num_edges = 160
+    info = ipagnn.Info(vocab_size=vocab_size)
+    transformer_config = transformer_modules.TransformerConfig(
+        vocab_size=vocab_size,
+        output_vocab_size=vocab_size,
+    )
+    self.transformer = transformer_modules.Transformer(transformer_config)
+
+  @nn.compact
+  def __call__(self, x):
+    tokens = x['tokens']
+    # tokens.shape: batch_size, max_tokens
+    tokens_mask = tokens > 0
+    # tokens_mask.shape: batch_size, max_tokens
+    # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
+    # encoded_inputs.shape: batch_size, max_tokens, hidden_size
+    encoding = self.transformer.encoder(tokens)
+    # encoding.shape: batch_size, max_tokens, hidden_size
+
+    # Mean pooling.
+    tokens_mask_ext = tokens_mask[:, :, None]
+    x = (
+        jnp.sum(encoding * tokens_mask_ext, axis=1)
+        / jnp.maximum(1, jnp.sum(tokens_mask_ext, axis=1))
+    )
     # x.shape: batch_size, hidden_size
     x = nn.Dense(features=NUM_CLASSES)(x)
     # x.shape: batch_size, NUM_CLASSES

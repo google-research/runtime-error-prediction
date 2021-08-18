@@ -5,6 +5,7 @@ DEPENDENCIES = [
     'fire>=0.4.0',
     'flax',
     'gast',
+    'google-cloud-storage',
     'ipython',
     'jax>=0.2.7',
     'jaxlib>=0.1.69',

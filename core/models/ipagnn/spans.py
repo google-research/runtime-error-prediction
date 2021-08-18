@@ -78,6 +78,7 @@ class NodeAwareTokenEmbedder(nn.Module):
   features: int
   max_tokens: int
   max_num_nodes: int
+  use_span_encoder: bool = True
 
   def setup(self):
     self.embed = nn.Embed(
@@ -97,10 +98,11 @@ class NodeAwareTokenEmbedder(nn.Module):
     # x.shape: batch_size, max_tokens
     x = self.embed(x)
     # x.shape: batch_size, max_tokens, features
-    token_span_encodings = jax.vmap(self.span_index_encoder)(
-        node_span_starts, node_span_ends)
-    # token_span_encodings.shape: batch_size, max_tokens, features
-    x = x + token_span_encodings
+    if self.use_span_encoder:
+      token_span_encodings = jax.vmap(self.span_index_encoder)(
+          node_span_starts, node_span_ends)
+      # token_span_encodings.shape: batch_size, max_tokens, features
+      x = x + token_span_encodings
     # x.shape: batch_size, max_tokens, features
     x = self.add_position_embeds(x)
     return x
