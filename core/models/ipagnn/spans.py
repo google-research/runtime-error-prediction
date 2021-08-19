@@ -132,13 +132,17 @@ class NodeSpanEncoder(nn.Module):
         max_tokens=self.max_tokens,
         max_num_nodes=self.max_num_nodes,
     )
-    self.transformer = encoder.TransformerEncoder(config=transformer_config)
+    self.encoder = encoder.TransformerEncoder(config=transformer_config)
 
   def __call__(self, tokens, node_span_starts, node_span_ends):
-    # tokens.shape: batch_size, length
+    # tokens.shape: batch_size, max_tokens
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
-    # token_embeddings.shape: batch_size, length, hidden_size
-    encoding = self.transformer(token_embeddings)
+    # token_embeddings.shape: batch_size, max_tokens, hidden_size
+    tokens_mask = tokens > 0
+    # tokens_mask.shape: batch_size, max_tokens
+    encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
+    # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
+    encoding = self.encoder(token_embeddings, encoder_mask=encoder_mask)
     # encoding.shape: batch_size, length, hidden_size
 
     # Get just the encoding of the first token in each span.
