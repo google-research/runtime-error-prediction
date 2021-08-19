@@ -99,46 +99,6 @@ class Transformer(nn.Module):
     return x
 
 
-class TransformerBaseline(nn.Module):
-
-  config: Any
-
-  def setup(self):
-    config = self.config
-    vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
-    max_tokens = 896
-    max_num_nodes = 80
-    max_num_edges = 160
-    info = ipagnn.Info(vocab_size=vocab_size)
-    transformer_config = transformer_modules.TransformerConfig(
-        vocab_size=vocab_size,
-        output_vocab_size=vocab_size,
-    )
-    self.transformer = transformer_modules.Transformer(transformer_config)
-
-  @nn.compact
-  def __call__(self, x):
-    tokens = x['tokens']
-    # tokens.shape: batch_size, max_tokens
-    tokens_mask = tokens > 0
-    # tokens_mask.shape: batch_size, max_tokens
-    # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
-    # encoded_inputs.shape: batch_size, max_tokens, hidden_size
-    encoding = self.transformer.encoder(tokens)
-    # encoding.shape: batch_size, max_tokens, hidden_size
-
-    # Mean pooling.
-    tokens_mask_ext = tokens_mask[:, :, None]
-    x = (
-        jnp.sum(encoding * tokens_mask_ext, axis=1)
-        / jnp.maximum(1, jnp.sum(tokens_mask_ext, axis=1))
-    )
-    # x.shape: batch_size, hidden_size
-    x = nn.Dense(features=NUM_CLASSES)(x)
-    # x.shape: batch_size, NUM_CLASSES
-    return x
-
-
 class IPAGNN(nn.Module):
 
   config: Any
@@ -285,11 +245,12 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   max_num_edges = 160
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
-  filter_fn = data_io.make_filter(max_tokens, max_num_nodes, max_num_edges)
+  filter_fn = data_io.make_filter(
+      max_tokens, max_num_nodes, max_num_edges, allowlist=None)
   return (
       data_io.load_dataset(dataset_path, split=split)
-      .repeat(epochs)
       .filter(filter_fn)
+      .repeat(epochs)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
