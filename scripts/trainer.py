@@ -122,7 +122,7 @@ class IPAGNN(nn.Module):
         max_num_nodes=max_num_nodes,
     )
 
-    self.ipagnn = ipagnn.IPAGNN(
+    self.ipagnn = ipagnn.IPAGNNModule(
         info=info,
         config=config,
         max_steps=max_steps,
@@ -153,9 +153,6 @@ class IPAGNN(nn.Module):
 
     # TODO(dbieber): Reevaluate how to go from transformer encodings to output.
     exit_node_embeddings = ipagnn_output['exit_node_embeddings']
-    print("x['exit_index']")
-    print(x['exit_index'])
-    print(exit_node_embeddings)
     # exit_node_embeddings.shape: batch_size, emb_dim
     logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
     # logits.shape: batch_size, NUM_CLASSES

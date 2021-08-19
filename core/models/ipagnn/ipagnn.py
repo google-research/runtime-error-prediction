@@ -19,13 +19,10 @@ def _rnn_state_to_embedding(hidden_state):
       jax.tree_leaves(hidden_state), axis=-1)
 
 
-class IPAGNN(nn.Module):
-  """IPAGNN model with batch dimension (not graph batching)."""
-
+class IPAGNNLayer(nn.Module):
+  """IPAGNN single-layer with batch dimension (not graph batching)."""
   info: Any
   config: Any
-
-  max_steps: int
 
   def setup(self):
     info = self.info
@@ -48,6 +45,9 @@ class IPAGNN(nn.Module):
 
   def __call__(
       self,
+      # State. Varies from step to step.
+      carry,
+      # Inputs. Shared across all steps.
       node_embeddings,
       edge_sources,
       edge_dests,
@@ -60,26 +60,19 @@ class IPAGNN(nn.Module):
     info = self.info
     config = self.config
 
+    # State. Varies from step to step.
+    hidden_states, instruction_pointer, current_step = carry
+
     # Inputs.
     vocab_size = info.vocab_size
     output_token_vocabulary_size = info.vocab_size
     hidden_size = config.model.hidden_size
     batch_size, num_nodes, unused_hidden_size = node_embeddings.shape
-    # exit_indexes.shape: batch_size, 1
-    exit_indexes = jnp.squeeze(exit_indexes, axis=-1)
     # exit_indexes.shape: batch_size
 
-    # Initialize hidden states and soft instruction pointer.
-    current_step = jnp.zeros((batch_size,), dtype=jnp.int32)
-    hidden_states = self.lstm.initialize_carry(
-        jax.random.PRNGKey(0),
-        (batch_size, num_nodes,), hidden_size)
+    # State.
+    # current_step.shape: batch_size,
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
-    instruction_pointer = jax.ops.index_add(
-        jnp.zeros((batch_size, num_nodes,)),
-        jax.ops.index[:, 0],  # TODO(dbieber): Use "start_indexes" instead of 0.
-        1
-    )
     # instruction_pointer.shape: batch_size, num_nodes,
 
     def branch_decide_single_node(hidden_state):
@@ -164,42 +157,132 @@ class IPAGNN(nn.Module):
     keep_old_if_done = jax.vmap(keep_old_if_done_single_example)
 
     # Take a full step of IPAGNN
-    for _ in range(self.max_steps):
-      hidden_state_contributions = execute(hidden_states, node_embeddings)
-      # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
+    hidden_state_contributions = execute(hidden_states, node_embeddings)
+    # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
-      hidden_state_contributions = jax.tree_multimap(
-          lambda h1, h2: batch_mask_h(h1, h2, exit_indexes),
-          hidden_state_contributions, hidden_states)
-      # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
+    hidden_state_contributions = jax.tree_multimap(
+        lambda h1, h2: batch_mask_h(h1, h2, exit_indexes),
+        hidden_state_contributions, hidden_states)
+    # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
-      # Branch decisions:
-      branch_decision_logits = branch_decide(hidden_state_contributions)
-      # branch_decision_logits.shape: batch_size, num_nodes, 2
-      branch_decisions = nn.softmax(branch_decision_logits, axis=-1)
-      # branch_decision.shape: batch_size, num_nodes, 2
+    # Branch decisions:
+    branch_decision_logits = branch_decide(hidden_state_contributions)
+    # branch_decision_logits.shape: batch_size, num_nodes, 2
+    branch_decisions = nn.softmax(branch_decision_logits, axis=-1)
+    # branch_decision.shape: batch_size, num_nodes, 2
 
-      # instruction_pointer.shape: batch_size, num_nodes
-      # true_indexes.shape: batch_size, num_nodes
-      # false_indexes.shape: batch_size, num_nodes
-      instruction_pointer_new = update_instruction_pointer(
-          instruction_pointer, branch_decisions, true_indexes, false_indexes)
-      # instruction_pointer_new.shape: batch_size, num_nodes
+    # instruction_pointer.shape: batch_size, num_nodes
+    # true_indexes.shape: batch_size, num_nodes
+    # false_indexes.shape: batch_size, num_nodes
+    instruction_pointer_new = update_instruction_pointer(
+        instruction_pointer, branch_decisions, true_indexes, false_indexes)
+    # instruction_pointer_new.shape: batch_size, num_nodes
 
-      hidden_states_new = aggregate(
-          hidden_state_contributions, instruction_pointer, branch_decisions,
-          true_indexes, false_indexes)
-      # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
+    hidden_states_new = aggregate(
+        hidden_state_contributions, instruction_pointer, branch_decisions,
+        true_indexes, false_indexes)
+    # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
 
-      # current_step.shape: batch_size
-      # step_limits.shape: batch_size
-      hidden_states, instruction_pointer = keep_old_if_done(
-          (hidden_states, instruction_pointer),
-          (hidden_states_new, instruction_pointer_new),
-          current_step,
-          step_limits,
-      )
-      current_step = current_step + 1
+    # current_step.shape: batch_size,
+    # step_limits.shape: batch_size,
+    hidden_states, instruction_pointer = keep_old_if_done(
+        (hidden_states, instruction_pointer),
+        (hidden_states_new, instruction_pointer_new),
+        current_step,
+        step_limits,
+    )
+    current_step = current_step + 1
+    # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
+    # instruction_pointer.shape: batch_size, num_nodes
+    # current_step.shape: batch_size,
+    return (hidden_states, instruction_pointer, current_step), None
+
+
+class IPAGNNModule(nn.Module):
+  """IPAGNN model with batch dimension (not graph batching)."""
+
+  info: Any
+  config: Any
+
+  max_steps: int
+
+  def setup(self):
+    info = self.info
+    config = self.config
+    output_token_vocabulary_size = info.vocab_size
+
+    # self.ipagnn_layer = IPAGNNLayer(info=info, config=config)
+    # TODO(dbieber): When adding remat, set prevent_cse=False.
+    self.ipagnn_layer_scan = nn.scan(
+        IPAGNNLayer,
+        variable_broadcast='params',
+        split_rngs={'params': False},
+        in_axes=(nn.broadcast,) * 8,
+        length=self.max_steps,
+    )(info=info, config=config)
+
+  def __call__(
+      self,
+      node_embeddings,
+      edge_sources,
+      edge_dests,
+      edge_types,
+      true_indexes,
+      false_indexes,
+      exit_indexes,
+      step_limits,
+  ):
+    info = self.info
+    config = self.config
+
+    # Inputs.
+    hidden_size = config.model.hidden_size
+    batch_size, num_nodes, unused_hidden_size = node_embeddings.shape
+    # exit_indexes.shape: batch_size, 1
+    exit_indexes = jnp.squeeze(exit_indexes, axis=-1)
+    # exit_indexes.shape: batch_size
+
+    # Initialize hidden states and soft instruction pointer.
+    current_step = jnp.zeros((batch_size,), dtype=jnp.int32)
+    hidden_states = self.ipagnn_layer_scan.lstm.initialize_carry(
+        jax.random.PRNGKey(0),
+        (batch_size, num_nodes,), hidden_size)
+    # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
+    instruction_pointer = jax.ops.index_add(
+        jnp.zeros((batch_size, num_nodes,)),
+        jax.ops.index[:, 0],  # TODO(dbieber): Use "start_indexes" instead of 0.
+        1
+    )
+    # instruction_pointer.shape: batch_size, num_nodes,
+
+    # The scan that follows is equivalent to:
+    # for _ in range(self.max_steps):
+    #   (hidden_states, instruction_pointer, current_step), _ = self.ipagnn_layer(
+    #       # State:
+    #       (hidden_states, instruction_pointer, current_step),
+    #       # Inputs:
+    #       node_embeddings,
+    #       edge_sources,
+    #       edge_dests,
+    #       edge_types,
+    #       true_indexes,
+    #       false_indexes,
+    #       exit_indexes,
+    #       step_limits,
+    #   )
+    (hidden_states, instruction_pointer, current_step), _ = self.ipagnn_layer_scan(
+        # State:
+        (hidden_states, instruction_pointer, current_step),
+        # Inputs:
+        node_embeddings,
+        edge_sources,
+        edge_dests,
+        edge_types,
+        true_indexes,
+        false_indexes,
+        exit_indexes,
+        step_limits,
+    )
 
     def get_final_state(hidden_states, exit_index):
       # leaves(hidden_states).shape: num_nodes, hidden_size
