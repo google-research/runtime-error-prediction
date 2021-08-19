@@ -239,10 +239,11 @@ def train_step(state, batch):
         batch,
         rngs={'dropout': dropout_rng}
     )
-    loss = jnp.mean(
-        optax.softmax_cross_entropy(
-            logits=logits,
-            labels=jax.nn.one_hot(batch['target'], NUM_CLASSES)))
+    labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+    losses = optax.softmax_cross_entropy(
+        logits=logits,
+        labels=labels)
+    loss = jnp.mean(losses)
     return loss, {
         'logits': logits,
     }
