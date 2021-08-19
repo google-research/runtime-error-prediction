@@ -68,7 +68,9 @@ def to_error(index):
   return error_kinds_list[index]
 
 
-INTERESTING_ERROR_KINDS = [
+# "Tier 1" errors are those that are definitively
+# execution-behavior-based runtime errors.
+TIER1_ERROR_KINDS = [
     'IndexError',
     'TypeError',
     TIMEOUT,
@@ -80,7 +82,7 @@ INTERESTING_ERROR_KINDS = [
     'MathDomainError',
     'NameError',
 ]
-INTERESTING_ERROR_IDS = [to_index(e) for e in INTERESTING_ERROR_KINDS]
+TIER1_ERROR_IDS = [to_index(e) for e in TIER1_ERROR_KINDS]
 
 
 if __name__ == '__main__':
