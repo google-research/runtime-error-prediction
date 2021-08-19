@@ -55,7 +55,7 @@ class IPAGNN(nn.Module):
       true_indexes,
       false_indexes,
       exit_indexes,
-      all_steps,
+      step_limits,
   ):
     info = self.info
     config = self.config
@@ -157,9 +157,9 @@ class IPAGNN(nn.Module):
     batch_mask_h = jax.vmap(mask_h)
 
     # If we've taken allowed_steps steps already, keep the old values.
-    def keep_old_if_done_single_example(old, new, current_step, allowed_steps):
+    def keep_old_if_done_single_example(old, new, current_step, step_limit):
       return jax.tree_multimap(
-          lambda new, old: jnp.where(current_step < allowed_steps, new, old),
+          lambda new, old: jnp.where(current_step < step_limit, new, old),
           new, old)
     keep_old_if_done = jax.vmap(keep_old_if_done_single_example)
 
@@ -192,12 +192,12 @@ class IPAGNN(nn.Module):
       # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
 
       # current_step.shape: batch_size
-      # all_steps.shape: batch_size
+      # step_limits.shape: batch_size
       hidden_states, instruction_pointer = keep_old_if_done(
           (hidden_states, instruction_pointer),
           (hidden_states_new, instruction_pointer_new),
           current_step,
-          all_steps,
+          step_limits,
       )
       current_step = current_step + 1
 
