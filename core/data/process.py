@@ -1,8 +1,10 @@
 """Dataset preprocessing."""
 
+import builtins
 from typing import List, Optional, Text
 
 import bisect
+import collections
 import dataclasses
 
 import fire
@@ -81,6 +83,61 @@ def get_span(instruction):
     end_lineno = ast_node.end_lineno
     end_col_offset = ast_node.end_col_offset
   return lineno, col_offset, end_lineno, end_col_offset
+
+
+def examine_udfs(graph, problem_id, submission_id):
+  nodes = graph.nodes
+  ast_nodes = [n.instruction.node for n in nodes]
+
+  # This doesn't consider the scope of a function, such as if
+  # it is defined inside a class.
+  nodes_by_function_name = {
+      ast_node.name: ast_node
+      for ast_node in ast_nodes
+      if isinstance(ast_node, (ast.FunctionDef, ast.ClassDef))
+  }
+
+  # We're interested in splitting instructions that call user defined functions
+  # into multiple nodes. We won't do this for FunctionDef, ClassDef.
+  # If it's a class, we'll point to the init function.
+  total_function_calls = 0
+  calls_by_function_name = collections.defaultdict(int)
+  for node in nodes:
+    if not isinstance(node.instruction.node, instruction_module.INSTRUCTION_AST_NODES):
+      continue
+
+    num_func_calls = 0
+    for ast_node in ast.walk(node.instruction.node):
+      if isinstance(ast_node, ast.Call):
+        if isinstance(ast_node.func, ast.Name):
+          # e.g. "func_name()"
+          function_name = ast_node.func.id
+        elif isinstance(ast_node.func, ast.Attribute):
+          # e.g. "o.func_name()"
+          function_name = ast_node.func.attr
+        else:
+          # e.g. o[0]() (ast.Subscript)
+          continue
+        if function_name in nodes_by_function_name:
+          num_func_calls += 1
+          calls_by_function_name[function_name] += 1
+          total_function_calls += num_func_calls
+        elif function_name in dir(builtins):
+          # Builtin function called.
+          pass
+        else:  # Unknown function called
+          pass
+  if calls_by_function_name.values() and max(calls_by_function_name.values()) > 1:
+    n = max(calls_by_function_name.values())
+    for f in calls_by_function_name:
+      if calls_by_function_name[f] == n:
+        break
+    print(f'Calling function {f} {n} times')
+    return 'Function called more than once'
+  elif total_function_calls == 0:
+    return 'No UDFs called'
+  else:
+    return 'UDFs called at most once'
 
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):

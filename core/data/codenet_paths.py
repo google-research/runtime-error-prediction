@@ -19,6 +19,7 @@ elif HOSTNAME == 'code-executor-001':
   PYTHON3 = '/home/dbieber/_39/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 
+CLOUD_DATA_ROOT = 'gs://project-codenet/'
 
 def make_tfrecord_path(dataset_path, split):
   return os.path.join(dataset_path, f'{split}.tfrecord')

@@ -1,3 +1,5 @@
+import fire
+
 NO_DATA = 'No data'
 TIMEOUT = 'Timeout'
 
@@ -47,7 +49,6 @@ NO_ERROR = 'No error'
 
 NUM_CLASSES = 3 + len(ERROR_KINDS)
 
-
 def to_index(error_kind):
   if error_kind == NO_DATA:
     return 0
@@ -65,3 +66,24 @@ def to_index(error_kind):
 def to_error(index):
   error_kinds_list = [NO_DATA, NO_ERROR, SILENT_ERROR, OTHER_ERROR] + ERROR_KINDS
   return error_kinds_list[index]
+
+
+# "Tier 1" errors are those that are definitively
+# execution-behavior-based runtime errors.
+TIER1_ERROR_KINDS = [
+    'IndexError',
+    'TypeError',
+    TIMEOUT,
+    'ValueError',
+    'AttributeError',
+    'KeyError',
+    'ZeroDivisionError',
+    'AssertionError',
+    'MathDomainError',
+    'NameError',
+]
+TIER1_ERROR_IDS = [to_index(e) for e in TIER1_ERROR_KINDS]
+
+
+if __name__ == '__main__':
+  fire.Fire()

@@ -77,8 +77,9 @@ class Transformer(nn.Module):
   def __call__(self, x):
     tokens = x['tokens']
     # tokens.shape: batch_size, max_tokens
-    encoder_mask = nn.make_attention_mask(
-        tokens > 0, tokens > 0, dtype=jnp.float32)
+    tokens_mask = tokens > 0
+    # tokens_mask.shape: batch_size, max_tokens
+    encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoded_inputs = self.token_embedder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'])
@@ -86,8 +87,12 @@ class Transformer(nn.Module):
     encoding = self.encoder(encoded_inputs, encoder_mask=encoder_mask)
     # encoding.shape: batch_size, max_tokens, hidden_size
 
-    # TODO(dbieber): Reevaluate how to go from transformer encodings to output.
-    x = encoding[:, 0, :]
+    # Mean pooling.
+    tokens_mask_ext = tokens_mask[:, :, None]
+    x = (
+        jnp.sum(encoding * tokens_mask_ext, axis=1)
+        / jnp.maximum(1, jnp.sum(tokens_mask_ext, axis=1))
+    )
     # x.shape: batch_size, hidden_size
     x = nn.Dense(features=NUM_CLASSES)(x)
     # x.shape: batch_size, NUM_CLASSES
@@ -194,10 +199,11 @@ def train_step(state, batch):
         batch,
         rngs={'dropout': dropout_rng}
     )
-    loss = jnp.mean(
-        optax.softmax_cross_entropy(
-            logits=logits,
-            labels=jax.nn.one_hot(batch['target'], NUM_CLASSES)))
+    labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+    losses = optax.softmax_cross_entropy(
+        logits=logits,
+        labels=labels)
+    loss = jnp.mean(losses)
     return loss, {
         'logits': logits,
     }
@@ -225,12 +231,13 @@ def create_train_state(rng, model):
       {'params': params_rng, 'dropout': dropout_rng},
       fake_input)
   params = variables['params']
-  tx = optax.sgd(0)
+  learning_rate = 0.03
+  tx = optax.sgd(learning_rate)
   return TrainState.create(
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
 
-def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
+def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   epochs = 1000
   batch_size = 8
   max_tokens = 896
@@ -238,27 +245,18 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
   max_num_edges = 160
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
+  filter_fn = data_io.make_filter(
+      max_tokens, max_num_nodes, max_num_edges, allowlist=None)
   return (
-      data_io.load_dataset(dataset_path, split='train')
+      data_io.load_dataset(dataset_path, split=split)
+      .filter(filter_fn)
       .repeat(epochs)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
-def load_dataset(dataset_path=DEFAULT_DATASET_PATH):
-  epochs = 1000
-  batch_size = 8
-  max_tokens = 896
-  max_num_nodes = 80
-  max_num_edges = 160
-  padded_shapes = data_io.get_padded_shapes(
-      max_tokens, max_num_nodes, max_num_edges)
-  return (
-      data_io.load_dataset(dataset_path)
-      .repeat(epochs)
-      .padded_batch(batch_size, padded_shapes=padded_shapes)
-  )
 
 def run_train(dataset_path=DEFAULT_DATASET_PATH):
+  print(f'Training on data: {dataset_path}')
   dataset = load_dataset(dataset_path)
   rng = jax.random.PRNGKey(0)
 

@@ -9,6 +9,9 @@ import fire
 import termcolor
 
 
+WORKER_PREFIX = 'worker'
+
+
 def call(args):
   """Uses subprocess to call the command given by the args."""
   shell_str = as_shell_string(args)
@@ -31,7 +34,7 @@ def wait(processes):
 
 
 def _hostname(index):
-  return 'worker-{index:03d}'.format(index=index)
+  return f'{WORKER_PREFIX}-{index:03d}'
 
 
 def _zone(index):
@@ -73,7 +76,7 @@ def as_shell_string(args):
 
 def up_args(
     index,
-    project='dbieber-playground',
+    project='runtime-error-problems',
     machine_type='c2-standard-4',
 ):
   """Starts a single worker."""
@@ -120,7 +123,7 @@ def down_args(index):
   hostname = _hostname(index)
   zone = _zone(index)
   return (
-      f'gcloud beta compute instances delete {hostname} --zone={zone}'.split()
+      f'gcloud beta compute instances delete {hostname} --zone={zone} --quiet'.split()
   )
 
 
@@ -167,8 +170,7 @@ def run_command(command, n):
   for index in range(n):
     hostname = _hostname(index)
     zone = _zone(index)
-    worker_command = 'echo {hostname} && {command}'.format(hostname=hostname,
-                                                           command=command)
+    worker_command = f'echo {hostname} && {command}'
     calls.append(call(['gcloud', 'compute', 'ssh', hostname, '--command',
                        worker_command, '--zone', zone]))
   wait(calls)

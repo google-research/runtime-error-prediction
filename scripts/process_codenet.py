@@ -1,8 +1,13 @@
 """Parsing, tokenizing, and generating datasets from the CodeNet data."""
 
+import collections
 import json
 import itertools
 import random
+
+import fire
+from python_graphs import control_flow
+import tensorflow as tf
 
 from core.data import codenet
 from core.data import codenet_paths
@@ -12,9 +17,6 @@ from core.data import process
 from core.data import splits
 from core.data import tokenization
 
-import tensorflow as tf
-
-import fire
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 DEFAULT_SPLITS_PATH = codenet_paths.DEFAULT_SPLITS_PATH
@@ -125,8 +127,12 @@ def process_codenet(
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
-  problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
-      problem_ids)
+  if problem_ids:
+    problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
+        problem_ids)
+  else:
+    print('Using all problem_ids')
+    problem_and_submission_ids = codenet.get_all_problem_and_submission_ids_with_evals()
 
   count = 0
   for problem_id, submission_id in problem_and_submission_ids:
@@ -141,6 +147,8 @@ def process_codenet(
     with open(python_path, 'r') as f:
       source = f.read()
       error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
+      if error_kind == error_kinds.NO_DATA:
+        raise RuntimeError('No data available for python_path', python_path)
       target = error_kinds.to_index(error_kind)
 
     try:
@@ -168,6 +176,55 @@ def process_codenet(
 
     if count % 1000 == 0:
       print(count)
+
+
+def investigate_udf_usage(problem_ids=None, start_at=0):
+  if problem_ids:
+    problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
+        problem_ids)
+  else:
+    print('Using all problem_ids')
+    problem_and_submission_ids = codenet.get_all_problem_and_submission_ids_with_evals()
+
+  count = 0
+  udf_usages = collections.defaultdict(int)
+  for problem_id, submission_id in problem_and_submission_ids:
+    count += 1
+    if count < start_at:
+      continue
+
+    python_path = codenet.get_python_path(problem_id, submission_id)
+    with open(python_path, 'r') as f:
+      source = f.read()
+      error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
+      target = error_kinds.to_index(error_kind)
+      if target == 0:
+        print(python_path)
+        raise RuntimeError()
+
+    try:
+      graph = control_flow.get_control_flow_graph(source)
+      udf_usage = process.examine_udfs(graph, problem_id, submission_id)
+      udf_usages[udf_usage] += 1
+    except ValueError as e:
+      print(f'ValueError: {python_path} - {e}')
+    except SyntaxError:
+      print(f'SyntaxError: {python_path}')
+    except IndexError:
+      print(f'IndexError: {python_path}')
+    except RuntimeError:
+      # Could be "return occurs outside of a function frame".
+      print(f'RuntimeError: {python_path}')
+    except AttributeError:
+      print(f'AttributeError: {python_path}')
+    except AssertionError:
+      print(f'AssertionError: {python_path}')
+    except:
+      print(f'Unexpected error: {python_path}')
+
+    if count % 1000 == 0:
+      print(count)
+      print(dict(udf_usages))
 
 
 def run_codenet_submissions(max_files=None):

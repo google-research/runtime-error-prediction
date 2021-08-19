@@ -29,6 +29,10 @@ def to_tf_example(problem):
       'exit_index': _int64_feature([problem.exit_index]),
       'step_limit': _int64_feature([problem.step_limit]),
       'target': _int64_feature([problem.target]),
+
+      'num_tokens': _int64_feature([len(problem.tokens)]),
+      'num_nodes': _int64_feature([len(problem.true_branch_nodes)]),
+      'num_edges': _int64_feature([len(problem.edge_sources)]),
   }))
 
 
@@ -53,6 +57,10 @@ def decode_fn(record_bytes):
           'exit_index': tf.io.FixedLenFeature([1], dtype=tf.int64),
           'step_limit': tf.io.FixedLenFeature([1], dtype=tf.int64),
           'target': tf.io.FixedLenFeature([1], dtype=tf.int64),
+
+          'num_tokens': tf.io.FixedLenFeature([1], dtype=tf.int64),
+          'num_nodes': tf.io.FixedLenFeature([1], dtype=tf.int64),
+          'num_edges': tf.io.FixedLenFeature([1], dtype=tf.int64),
       }
   )
 
@@ -70,6 +78,10 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       'exit_index': jnp.full((batch_size, 1), max_num_nodes - 1, dtype=jnp.int32),
       'step_limit': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
       'target': jnp.zeros((batch_size, 1), dtype=jnp.int32),
+
+      'num_tokens': jnp.full((batch_size, 1), max_tokens, dtype=jnp.int32),
+      'num_nodes': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
+      'num_edges': jnp.full((batch_size, 1), max_num_edges, dtype=jnp.int32),
   }
 
 
@@ -87,7 +99,30 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
       'exit_index': [1],
       'step_limit': [1],
       'target': [1],
+
+      'num_tokens': [1],
+      'num_nodes': [1],
+      'num_edges': [1],
   }
+
+
+def make_filter(max_tokens, max_num_nodes, max_num_edges, allowlist=None):
+  def fn(example):
+    # An on-device predicate for filtering out too-large examples.
+    allowed = tf.squeeze(
+        (example['num_tokens'] <= max_tokens)
+        & (example['num_nodes'] <= max_num_nodes)
+        & (example['num_edges'] <= max_num_edges),
+        axis=-1
+    )
+    if allowlist is not None:
+      # Limit the allowed error_kinds to the allowlist.
+      class_ok = False
+      for index in allowlist:
+        class_ok |= (example['target'][0] == index)
+      allowed = allowed & class_ok
+    return allowed
+  return fn
 
 
 def load_tfrecord_dataset(tfrecord_path):
