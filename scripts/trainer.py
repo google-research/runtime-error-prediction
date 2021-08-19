@@ -243,10 +243,11 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   max_tokens = 896
   max_num_nodes = 80
   max_num_edges = 160
+  max_steps = 16
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
   filter_fn = data_io.make_filter(
-      max_tokens, max_num_nodes, max_num_edges, allowlist=None)
+      max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=None)
   return (
       data_io.load_dataset(dataset_path, split=split)
       .filter(filter_fn)
