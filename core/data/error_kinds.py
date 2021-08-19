@@ -4,20 +4,20 @@ NO_DATA = 'No data'
 TIMEOUT = 'Timeout'
 
 ERROR_KINDS = [
-    'AssertionError',
+    'AssertionError',  # index = 4
     'AttributeError',
     # bdb.BdbQuit p02702 s706694213
     'decimal.InvalidOperation',
     'EOFError',
     'FileNotFoundError',
     'ImportError',
-    'IndentationError',
+    'IndentationError',  # index = 10
     'IndexError',
     'KeyError',
     'MathDomainError',
     'MemoryError',
     'ModuleNotFoundError',
-    'NameError',
+    'NameError',  # index = 16
     'OSError', # Bad file descriptor
     'OverflowError',
     're.error',  # nothing to repeat at position 0
@@ -26,11 +26,11 @@ ERROR_KINDS = [
     'StopIteration',
     'SyntaxError',
     'TabError',
-    'TypeError',
+    'TypeError',  # index = 25
     'UnboundLocalError',
     'ValueError',
     'ZeroDivisionError',
-    'numpy.AxisError',
+    'numpy.AxisError',  # index = 29
     # 'Exception',
     # SyntaxError: invalid syntax
     # SyntaxError: invalid character

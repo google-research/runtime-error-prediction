@@ -144,7 +144,7 @@ class IPAGNN(nn.Module):
         true_indexes=x['true_branch_nodes'],
         false_indexes=x['false_branch_nodes'],
         exit_indexes=x['exit_index'],
-        all_steps=x['step_limit'],
+        step_limits=x['step_limit'],
     )
     # ipagnn_output['node_embeddings'].shape: batch_size, max_num_nodes, hidden_size
     # ipagnn_output['instruction_pointer'].shape: batch_size, max_num_nodes
