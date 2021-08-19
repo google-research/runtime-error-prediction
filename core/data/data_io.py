@@ -106,15 +106,22 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
   }
 
 
-def make_filter(max_tokens, max_num_nodes, max_num_edges):
+def make_filter(max_tokens, max_num_nodes, max_num_edges, allowlist=None):
   def fn(example):
     # An on-device predicate for filtering out too-large examples.
-    return tf.squeeze(
+    allowed = tf.squeeze(
         (example['num_tokens'] <= max_tokens)
         & (example['num_nodes'] <= max_num_nodes)
         & (example['num_edges'] <= max_num_edges),
         axis=-1
     )
+    if allowlist is not None:
+      # Limit the allowed error_kinds to the allowlist.
+      class_ok = False
+      for index in allowlist:
+        class_ok |= (example['target'][0] == index)
+      allowed = allowed & class_ok
+    return allowed
   return fn
 
 

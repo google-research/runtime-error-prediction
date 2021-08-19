@@ -9,7 +9,7 @@ import fire
 import termcolor
 
 
-WORKER_PREFIX = 'runner'
+WORKER_PREFIX = 'worker'
 
 
 def call(args):

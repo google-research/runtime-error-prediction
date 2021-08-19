@@ -205,39 +205,5 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   return stdout
 
 
-def run_for_errors_cloud(client, problem_id, submission_id, skip_existing=True):
-  """Runs the command in the error-checker subprocess."""
-  evals_dir = get_evals_dir(problem_id, submission_id)
-  if os.path.exists(evals_dir):
-    if skip_existing:
-      return
-    shutil.rmtree(evals_dir)
-  os.makedirs(evals_dir)
-
-  python_filepath = get_python_path(problem_id, submission_id)
-  input_filepath = get_input_path(problem_id, submission_id)
-
-  if not os.path.exists(input_filepath):
-    return
-
-  error_path, timeout_path, stdout_path, stderr_path = get_evals_paths(
-      problem_id, submission_id)
-  command = [PYTHON3, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
-  try:
-    subprocess.run(
-        command,
-        input=open(input_filepath, 'rb').read(),
-        stderr=open(stderr_path, 'wb'),
-        stdout=open(stdout_path, 'wb'),
-        timeout=1,
-    )
-  except subprocess.TimeoutExpired as e:
-    with open(timeout_path, 'w') as f:
-      f.write(str(e) + '\n')
-  stdout = open(stdout_path, 'r').read()
-  stderr = open(stderr_path, 'r').read()
-  return stdout
-
-
 if __name__ == '__main__':
   fire.Fire()

@@ -89,7 +89,7 @@ def examine_udfs(graph, problem_id, submission_id):
   nodes = graph.nodes
   ast_nodes = [n.instruction.node for n in nodes]
 
-  # TODO(dbieber): This doesn't consider the scope of a function, such as if
+  # This doesn't consider the scope of a function, such as if
   # it is defined inside a class.
   nodes_by_function_name = {
       ast_node.name: ast_node
