@@ -212,9 +212,10 @@ class IPAGNNModule(nn.Module):
     output_token_vocabulary_size = info.vocab_size
 
     # self.ipagnn_layer = IPAGNNLayer(info=info, config=config)
-    # TODO(dbieber): When adding remat, set prevent_cse=False.
+    # TODO(dbieber): Once linen makes it possible, set prevent_cse=False.
+    IPAGNNLayerRemat = nn.remat(IPAGNNLayer)
     self.ipagnn_layer_scan = nn.scan(
-        IPAGNNLayer,
+        IPAGNNLayerRemat,
         variable_broadcast='params',
         split_rngs={'params': False},
         in_axes=(nn.broadcast,) * 8,
