@@ -2,7 +2,7 @@
 
 import dataclasses
 import itertools
-from typing import Any, Text
+from typing import Any, Optional, Text
 
 import fire
 from flax import linen as nn
