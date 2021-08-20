@@ -6,7 +6,7 @@ from typing import Any
 
 import fire
 from flax import linen as nn
-from flax import common_utils
+from flax.training import common_utils
 from flax.training import train_state
 import jax
 import jax.numpy as jnp
