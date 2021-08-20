@@ -237,7 +237,7 @@ if MULTIDEVICE:
 
 def create_train_state(rng, model):
   """Creates initial TrainState."""
-  batch_size = 8
+  batch_size = 128
   max_tokens = 256
   max_num_nodes = 80
   max_num_edges = 160
@@ -248,7 +248,7 @@ def create_train_state(rng, model):
       {'params': params_rng, 'dropout': dropout_rng},
       fake_input)
   params = variables['params']
-  learning_rate = 0.03
+  learning_rate = 0.10
   tx = optax.sgd(learning_rate)
   return TrainState.create(
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
@@ -256,7 +256,7 @@ def create_train_state(rng, model):
 
 def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   epochs = 1000
-  batch_size = 8
+  batch_size = 128
   max_tokens = 256
   max_num_nodes = 80
   max_num_edges = 160
