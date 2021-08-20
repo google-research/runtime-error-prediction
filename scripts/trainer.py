@@ -58,10 +58,10 @@ class Transformer(nn.Module):
 
   def setup(self):
     config = self.config
-    vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
-    max_tokens = 256
-    max_num_nodes = 80
-    max_num_edges = 160
+    vocab_size = config.vocab_size  # TODO(dbieber): Load from tokenizer / info.
+    max_tokens = config.max_tokens
+    max_num_nodes = config.max_num_nodes
+    max_num_edges = config.max_num_edges
     info = ipagnn.Info(vocab_size=vocab_size)
     transformer_config = transformer_modules.TransformerConfig(
         vocab_size=vocab_size,
@@ -108,11 +108,11 @@ class IPAGNN(nn.Module):
 
   def setup(self):
     config = self.config
-    vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
-    max_tokens = 256
-    max_num_nodes = 80
-    max_num_edges = 160
-    max_steps = 100
+    vocab_size = config.vocab_size  # TODO(dbieber): Load from tokenizer / info.
+    max_tokens = config.max_tokens
+    max_num_nodes = config.max_num_nodes
+    max_num_edges = config.max_num_edges
+    max_steps = config.max_steps
     info = ipagnn.Info(vocab_size=vocab_size)
     transformer_config = transformer_modules.TransformerConfig(
         vocab_size=vocab_size,
@@ -176,6 +176,7 @@ class Trainer:
   max_num_nodes: int = 80
   max_num_edges: int = 160
   max_steps: int = 100
+  hidden_size: int = 10
   multidevice: bool = True
 
   def load_dataset(self, dataset_path=DEFAULT_DATASET_PATH, split='train'):
@@ -212,9 +213,14 @@ class Trainer:
   def make_sample_config(self):
     config = Config()
     config.model = Config()
-    config.model.hidden_size = 10
+    config.model.hidden_size = self.hidden_size
     config.model.rnn_layers = 2
-    config.model.checkpoint = False
+
+    config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
+    config.max_tokens = self.max_tokens
+    config.max_num_nodes = self.max_num_nodes
+    config.max_num_edges = self.max_num_edges
+    config.max_steps = self.max_steps
     return config
 
   def make_model(self):
@@ -232,7 +238,7 @@ class Trainer:
   def create_train_state(self, rng, model):
     """Creates initial TrainState."""
     fake_input = data_io.get_fake_input(
-        batch_size, max_tokens, max_num_nodes, max_num_edges)
+        self.batch_size, self.max_tokens, self.max_num_nodes, self.max_num_edges)
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = model.init(
         {'params': params_rng, 'dropout': dropout_rng},
@@ -296,12 +302,12 @@ class Trainer:
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Training on data: {dataset_path}')
-    dataset = load_dataset(dataset_path, split=split)
+    dataset = self.load_dataset(dataset_path, split=split)
     rng = jax.random.PRNGKey(0)
 
     rng, init_rng = jax.random.split(rng)
-    model = make_model()
-    state = create_train_state(init_rng, model)
+    model = self.make_model()
+    state = self.create_train_state(init_rng, model)
     train_step = self.make_train_step()
 
     for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
