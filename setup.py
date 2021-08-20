@@ -17,7 +17,11 @@ DEPENDENCIES = [
 ]
 
 packages = [
-    'core', 'core.data', 'core.distributed', 'core.models.ipagnn',
+    'core',
+    'core.data',
+    'core.distributed',
+    'core.lib',
+    'core.models.ipagnn',
     'scripts',
     'third_party', 'third_party.flax_examples',
     'experimental',
