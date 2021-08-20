@@ -1,6 +1,7 @@
 """Temporary train script."""
 
 import dataclasses
+import itertools
 from typing import Any
 
 import fire
@@ -252,7 +253,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   )
 
 
-def run_train(dataset_path=DEFAULT_DATASET_PATH):
+def run_train(dataset_path=DEFAULT_DATASET_PATH, steps=None):
   print(f'Training on data: {dataset_path}')
   dataset = load_dataset(dataset_path)
   rng = jax.random.PRNGKey(0)
@@ -261,7 +262,7 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH):
   model = make_model()
   state = create_train_state(init_rng, model)
 
-  for step, batch in enumerate(tfds.as_numpy(dataset)):
+  for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
     state, aux = train_step(state, batch)
     print(f'--- Step {step}')
     print(f"Loss: {aux['loss']}")
