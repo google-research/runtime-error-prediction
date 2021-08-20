@@ -224,12 +224,13 @@ if MULTIDEVICE:
       train_step,
       axis_name='batch',
       in_axes=(None, 0),
+      out_axes=(None, 0),
   )
 
 
 def create_train_state(rng, model):
   """Creates initial TrainState."""
-  batch_size = 8
+  batch_size = 16
   max_tokens = 256
   max_num_nodes = 80
   max_num_edges = 160
@@ -248,7 +249,7 @@ def create_train_state(rng, model):
 
 def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   epochs = 1000
-  batch_size = 8
+  batch_size = 16
   max_tokens = 256
   max_num_nodes = 80
   max_num_edges = 160
