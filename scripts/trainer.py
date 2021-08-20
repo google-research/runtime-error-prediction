@@ -284,7 +284,7 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH, steps=None):
     print(f'--- Step {step}')
     print(f"Loss: {aux['loss']}")
     print(f"Predictions: {jnp.argmax(aux['logits'], axis=-1)}")
-    print(f"Targets: {batch['target']}")
+    print(f"Targets: {jnp.squeeze(batch['target'])}")
 
 
 if __name__ == '__main__':
