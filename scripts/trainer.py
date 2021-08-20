@@ -199,11 +199,18 @@ def train_step(state, batch):
         batch,
         rngs={'dropout': dropout_rng}
     )
+    assert len(logits.shape) == 2
+    # logits.shape: batch_size, NUM_CLASSES
     labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+    assert len(labels.shape) == 2
+    # labels.shape: batch_size, NUM_CLASSES
     losses = optax.softmax_cross_entropy(
         logits=logits,
         labels=labels)
+    assert len(losses.shape) == 1
+    # losses.shape: batch_size
     loss = jnp.mean(losses)
+    assert len(loss.shape) == 0
     return loss, {
         'logits': logits,
     }
