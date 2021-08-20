@@ -289,7 +289,7 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH, steps=None):
     if MULTIDEVICE:
       batch = common_utils.shard(batch)
     state, aux = train_step(state, batch)
-    print(f"""--- Step {step}'
+    print(f"""--- Step {step}
 Loss: {aux['loss']}
 Predictions:
 {jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))}
