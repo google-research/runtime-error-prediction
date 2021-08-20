@@ -219,7 +219,7 @@ def train_step(state, batch):
   (loss, aux), grads = grad_fn(state.params)
   if MULTIDEVICE:
     grads = jax.lax.pmean(grads, 'batch')
-  grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
+  # grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
   state = state.apply_gradients(grads=grads)
   # TODO(dbieber): Optionally compute on-device metrics here.
   return state, {
