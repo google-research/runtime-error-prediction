@@ -241,6 +241,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   max_steps = 16
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
+  allowlist = error_kinds.TIER1_ERROR_IDS
   filter_fn = data_io.make_filter(
       max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=None)
   return (
