@@ -310,16 +310,24 @@ class Trainer:
     state = self.create_train_state(init_rng, model)
     train_step = self.make_train_step()
 
+    recent_accuracies = []
     for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       if self.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
+      predictions = jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))
+      targets = jnp.squeeze(batch['target'])
+      batch_accuracy = jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets))
+      recent_accuracies.append(batch_accuracy)
+      recent_accuracies = recent_accuracies[-10:]
       print(f"""--- Step {step}
 Loss: {aux['loss']}
 Predictions:
-{jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))}
+{predictions}
 Targets:
-{jnp.squeeze(batch['target'])}""")
+{targets}
+Batch Accuracy: {100 * batch_accuracy:02.1f}
+Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
 
 if __name__ == '__main__':
