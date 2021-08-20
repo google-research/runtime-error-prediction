@@ -294,7 +294,7 @@ Loss: {aux['loss']}
 Predictions:
 {jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))}
 Targets:
-{jnp.squeeze(batch['target'])}"""
+{jnp.squeeze(batch['target'])}""")
 
 
 if __name__ == '__main__':
