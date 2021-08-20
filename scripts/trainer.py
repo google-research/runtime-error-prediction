@@ -266,19 +266,31 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   allowlist = error_kinds.TIER1_ERROR_IDS
   filter_fn = data_io.make_filter(
       max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=allowlist)
+
+  if split.endswith('-batch'):
+    # Prepare a dataset with a single repeating batch.
+    split = split[:-len('-batch')]
+    return (
+        data_io.load_dataset(dataset_path, split=split)
+        .filter(filter_fn)
+        .take(batch_size)
+        .repeat(epochs)
+        .padded_batch(batch_size, padded_shapes=padded_shapes)
+    )
+
+  # Return the requested dataset.
   return (
       data_io.load_dataset(dataset_path, split=split)
       .filter(filter_fn)
-      .take(batch_size)  # TODO(dbieber): Remove this.
       .repeat(epochs)
-      # .shuffle(1000)
+      .shuffle(1000)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
 
-def run_train(dataset_path=DEFAULT_DATASET_PATH, steps=None):
+def run_train(dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
   print(f'Training on data: {dataset_path}')
-  dataset = load_dataset(dataset_path)
+  dataset = load_dataset(dataset_path, split=split)
   rng = jax.random.PRNGKey(0)
 
   rng, init_rng = jax.random.split(rng)
