@@ -2,7 +2,7 @@
 
 import dataclasses
 import itertools
-from typing import Any
+from typing import Any, Text
 
 import fire
 from flax import linen as nn
@@ -28,8 +28,6 @@ DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 NUM_CLASSES = error_kinds.NUM_CLASSES
 
 Config = ml_collections.ConfigDict
-
-MULTIDEVICE = True
 
 
 class MlpModel(nn.Module):
@@ -164,144 +162,153 @@ class IPAGNN(nn.Module):
     return logits
 
 
-def make_sample_config():
-  config = Config()
-  config.model = Config()
-  config.model.hidden_size = 10
-  config.model.rnn_layers = 2
-  config.model.checkpoint = False
-  return config
-
-
-def make_model():
-  config = make_sample_config()
-  # model = MlpModel()
-  # model = Transformer(config=config)
-  model = IPAGNN(config=config)
-  return model
-
-
 class TrainState(train_state.TrainState):
   rng: Any
 
 
-@jax.jit
-def train_step(state, batch):
-  """The on-device part of a train step."""
-  model = make_model()
+@dataclasses.dataclass
+class Trainer:
 
-  new_rng, dropout_rng = jax.random.split(state.rng, 2)
-  state = dataclasses.replace(state, rng=new_rng)
+  model_class: Text = 'IPAGNN'
+  epochs: int = 1000
+  batch_size: int = 128
+  max_tokens: int = 256
+  max_num_nodes: int = 80
+  max_num_edges: int = 160
+  max_steps: int = 100
+  multidevice: bool = True
 
-  def loss_fn(params):
-    logits = model.apply(
-        {'params': params},
-        batch,
-        rngs={'dropout': dropout_rng}
-    )
-    assert len(logits.shape) == 2
-    # logits.shape: batch_size, NUM_CLASSES
-    labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
-    assert len(labels.shape) == 2
-    # labels.shape: batch_size, NUM_CLASSES
-    losses = optax.softmax_cross_entropy(
-        logits=logits,
-        labels=labels)
-    assert len(losses.shape) == 1
-    # losses.shape: batch_size
-    loss = jnp.mean(losses)
-    assert len(loss.shape) == 0
-    return loss, {
-        'logits': logits,
-    }
+  def load_dataset(self, dataset_path=DEFAULT_DATASET_PATH, split='train'):
+    batch_size = self.batch_size
+    epochs = self.epochs
 
-  grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
-  (loss, aux), grads = grad_fn(state.params)
-  if MULTIDEVICE:
-    grads = jax.lax.pmean(grads, 'batch')
-  # grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
-  state = state.apply_gradients(grads=grads)
-  # TODO(dbieber): Optionally compute on-device metrics here.
-  return state, {
-      'logits': aux['logits'],
-      'loss': loss,
-  }
-if MULTIDEVICE:
-  train_step = jax.pmap(
-      train_step,
-      axis_name='batch',
-      in_axes=(None, 0),
-      out_axes=(None, 0),
-  )
+    padded_shapes = data_io.get_padded_shapes(
+        self.max_tokens, self.max_num_nodes, self.max_num_edges)
+    allowlist = error_kinds.TIER1_ERROR_IDS
+    filter_fn = data_io.make_filter(
+        self.max_tokens, self.max_num_nodes, self.max_num_edges,
+        self.max_steps, allowlist=allowlist)
 
+    if split.endswith('-batch'):
+      # Prepare a dataset with a single repeating batch.
+      split = split[:-len('-batch')]
+      return (
+          data_io.load_dataset(dataset_path, split=split)
+          .filter(filter_fn)
+          .take(batch_size)
+          .repeat(epochs)
+          .padded_batch(batch_size, padded_shapes=padded_shapes)
+      )
 
-def create_train_state(rng, model):
-  """Creates initial TrainState."""
-  batch_size = 128
-  max_tokens = 256
-  max_num_nodes = 80
-  max_num_edges = 160
-  fake_input = data_io.get_fake_input(
-      batch_size, max_tokens, max_num_nodes, max_num_edges)
-  rng, params_rng, dropout_rng = jax.random.split(rng, 3)
-  variables = model.init(
-      {'params': params_rng, 'dropout': dropout_rng},
-      fake_input)
-  params = variables['params']
-  learning_rate = 0.03
-  tx = optax.sgd(learning_rate)
-  return TrainState.create(
-      apply_fn=model.apply, params=params, tx=tx, rng=rng)
-
-
-def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
-  epochs = 1000
-  batch_size = 128
-  max_tokens = 256
-  max_num_nodes = 80
-  max_num_edges = 160
-  max_steps = 100
-  padded_shapes = data_io.get_padded_shapes(
-      max_tokens, max_num_nodes, max_num_edges)
-  allowlist = error_kinds.TIER1_ERROR_IDS
-  filter_fn = data_io.make_filter(
-      max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=allowlist)
-
-  if split.endswith('-batch'):
-    # Prepare a dataset with a single repeating batch.
-    split = split[:-len('-batch')]
+    # Return the requested dataset.
     return (
         data_io.load_dataset(dataset_path, split=split)
         .filter(filter_fn)
-        .take(batch_size)
         .repeat(epochs)
+        .shuffle(1000)
         .padded_batch(batch_size, padded_shapes=padded_shapes)
     )
 
-  # Return the requested dataset.
-  return (
-      data_io.load_dataset(dataset_path, split=split)
-      .filter(filter_fn)
-      .repeat(epochs)
-      .shuffle(1000)
-      .padded_batch(batch_size, padded_shapes=padded_shapes)
-  )
+  def make_sample_config(self):
+    config = Config()
+    config.model = Config()
+    config.model.hidden_size = 10
+    config.model.rnn_layers = 2
+    config.model.checkpoint = False
+    return config
 
+  def make_model(self):
+    config = self.make_sample_config()
+    model_class = self.model_class
+    if model_class == 'MlpModel':
+      return MlpModel()
+    elif model_class == 'Transformer':
+      return Transformer(config=config)
+    elif model_class == 'IPAGNN':
+      return IPAGNN(config=config)
+    else:
+      raise ValueError('Unexpected model_class.')
 
-def run_train(dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
-  print(f'Training on data: {dataset_path}')
-  dataset = load_dataset(dataset_path, split=split)
-  rng = jax.random.PRNGKey(0)
+  def create_train_state(self, rng, model):
+    """Creates initial TrainState."""
+    fake_input = data_io.get_fake_input(
+        batch_size, max_tokens, max_num_nodes, max_num_edges)
+    rng, params_rng, dropout_rng = jax.random.split(rng, 3)
+    variables = model.init(
+        {'params': params_rng, 'dropout': dropout_rng},
+        fake_input)
+    params = variables['params']
+    learning_rate = 0.03
+    tx = optax.sgd(learning_rate)
+    return TrainState.create(
+        apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
-  rng, init_rng = jax.random.split(rng)
-  model = make_model()
-  state = create_train_state(init_rng, model)
+  def make_train_step(self):
+    @jax.jit
+    def train_step(state, batch):
+      """The on-device part of a train step."""
+      model = self.make_model()
 
-  for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
-    if MULTIDEVICE:
-      batch = common_utils.shard(batch)
-    state, aux = train_step(state, batch)
-    print(f"""--- Step {step}
+      new_rng, dropout_rng = jax.random.split(state.rng, 2)
+      state = dataclasses.replace(state, rng=new_rng)
+
+      def loss_fn(params):
+        logits = model.apply(
+            {'params': params},
+            batch,
+            rngs={'dropout': dropout_rng}
+        )
+        assert len(logits.shape) == 2
+        # logits.shape: batch_size, NUM_CLASSES
+        labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+        assert len(labels.shape) == 2
+        # labels.shape: batch_size, NUM_CLASSES
+        losses = optax.softmax_cross_entropy(
+            logits=logits,
+            labels=labels)
+        assert len(losses.shape) == 1
+        # losses.shape: batch_size
+        loss = jnp.mean(losses)
+        assert len(loss.shape) == 0
+        return loss, {
+            'logits': logits,
+        }
+
+      grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
+      (loss, aux), grads = grad_fn(state.params)
+      if self.multidevice:
+        grads = jax.lax.pmean(grads, 'batch')
+      # grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
+      state = state.apply_gradients(grads=grads)
+      # TODO(dbieber): Optionally compute on-device metrics here.
+      return state, {
+          'logits': aux['logits'],
+          'loss': loss,
+      }
+    if self.multidevice:
+      train_step = jax.pmap(
+          train_step,
+          axis_name='batch',
+          in_axes=(None, 0),
+          out_axes=(None, 0),
+      )
+    return train_step
+
+  def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
+    print(f'Training on data: {dataset_path}')
+    dataset = load_dataset(dataset_path, split=split)
+    rng = jax.random.PRNGKey(0)
+
+    rng, init_rng = jax.random.split(rng)
+    model = make_model()
+    state = create_train_state(init_rng, model)
+    train_step = self.make_train_step()
+
+    for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      if self.multidevice:
+        batch = common_utils.shard(batch)
+      state, aux = train_step(state, batch)
+      print(f"""--- Step {step}
 Loss: {aux['loss']}
 Predictions:
 {jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))}
