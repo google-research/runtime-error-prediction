@@ -6,6 +6,7 @@ from typing import Any
 
 import fire
 from flax import linen as nn
+from flax import common_utils
 from flax.training import train_state
 import jax
 import jax.numpy as jnp
@@ -16,6 +17,7 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.lib import optimizer_lib
 from core.models.ipagnn import encoder
 from core.models.ipagnn import ipagnn
 from core.models.ipagnn import spans
@@ -26,6 +28,8 @@ DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 NUM_CLASSES = error_kinds.NUM_CLASSES
 
 Config = ml_collections.ConfigDict
+
+MULTIDEVICE = True
 
 
 class MlpModel(nn.Module):
@@ -206,12 +210,21 @@ def train_step(state, batch):
 
   grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
   (loss, aux), grads = grad_fn(state.params)
+  if MULTIDEVICE:
+    grads = jax.lax.pmean(grads, 'batch')
+  grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
   state = state.apply_gradients(grads=grads)
   # TODO(dbieber): Optionally compute on-device metrics here.
   return state, {
       'logits': aux['logits'],
       'loss': loss,
   }
+if MULTIDEVICE:
+  train_step = jax.pmap(
+      train_step,
+      axis_name='batch',
+      in_axes=(None, 0),
+  )
 
 
 def create_train_state(rng, model):
@@ -264,6 +277,8 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH, steps=None):
   state = create_train_state(init_rng, model)
 
   for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+    if MULTIDEVICE:
+      batch = common_utils.shard(batch)
     state, aux = train_step(state, batch)
     print(f'--- Step {step}')
     print(f"Loss: {aux['loss']}")
