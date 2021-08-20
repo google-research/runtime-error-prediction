@@ -319,7 +319,7 @@ class Trainer:
       targets = jnp.squeeze(batch['target'])
       batch_accuracy = jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets))
       recent_accuracies.append(batch_accuracy)
-      recent_accuracies = recent_accuracies[-10:]
+      recent_accuracies = recent_accuracies[-500:]
       print(f"""--- Step {step}
 Loss: {aux['loss']}
 Predictions:
