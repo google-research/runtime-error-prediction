@@ -29,7 +29,7 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 
 Config = ml_collections.ConfigDict
 
-MULTIDEVICE = False
+MULTIDEVICE = True
 
 
 class MlpModel(nn.Module):
