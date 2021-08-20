@@ -248,7 +248,7 @@ def create_train_state(rng, model):
       {'params': params_rng, 'dropout': dropout_rng},
       fake_input)
   params = variables['params']
-  learning_rate = 0.10
+  learning_rate = 0.01
   tx = optax.sgd(learning_rate)
   return TrainState.create(
       apply_fn=model.apply, params=params, tx=tx, rng=rng)
@@ -291,7 +291,7 @@ def run_train(dataset_path=DEFAULT_DATASET_PATH, steps=None):
     state, aux = train_step(state, batch)
     print(f'--- Step {step}')
     print(f"Loss: {aux['loss']}")
-    print(f"Predictions: {jnp.argmax(aux['logits'], axis=-1)}")
+    print(f"Predictions: {jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))}")
     print(f"Targets: {jnp.squeeze(batch['target'])}")
 
 
