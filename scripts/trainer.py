@@ -269,6 +269,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   return (
       data_io.load_dataset(dataset_path, split=split)
       .filter(filter_fn)
+      .take(batch_size)  # TODO(dbieber): Remove this.
       .repeat(epochs)
       .shuffle(1000)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
