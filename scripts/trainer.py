@@ -243,7 +243,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
       max_tokens, max_num_nodes, max_num_edges)
   allowlist = error_kinds.TIER1_ERROR_IDS
   filter_fn = data_io.make_filter(
-      max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=None)
+      max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=allowlist)
   return (
       data_io.load_dataset(dataset_path, split=split)
       .filter(filter_fn)
