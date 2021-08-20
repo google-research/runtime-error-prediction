@@ -57,7 +57,7 @@ class Transformer(nn.Module):
   def setup(self):
     config = self.config
     vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
-    max_tokens = 896
+    max_tokens = 256
     max_num_nodes = 80
     max_num_edges = 160
     info = ipagnn.Info(vocab_size=vocab_size)
@@ -107,10 +107,10 @@ class IPAGNN(nn.Module):
   def setup(self):
     config = self.config
     vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
-    max_tokens = 896
+    max_tokens = 256
     max_num_nodes = 80
     max_num_edges = 160
-    max_steps = 16
+    max_steps = 100
     info = ipagnn.Info(vocab_size=vocab_size)
     transformer_config = transformer_modules.TransformerConfig(
         vocab_size=vocab_size,
@@ -172,8 +172,8 @@ def make_sample_config():
 def make_model():
   config = make_sample_config()
   # model = MlpModel()
-  model = Transformer(config=config)
-  # model = IPAGNN(config=config)
+  # model = Transformer(config=config)
+  model = IPAGNN(config=config)
   return model
 
 
@@ -217,7 +217,7 @@ def train_step(state, batch):
 def create_train_state(rng, model):
   """Creates initial TrainState."""
   batch_size = 8
-  max_tokens = 896
+  max_tokens = 256
   max_num_nodes = 80
   max_num_edges = 160
   fake_input = data_io.get_fake_input(
@@ -236,10 +236,10 @@ def create_train_state(rng, model):
 def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
   epochs = 1000
   batch_size = 8
-  max_tokens = 896
+  max_tokens = 256
   max_num_nodes = 80
   max_num_edges = 160
-  max_steps = 16
+  max_steps = 100
   padded_shapes = data_io.get_padded_shapes(
       max_tokens, max_num_nodes, max_num_edges)
   allowlist = error_kinds.TIER1_ERROR_IDS
@@ -249,6 +249,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
       data_io.load_dataset(dataset_path, split=split)
       .filter(filter_fn)
       .repeat(epochs)
+      .shuffle(1000)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
