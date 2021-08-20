@@ -271,7 +271,7 @@ def load_dataset(dataset_path=DEFAULT_DATASET_PATH, split='train'):
       .filter(filter_fn)
       .take(batch_size)  # TODO(dbieber): Remove this.
       .repeat(epochs)
-      .shuffle(1000)
+      # .shuffle(1000)
       .padded_batch(batch_size, padded_shapes=padded_shapes)
   )
 
