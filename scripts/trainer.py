@@ -170,7 +170,7 @@ class TrainState(train_state.TrainState):
 class Trainer:
 
   model_class: Text = 'IPAGNN'
-  epochs: int = 1000
+  epochs: Optional[int] = None
   batch_size: int = 128
   max_tokens: int = 256
   max_num_nodes: int = 80
