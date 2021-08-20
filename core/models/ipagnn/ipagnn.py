@@ -211,7 +211,6 @@ class IPAGNNModule(nn.Module):
     config = self.config
     output_token_vocabulary_size = info.vocab_size
 
-    # self.ipagnn_layer = IPAGNNLayer(info=info, config=config)
     # TODO(dbieber): Once linen makes it possible, set prevent_cse=False.
     IPAGNNLayerRemat = nn.remat(IPAGNNLayer)
     self.ipagnn_layer_scan = nn.scan(
@@ -256,21 +255,7 @@ class IPAGNNModule(nn.Module):
     )
     # instruction_pointer.shape: batch_size, num_nodes,
 
-    # The scan that follows is equivalent to:
-    # for _ in range(self.max_steps):
-    #   (hidden_states, instruction_pointer, current_step), _ = self.ipagnn_layer(
-    #       # State:
-    #       (hidden_states, instruction_pointer, current_step),
-    #       # Inputs:
-    #       node_embeddings,
-    #       edge_sources,
-    #       edge_dests,
-    #       edge_types,
-    #       true_indexes,
-    #       false_indexes,
-    #       exit_indexes,
-    #       step_limits,
-    #   )
+    # Run self.max_steps steps of IPAGNNLayer.
     (hidden_states, instruction_pointer, current_step), _ = self.ipagnn_layer_scan(
         # State:
         (hidden_states, instruction_pointer, current_step),
