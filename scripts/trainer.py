@@ -179,13 +179,17 @@ class Trainer:
   hidden_size: int = 10
   multidevice: bool = True
 
-  def load_dataset(self, dataset_path=DEFAULT_DATASET_PATH, split='train'):
+  def load_dataset(
+    self, dataset_path=DEFAULT_DATASET_PATH, split='train',
+    allowlist=None,
+  ):
     batch_size = self.batch_size
     epochs = self.epochs
 
     padded_shapes = data_io.get_padded_shapes(
         self.max_tokens, self.max_num_nodes, self.max_num_edges)
-    allowlist = error_kinds.TIER1_ERROR_IDS
+    if allowlist == 'TIER1_ERROR_IDS':
+      allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
         self.max_tokens, self.max_num_nodes, self.max_num_edges,
         self.max_steps, allowlist=allowlist)
