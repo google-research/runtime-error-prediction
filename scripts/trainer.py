@@ -2,7 +2,7 @@
 
 import dataclasses
 import itertools
-from typing import Any, Optional, Text
+from typing import Any, List, Optional, Text
 
 import fire
 from flax import linen as nn
@@ -177,14 +177,15 @@ class Trainer:
   max_num_edges: int = 160
   max_steps: int = 100
   hidden_size: int = 10
+  allowlist: Optional[List[int]] = None
   multidevice: bool = True
 
   def load_dataset(
     self, dataset_path=DEFAULT_DATASET_PATH, split='train',
-    allowlist=None,
   ):
     batch_size = self.batch_size
     epochs = self.epochs
+    allowlist = self.allowlist
 
     padded_shapes = data_io.get_padded_shapes(
         self.max_tokens, self.max_num_nodes, self.max_num_edges)
