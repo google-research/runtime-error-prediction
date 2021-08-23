@@ -172,11 +172,11 @@ class Trainer:
   model_class: Text = 'IPAGNN'
   epochs: Optional[int] = None
   batch_size: int = 128
-  max_tokens: int = 256
-  max_num_nodes: int = 80
-  max_num_edges: int = 160
-  max_steps: int = 100
-  hidden_size: int = 10
+  max_tokens: int = 512
+  max_num_nodes: int = 128
+  max_num_edges: int = 128
+  max_steps: int = 174
+  hidden_size: int = 16
   allowlist: Optional[List[int]] = None
   multidevice: bool = True
 
