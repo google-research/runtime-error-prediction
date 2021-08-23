@@ -28,7 +28,7 @@ ERROR_KINDS = [
     'TabError',
     'TypeError',  # index = 25
     'UnboundLocalError',
-    'ValueError',
+    'ValueError',  # index = 27
     'ZeroDivisionError',
     'numpy.AxisError',  # index = 29
     # 'Exception',
