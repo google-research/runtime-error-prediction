@@ -18,9 +18,11 @@ if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
 elif HOSTNAME == 'code-executor-001':
   PYTHON3 = '/home/dbieber/_39/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+  EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 elif HOSTNAME == 'dev-000':
   PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
   DATA_ROOT = '/home/veetee/Project_CodeNet/'
+  EVALS_ROOT = '/home/veetee/out/evals'
 
 CLOUD_DATA_ROOT = 'gs://project-codenet/'
 
