@@ -13,6 +13,7 @@ from typing import Any, List, Optional, Text
 
 import fire
 from flax import linen as nn
+from flax.training import checkpoints
 from flax.training import common_utils
 from flax.training import train_state
 import jax
@@ -316,6 +317,8 @@ class Trainer:
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
     rng = jax.random.PRNGKey(0)
+    checkpoint_dir = codenet_paths.make_checkpoints_path()
+    print(f'Checkpoints: {checkpoint_dir}')
 
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
@@ -340,6 +343,9 @@ Targets:
 {targets}
 Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
+
+      if step % 20 == 0:
+        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
 
 
 if __name__ == '__main__':

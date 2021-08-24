@@ -1,5 +1,8 @@
+from datetime import datetime
+
 import os
 import socket
+import time
 
 DEFAULT_DATASET_PATH = 'out/data/default'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
@@ -32,3 +35,10 @@ def make_tfrecord_path(dataset_path, split):
 
 def make_ids_path(tfrecord_path):
   return tfrecord_path.replace('.tfrecord', '-ids.json')
+
+
+def make_checkpoints_path():
+  now = datetime.now()
+  date_str = now.strftime('%Y%m%d')
+  milliseconds = int(round(time.time() * 1000))
+  return os.path.join('out', 'checkpoints', f'{date_str}-{milliseconds}')
