@@ -1,6 +1,5 @@
 from sklearn.metrics import f1_score, confusion_matrix
 
-
 def get_f1_score(true, pred, average="micro"):
     return f1_score(true, pred, average=average)
 
