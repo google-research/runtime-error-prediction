@@ -37,27 +37,27 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
 class TrainTest(absltest.TestCase):
-    def setUp(self):
-        super().setUp()
-        tf.config.experimental.set_visible_devices([], "GPU")
+  def setUp(self):
+    super().setUp()
+    tf.config.experimental.set_visible_devices([], "GPU")
 
-    def test_create_model(self):
-        """Tests creating model."""
-        config = default_lib.get_config()
-        rng = jax.random.PRNGKey(config.seed_id)
-        rng, init_rng = jax.random.split(rng)
-        model = setup.create_model(config)
-        fake_input = setup.create_fake_inputs(
-            config.dataset.batch_size,
-            config.dataset.max_tokens,
-            config.dataset.max_length,
-            config.model.name,
-        )
-        train_state = setup.create_train_state(init_rng, model, fake_input, config)
-        model = setup.create_model(config)
-        y = model.apply({"params": train_state.params}, fake_input, config)
-        self.assertEqual(y.shape, (config.dataset.batch_size, NUM_CLASSES))
+  def test_create_model(self):
+    """Tests creating model."""
+    config = default_lib.get_config()
+    rng = jax.random.PRNGKey(config.seed_id)
+    rng, init_rng = jax.random.split(rng)
+    model = setup.create_model(config)
+    fake_input = setup.create_fake_inputs(
+      config.dataset.batch_size,
+      config.dataset.max_tokens,
+      config.dataset.max_length,
+      config.model.name,
+    )
+    train_state = setup.create_train_state(init_rng, model, fake_input, config)
+    model = setup.create_model(config)
+    y = model.apply({"params": train_state.params}, fake_input, config)
+    self.assertEqual(y.shape, (config.dataset.batch_size, NUM_CLASSES))
 
 
 if __name__ == "__main__":
-    absltest.main()
+  absltest.main()

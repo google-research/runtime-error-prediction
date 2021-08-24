@@ -59,27 +59,27 @@ def train_step(state, batch, config):
   state = dataclasses.replace(state, rng=new_rng)
 
   def loss_fn(params):
-    logits = model.apply(
-        {'params': params},
-        batch,
-        rngs={'dropout': dropout_rng}
-    )
-    labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
-    losses = optax.softmax_cross_entropy(
-        logits=logits,
-        labels=labels)
-    loss = jnp.mean(losses)
-    return loss, {
-        'logits': logits,
-    }
+  logits = model.apply(
+    {'params': params},
+    batch,
+    rngs={'dropout': dropout_rng}
+  )
+  labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+  losses = optax.softmax_cross_entropy(
+    logits=logits,
+    labels=labels)
+  loss = jnp.mean(losses)
+  return loss, {
+    'logits': logits,
+  }
 
   grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
   (loss, aux), grads = grad_fn(state.params)
   state = state.apply_gradients(grads=grads)
   # TODO(dbieber): Optionally compute on-device metrics here.
   return state, {
-      'logits': aux['logits'],
-      'loss': loss,
+    'logits': aux['logits'],
+    'loss': loss,
   }
 
 # @jax.jit
@@ -110,52 +110,52 @@ def train_step(state, batch, config):
 
 
 def trainer(config):
-    train_state, train_dataset, eval_dataset = setup.setup(config)
-    iter_id = 0
-    # TODO (rishab): store the state of the early stopping.
-    es = early_stopping.EarlyStopping(
-        min_delta=config.runner.early_stopping_delta,
-        patience=config.runner.early_stopping_threshold,
-    )
-    summary_writer = tensorboard.SummaryWriter(config.checkpoint.path)
-    summary_writer.hparams(config.to_dict())
+  train_state, train_dataset, eval_dataset = setup.setup(config)
+  iter_id = 0
+  # TODO (rishab): store the state of the early stopping.
+  es = early_stopping.EarlyStopping(
+    min_delta=config.runner.early_stopping_delta,
+    patience=config.runner.early_stopping_threshold,
+  )
+  summary_writer = tensorboard.SummaryWriter(config.checkpoint.path)
+  summary_writer.hparams(config.to_dict())
 
-    logging.info("Starting the training loop.")
+  logging.info("Starting the training loop.")
 
-    for step, batch in enumerate(tfds.as_numpy(train_dataset)):
-        train_state, aux = train_step(train_state, batch, config)
+  for step, batch in enumerate(tfds.as_numpy(train_dataset)):
+    train_state, aux = train_step(train_state, batch, config)
 
-        if iter_id % config.logging.save_freq == 0:
-            misc_utils.save_checkpoint(train_state, config.checkpoint.path)
+    if iter_id % config.logging.save_freq == 0:
+      misc_utils.save_checkpoint(train_state, config.checkpoint.path)
 
-        if iter_id % config.eval_steps == 0:
-            if eval_dataset is None:
-                logging.info(
-                    "Validation dataset unspecified. Using train dataset for evaluation."
-                )
-                eval_loss, eval_classification_score = default_evaluator.evaluate(
-                    train_dataset, train_state, config
-                )
-            else:
-                eval_loss, eval_classification_score = default_evaluator.evaluate(
-                    eval_dataset, train_state, config
-                )
-            logging.info(
-                f"Validation loss: {eval_loss}\n Validation {config.eval_metric}: {eval_classification_score}"
-            )
-            (
-                _,
-                batch_loss,
-                batch_classification_score,
-            ) = default_evaluator.evaluate_batch(batch, train_state, config)
-            summary_writer.scalar("train_loss", batch_loss, iter_id)
-            summary_writer.scalar("train_metric", batch_classification_score, iter_id)
-            summary_writer.scalar("eval_loss", eval_loss, iter_id)
-            summary_writer.scalar("eval_metric", eval_classification_score, iter_id)
+    if iter_id % config.eval_steps == 0:
+      if eval_dataset is None:
+        logging.info(
+          "Validation dataset unspecified. Using train dataset for evaluation."
+        )
+        eval_loss, eval_classification_score = default_evaluator.evaluate(
+          train_dataset, train_state, config
+        )
+      else:
+        eval_loss, eval_classification_score = default_evaluator.evaluate(
+          eval_dataset, train_state, config
+        )
+      logging.info(
+        f"Validation loss: {eval_loss}\n Validation {config.eval_metric}: {eval_classification_score}"
+      )
+      (
+        _,
+        batch_loss,
+        batch_classification_score,
+      ) = default_evaluator.evaluate_batch(batch, train_state, config)
+      summary_writer.scalar("train_loss", batch_loss, iter_id)
+      summary_writer.scalar("train_metric", batch_classification_score, iter_id)
+      summary_writer.scalar("eval_loss", eval_loss, iter_id)
+      summary_writer.scalar("eval_metric", eval_classification_score, iter_id)
 
-            did_improve, es = es.update(-1 * eval_loss)
-            if es.should_stop:
-                logging.info("Early stopping triggered.")
-                break
+      did_improve, es = es.update(-1 * eval_loss)
+      if es.should_stop:
+        logging.info("Early stopping triggered.")
+        break
 
-        iter_id += 1
+    iter_id += 1
