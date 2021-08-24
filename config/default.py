@@ -21,6 +21,10 @@ def default_config():
   config.allowlist: Optional[List[int]] = None
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = None
+
+  config.eval_freq = 1000
+  config.save_freq = 1000
+  config.eval_metric = 'F1-score'
   return config
 
 
