@@ -11,7 +11,6 @@ import dataclasses
 import itertools
 from typing import Any, List, Optional, Text
 
-import fire
 from flax.training import checkpoints
 from flax.training import common_utils
 from flax.training import train_state
@@ -43,32 +42,23 @@ class TrainState(train_state.TrainState):
 @dataclasses.dataclass
 class Trainer:
 
-  model_class: Text = 'IPAGNN'
-  epochs: Optional[int] = None
-  batch_size: int = 128
-  max_tokens: int = 512
-  max_num_nodes: int = 128
-  max_num_edges: int = 128
-  max_steps: int = 174
-  hidden_size: int = 16
-  allowlist: Optional[List[int]] = None
-  multidevice: bool = True
-  restore_checkpoint_dir: Optional[Text] = None
+  config: Config
 
   def load_dataset(
     self, dataset_path=DEFAULT_DATASET_PATH, split='train',
   ):
-    batch_size = self.batch_size
-    epochs = self.epochs
-    allowlist = self.allowlist
+    config = self.config
+    batch_size = config.batch_size
+    epochs = config.epochs
+    allowlist = config.allowlist
 
     padded_shapes = data_io.get_padded_shapes(
-        self.max_tokens, self.max_num_nodes, self.max_num_edges)
+        config.max_tokens, config.max_num_nodes, config.max_num_edges)
     if allowlist == 'TIER1_ERROR_IDS':
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
-        self.max_tokens, self.max_num_nodes, self.max_num_edges,
-        self.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0672})
+        config.max_tokens, config.max_num_nodes, config.max_num_edges,
+        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0672})
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
@@ -90,22 +80,9 @@ class Trainer:
         .padded_batch(batch_size, padded_shapes=padded_shapes)
     )
 
-  def make_sample_config(self):
-    config = Config()
-    config.model = Config()
-    config.model.hidden_size = self.hidden_size
-    config.model.rnn_layers = 2
-
-    config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / info.
-    config.max_tokens = self.max_tokens
-    config.max_num_nodes = self.max_num_nodes
-    config.max_num_edges = self.max_num_edges
-    config.max_steps = self.max_steps
-    return config
-
   def make_model(self):
-    config = self.make_sample_config()
-    model_class = self.model_class
+    config = self.config
+    model_class = config.model_class
     if model_class == 'MlpModel':
       return mlp.MlpModel()
     elif model_class == 'Transformer':
@@ -117,8 +94,9 @@ class Trainer:
 
   def create_train_state(self, rng, model):
     """Creates initial TrainState."""
+    config = self.config
     fake_input = data_io.get_fake_input(
-        self.batch_size, self.max_tokens, self.max_num_nodes, self.max_num_edges)
+        config.batch_size, config.max_tokens, config.max_num_nodes, config.max_num_edges)
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = model.init(
         {'params': params_rng, 'dropout': dropout_rng},
@@ -162,7 +140,7 @@ class Trainer:
 
       grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
       (loss, aux), grads = grad_fn(state.params)
-      if self.multidevice:
+      if self.config.multidevice:
         grads = jax.lax.pmean(grads, 'batch')
       # grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
       state = state.apply_gradients(grads=grads)
@@ -171,7 +149,7 @@ class Trainer:
           'logits': aux['logits'],
           'loss': loss,
       }
-    if self.multidevice:
+    if self.config.multidevice:
       train_step = jax.pmap(
           train_step,
           axis_name='batch',
@@ -192,13 +170,13 @@ class Trainer:
     model = self.make_model()
 
     state = self.create_train_state(init_rng, model)
-    if self.restore_checkpoint_dir is not None:
+    if self.config.restore_checkpoint_dir is not None:
       state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
     recent_accuracies = []
     for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
-      if self.multidevice:
+      if self.config.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
       predictions = jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))
@@ -220,7 +198,3 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
-
-
-if __name__ == '__main__':
-  fire.Fire()
