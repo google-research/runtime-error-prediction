@@ -344,8 +344,11 @@ Targets:
 Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
-      if step % 20 == 0:
+      if step % 2000 == 0:
         checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+
+    # Save final state.
+    checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
 
 
 if __name__ == '__main__':
