@@ -12,6 +12,7 @@ def get_confusion_matrix_score(true, pred):
 
 def evaluate(true, pred, eval_name):
   if eval_name == 'F1-score':
+    # TODO(dbieber): Support macro f1.
     return get_f1_score(true, pred, average='micro')
   elif eval_name == 'Confusion matrix':
     return get_confusion_matrix_score(true, pred)

@@ -13,12 +13,14 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
 def compute_metrics(logits, ground_truth, eval_metric):
+  # TODO(dbieber): Rename file.
   predictions = np.array(jnp.argmax(logits, -1))
   ground_truth = np.array(ground_truth)
+  labels = jax.nn.one_hot(jnp.squeeze(ground_truth, axis=-1), NUM_CLASSES)
   metric = evaluation.evaluate(ground_truth, predictions, eval_metric)
   loss = jnp.mean(
-    optax.softmax_cross_entropy(
-      logits=logits, labels=jax.nn.one_hot(ground_truth, NUM_CLASSES)
-    )
+      optax.softmax_cross_entropy(
+          logits=logits,
+          labels=labels)
   )
   return loss, metric
