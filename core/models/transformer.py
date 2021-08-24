@@ -30,7 +30,7 @@ class Transformer(nn.Module):
     self.token_embedder = spans.NodeAwareTokenEmbedder(
         transformer_config=transformer_config,
         num_embeddings=vocab_size,
-        features=config.model.hidden_size,
+        features=config.hidden_size,
         max_tokens=max_tokens,
         max_num_nodes=max_num_nodes,
     )

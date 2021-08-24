@@ -1,10 +1,10 @@
 import ml_collections
 
-DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 Config = ml_collections.ConfigDict
 
 
 def default_config():
+  """The default config."""
   config = Config()
   config.rnn_layers = 2
   config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / move to Info.
@@ -19,4 +19,11 @@ def default_config():
   config.allowlist: Optional[List[int]] = None
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = None
+  return config
+
+
+def get_config():
+  """Gets the config."""
+  config = default_config()
+  config.lock()
   return config

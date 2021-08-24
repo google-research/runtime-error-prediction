@@ -15,8 +15,7 @@ Config = ml_collections.ConfigDict
 
 def make_sample_config():
   config = Config()
-  config.model = Config()
-  config.model.hidden_size = 10
+  config.hidden_size = 10
   return config
 
 
