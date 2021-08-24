@@ -323,11 +323,10 @@ class Trainer:
 
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
+
+    state = self.create_train_state(init_rng, model)
     if self.restore_checkpoint_dir is not None:
-      state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir, None)
-      print(type(state))
-    else:
-      state = self.create_train_state(init_rng, model)
+      state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
     recent_accuracies = []
