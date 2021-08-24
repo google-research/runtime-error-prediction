@@ -187,6 +187,7 @@ class Trainer:
   hidden_size: int = 16
   allowlist: Optional[List[int]] = None
   multidevice: bool = True
+  restore_checkpoint_dir: Optional[Text] = None
 
   def load_dataset(
     self, dataset_path=DEFAULT_DATASET_PATH, split='train',
@@ -322,7 +323,11 @@ class Trainer:
 
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
-    state = self.create_train_state(init_rng, model)
+    if self.restore_checkpoint_dir is not None:
+      state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir)
+      print(type(state))
+    else:
+      state = self.create_train_state(init_rng, model)
     train_step = self.make_train_step()
 
     recent_accuracies = []
