@@ -47,7 +47,7 @@ class IPAGNN(nn.Module):
         max_num_nodes=max_num_nodes,
     )
 
-    self.ipagnn = ipagnn.IPAGNN(
+    self.ipagnn = ipagnn.IPAGNNModule(
         info=info,
         config=config,
         max_steps=max_steps,
