@@ -37,20 +37,21 @@ def evaluate(dataset, state, config):
   for batch in tfds.as_numpy(dataset):
     # logits = model.apply({'params': state.params}, batch, config)
     logits, _, _ = evaluate_batch(batch, state, config)
+    labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
     predictions.append(jnp.argmax(logits, -1))
     ground_truth.append(batch['target'])
     loss.append(
-      jnp.sum(
-        optax.softmax_cross_entropy(
-          logits=logits, labels=jax.nn.one_hot(batch['target'], NUM_CLASSES)
+        jnp.sum(
+            optax.softmax_cross_entropy(
+                logits=logits,
+                labels=labels)
         )
-      )
     )
   predictions = np.array(jnp.concatenate(predictions))
   ground_truth = np.array(jnp.concatenate(ground_truth)).flatten()
   eval_loss = sum(loss) / predictions.shape[0]
   assert predictions.shape[0] == ground_truth.shape[0]
   classification_score = evaluation.evaluate(
-    ground_truth, predictions, config.eval_metric
+      ground_truth, predictions, config.eval_metric
   )
   return eval_loss, classification_score
