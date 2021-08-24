@@ -4,7 +4,7 @@ import os
 import socket
 import time
 
-DEFAULT_DATASET_PATH = 'out/data/default'
+DEFAULT_DATASET_PATH = 'datasets/codenet/f=0.01-noudf'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 
@@ -28,6 +28,7 @@ elif HOSTNAME == 'dev-000':
   EVALS_ROOT = '/home/veetee/out/evals'
 
 CLOUD_DATA_ROOT = 'gs://project-codenet/'
+
 
 def make_tfrecord_path(dataset_path, split):
   return os.path.join(dataset_path, f'{split}.tfrecord')

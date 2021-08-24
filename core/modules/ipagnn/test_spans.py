@@ -6,8 +6,8 @@ import jax
 import jax.numpy as jnp
 
 import ml_collections
-from core.models.ipagnn import ipagnn
-from core.models.ipagnn import spans
+from core.modules.ipagnn import ipagnn
+from core.modules.ipagnn import spans
 
 
 Config = ml_collections.ConfigDict

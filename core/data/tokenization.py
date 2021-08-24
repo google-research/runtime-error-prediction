@@ -14,16 +14,16 @@ from core.data import codenet_paths
 
 DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
 SAMPLE_FILES = [
-    'data/handcrafted-10/122_A_1122406.txt',
-    'data/handcrafted-10/427_E_6564337.txt',
-    'data/handcrafted-10/525_A_11774226.txt',
-    'data/handcrafted-10/7_A_33250.txt',
-    'data/handcrafted-10/186_B_1655897.txt',
-    'data/handcrafted-10/432_B_9339909.txt',
-    'data/handcrafted-10/611_B_15111551.txt',
-    'data/handcrafted-10/306_A_3703719.txt',
-    'data/handcrafted-10/514_C_10082646.txt',
-    'data/handcrafted-10/658_A_17342467.txt',
+    'datasets/handcrafted-10/122_A_1122406.txt',
+    'datasets/handcrafted-10/427_E_6564337.txt',
+    'datasets/handcrafted-10/525_A_11774226.txt',
+    'datasets/handcrafted-10/7_A_33250.txt',
+    'datasets/handcrafted-10/186_B_1655897.txt',
+    'datasets/handcrafted-10/432_B_9339909.txt',
+    'datasets/handcrafted-10/611_B_15111551.txt',
+    'datasets/handcrafted-10/306_A_3703719.txt',
+    'datasets/handcrafted-10/514_C_10082646.txt',
+    'datasets/handcrafted-10/658_A_17342467.txt',
 ]
 
 

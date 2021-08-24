@@ -4,7 +4,7 @@ from flax import linen as nn
 import jax
 import jax.numpy as jnp
 
-from core.models.ipagnn import encoder
+from core.modules.ipagnn import encoder
 from third_party.flax_examples import transformer_modules
 
 
