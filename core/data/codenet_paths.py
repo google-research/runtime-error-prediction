@@ -1,5 +1,8 @@
+from datetime import datetime
+
 import os
 import socket
+import time
 
 DEFAULT_DATASET_PATH = 'out/data/default'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
@@ -18,6 +21,11 @@ if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
 elif HOSTNAME == 'code-executor-001':
   PYTHON3 = '/home/dbieber/_39/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+  EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
+elif HOSTNAME == 'dev-000':
+  PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
+  DATA_ROOT = '/home/veetee/Project_CodeNet/'
+  EVALS_ROOT = '/home/veetee/out/evals'
 
 CLOUD_DATA_ROOT = 'gs://project-codenet/'
 
@@ -27,3 +35,19 @@ def make_tfrecord_path(dataset_path, split):
 
 def make_ids_path(tfrecord_path):
   return tfrecord_path.replace('.tfrecord', '-ids.json')
+
+
+def make_experiment_id():
+  now = datetime.now()
+  date_str = now.strftime('%Y%m%d')
+  milliseconds = int(round(time.time() * 1000))
+  return f'{date_str}-{milliseconds}'
+
+
+def make_experiment_path(exp_id):
+  return os.path.join('out', 'experiments', exp_id)
+
+
+def make_checkpoints_path(exp_id):
+  experiment_path = make_experiment_path(exp_id)
+  return os.path.join(experiment_path, 'checkpoints')

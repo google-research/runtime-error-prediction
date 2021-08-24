@@ -155,6 +155,10 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
   lines = source.strip().split('\n')
   nodes = graph.nodes
 
+  udf_usage = examine_udfs(graph, problem_id, submission_id)
+  if udf_usage != 'No UDFs called':
+    raise ValueError('UDF not currently supported.')
+
   # cfg.nodes does not include an exit node, so we add 1.
   num_nodes = len(nodes) + 1
   exit_index = len(nodes)

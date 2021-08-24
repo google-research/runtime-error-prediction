@@ -1,4 +1,11 @@
-"""Temporary train script."""
+r"""Temporary train script.
+
+To run locally:
+python -m scripts.trainer Trainer \
+  --model_class=Transformer --batch_size=1 \
+  --nomultidevice --max_tokens=25 --max_steps=20 \
+  - run_train --dataset_path=data/codenet/f=0.01
+"""
 
 import dataclasses
 import itertools
@@ -6,6 +13,7 @@ from typing import Any, List, Optional, Text
 
 import fire
 from flax import linen as nn
+from flax.training import checkpoints
 from flax.training import common_utils
 from flax.training import train_state
 import jax
@@ -114,6 +122,7 @@ class IPAGNN(nn.Module):
     max_num_edges = config.max_num_edges
     max_steps = config.max_steps
     info = ipagnn.Info(vocab_size=vocab_size)
+    # TODO(dbieber): transformer_config is unused.
     transformer_config = transformer_modules.TransformerConfig(
         vocab_size=vocab_size,
         output_vocab_size=vocab_size,
@@ -179,6 +188,7 @@ class Trainer:
   hidden_size: int = 16
   allowlist: Optional[List[int]] = None
   multidevice: bool = True
+  restore_checkpoint_dir: Optional[Text] = None
 
   def load_dataset(
     self, dataset_path=DEFAULT_DATASET_PATH, split='train',
@@ -193,7 +203,7 @@ class Trainer:
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
         self.max_tokens, self.max_num_nodes, self.max_num_edges,
-        self.max_steps, allowlist=allowlist)
+        self.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0672})
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
@@ -309,10 +319,16 @@ class Trainer:
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
     rng = jax.random.PRNGKey(0)
+    exp_id = codenet_paths.make_experiment_id()
+    checkpoint_dir = codenet_paths.make_checkpoints_path(exp_id)
+    print(f'Checkpoints: {checkpoint_dir}')
 
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
+
     state = self.create_train_state(init_rng, model)
+    if self.restore_checkpoint_dir is not None:
+      state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
     recent_accuracies = []
@@ -333,6 +349,12 @@ Targets:
 {targets}
 Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
+
+      if step % 2000 == 0:
+        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+
+    # Save final state.
+    checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
 
 
 if __name__ == '__main__':

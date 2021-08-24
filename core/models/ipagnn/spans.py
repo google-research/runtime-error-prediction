@@ -146,6 +146,7 @@ class NodeSpanEncoder(nn.Module):
     # encoding.shape: batch_size, length, hidden_size
 
     # Get just the encoding of the first token in each span.
+    # TODO(dbieber): Replace first with some kind of pooling.
     span_encodings = jax.vmap(lambda a, b: a[b])(encoding, node_span_starts)
     # span_encodings.shape: batch_size, num_nodes, hidden_size
     return span_encodings

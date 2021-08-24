@@ -106,7 +106,25 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
   }
 
 
-def make_filter(max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=None):
+def make_filter(
+    max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=None,
+    class_subsample_values=None,
+):
+  """Makes a tf.Dataset filter function.
+
+  Args:
+    max_tokens: Filter out any examples with more than max_tokens tokens.
+    max_num_nodes: Filter out any examples with more than max_num_nodes nodes.
+    max_num_edges: Filter out any examples with more than max_num_edges edges.
+    max_steps: Filter out any examples with step_limit more than max_steps.
+    allowlist: (Optional) If set, only admit examples with targets in this list.
+    class_subsample_values: (Optional[Dict]) If set, keys indicate which target
+      classes to subsample, and values indicate how much to subsample.
+      class_subsample_values={1: 0.25} will admit only 25% of examples with
+      target 1.
+  Returns:
+    The filter function, suitable for use with dataset.filter.
+  """
   def fn(example):
     # An on-device predicate for filtering out too-large examples.
     allowed = tf.squeeze(
@@ -116,12 +134,19 @@ def make_filter(max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=N
         & (example['step_limit'] <= max_steps),
         axis=-1
     )
+    target = example['target'][0]
     if allowlist is not None:
       # Limit the allowed error_kinds to the allowlist.
       class_ok = False
       for index in allowlist:
-        class_ok |= (example['target'][0] == index)
+        class_ok |= (target == index)
       allowed = allowed & class_ok
+
+    # Filter x% of examples with target == 1 (the most common class).
+    if class_subsample_values is not None:
+      for key, value in class_subsample_values.items():
+        allowed &= ((target != key) | (tf.random.uniform(shape=()) < value))
+
     return allowed
   return fn
 
