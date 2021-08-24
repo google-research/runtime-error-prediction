@@ -17,12 +17,26 @@
 """Jax runner binary for the Learned Interpreters project."""
 
 import os
+import dataclasses
+from typing import Any
 
+import fire
+from flax import linen as nn
+from flax.training import train_state
 import jax
 import jax.numpy as jnp
-import numpy as np
+import ml_collections
 import optax
 import tensorflow_datasets as tfds
+
+from core.data import codenet_paths
+from core.data import data_io
+from core.data import error_kinds
+from core.models.ipagnn import encoder
+from core.models.ipagnn import ipagnn
+from core.models.ipagnn import spans
+from third_party.flax_examples import transformer_modules
+
 from absl import app, flags, logging
 from flax.metrics import tensorboard
 from flax.training import checkpoints, early_stopping
@@ -34,34 +48,65 @@ from lib import misc_utils, setup
 from models import models_lib
 
 NUM_CLASSES = error_kinds.NUM_CLASSES
-DEFAULT_DATA_DIR = "data"
-DEFAULT_CONFIG = "config/default.py"
+DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 
 # @jax.jit
 def train_step(state, batch, config):
-    """The on-device part of a train step."""
-    model = models_lib.ModelFactory()(config.model.name)()
+  """The on-device part of a train step."""
+  model = models_lib.ModelFactory()(config.model.name)(config)
 
-    def loss_fn(params):
-        logits = model.apply(
-            {"params": params},
-            batch,
-            config,
-        )
-        loss = jnp.mean(
-            optax.softmax_cross_entropy(
-                logits=logits, labels=jax.nn.one_hot(batch["target"], NUM_CLASSES)
-            )
-        )
-        return loss, {"logits": logits, "loss": loss}
+  new_rng, dropout_rng = jax.random.split(state.rng, 2)
+  state = dataclasses.replace(state, rng=new_rng)
 
-    grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
-    (_, aux), grads = grad_fn(state.params)
-    state = state.apply_gradients(grads=grads)
-    return state, {
-        "logits": aux["logits"],
-        "loss": aux["loss"],
+  def loss_fn(params):
+    logits = model.apply(
+        {'params': params},
+        batch,
+        rngs={'dropout': dropout_rng}
+    )
+    labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+    losses = optax.softmax_cross_entropy(
+        logits=logits,
+        labels=labels)
+    loss = jnp.mean(losses)
+    return loss, {
+        'logits': logits,
     }
+
+  grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
+  (loss, aux), grads = grad_fn(state.params)
+  state = state.apply_gradients(grads=grads)
+  # TODO(dbieber): Optionally compute on-device metrics here.
+  return state, {
+      'logits': aux['logits'],
+      'loss': loss,
+  }
+
+# @jax.jit
+# def train_step(state, batch, config):
+#     """The on-device part of a train step."""
+#     model = models_lib.ModelFactory()(config.model.name)()
+
+#     def loss_fn(params):
+#         logits = model.apply(
+#             {"params": params},
+#             batch,
+#             config,
+#         )
+#         loss = jnp.mean(
+#             optax.softmax_cross_entropy(
+#                 logits=logits, labels=jax.nn.one_hot(batch["target"], NUM_CLASSES)
+#             )
+#         )
+#         return loss, {"logits": logits, "loss": loss}
+
+#     grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
+#     (_, aux), grads = grad_fn(state.params)
+#     state = state.apply_gradients(grads=grads)
+#     return state, {
+#         "logits": aux["logits"],
+#         "loss": aux["loss"],
+#     }
 
 
 def trainer(config):
@@ -77,7 +122,7 @@ def trainer(config):
 
     logging.info("Starting the training loop.")
 
-    for batch in tfds.as_numpy(train_dataset):
+    for step, batch in enumerate(tfds.as_numpy(train_dataset)):
         train_state, aux = train_step(train_state, batch, config)
 
         if iter_id % config.logging.save_freq == 0:

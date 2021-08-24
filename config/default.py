@@ -60,11 +60,14 @@ def default_config():
     config.dataset.split = "default"
     config.dataset.representation = "code"  # code, trace
     config.dataset.max_length = 10000
-    config.dataset.max_tokens = 71
+    config.dataset.max_tokens = 896
     config.dataset.batch_size = 8
+    config.dataset.max_num_nodes = 80
+    config.dataset.max_num_edges = 160
     config.dataset.vocab_size = 20000
     config.dataset.batch = True
     config.dataset.in_memory = False
+    config.max_steps = 896
 
     config.train = Config()
     config.train.total_steps = 0  # 0 means no limit.
@@ -74,8 +77,9 @@ def default_config():
 
     # Model configs.
     config.model = Config()
-    config.model.name = "StackedLSTMModel"
+    config.model.name = "IPAGNN"
     config.model.hidden_size = 64
+    config.model.rnn_layers = 1
 
     # Other configs.
     config.eval_name = ""
@@ -83,6 +87,7 @@ def default_config():
     # Number of seconds to wait without receiving checkpoint before timing out.
     config.eval_timeout = 30 * 60  # 30 minutes.
     config.eval_metric = "F1-score"
+    config.eval_metric = "Confusion matrix"
 
     config.index = 0
     return config

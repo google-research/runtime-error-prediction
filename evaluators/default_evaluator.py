@@ -12,8 +12,16 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
 def evaluate_batch(batch, state, config):
-    model = models_lib.ModelFactory()(config.model.name)()
-    logits = model.apply({"params": state.params}, batch, config)
+    model = models_lib.ModelFactory()(config.model.name)(config)
+    # Potential bug in the following line. Dropout shouldn't be used
+    # during the evaluation.
+    new_rng, dropout_rng = jax.random.split(state.rng, 2)
+    logits = model.apply(
+        {'params': state.params},
+        batch,
+        rngs={'dropout': dropout_rng}
+    )
+    # logits = model.apply({"params": state.params}, batch, config)
     loss, metric = misc_utils.compute_metrics(
         logits, batch["target"], config.eval_metric
     )
@@ -24,6 +32,7 @@ def evaluate(dataset, state, config):
     predictions = []
     ground_truth = []
     loss = []
+    print(config.eval_metric)
     for batch in tfds.as_numpy(dataset):
         # logits = model.apply({'params': state.params}, batch, config)
         logits, _, _ = evaluate_batch(batch, state, config)
