@@ -1,4 +1,11 @@
-"""Temporary train script."""
+r"""Temporary train script.
+
+To run locally:
+python -m scripts.trainer Trainer \
+  --model_class=Transformer --batch_size=1 \
+  --nomultidevice --max_tokens=25 --max_steps=20 \
+  - run_train --dataset_path=data/codenet/f=0.01
+"""
 
 import dataclasses
 import itertools
@@ -193,7 +200,7 @@ class Trainer:
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
         self.max_tokens, self.max_num_nodes, self.max_num_edges,
-        self.max_steps, allowlist=allowlist)
+        self.max_steps, allowlist=allowlist, class_subsample_values={1: 0.25})
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
