@@ -55,10 +55,7 @@ class Analyzer:
       num_nodes.append(example['num_nodes'][0])
       step_limits.append(example['step_limit'][0])
 
-    # return (targets, num_tokens, num_edges, num_nodes, step_limits)
-    # print(targets)
-    print(sum([t for t in targets if t == 1]))
-    print(len(targets))
+    return (targets, num_tokens, num_edges, num_nodes, step_limits)
 
 
 if __name__ == '__main__':
