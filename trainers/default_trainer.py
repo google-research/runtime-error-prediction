@@ -59,18 +59,18 @@ def train_step(state, batch, config):
   state = dataclasses.replace(state, rng=new_rng)
 
   def loss_fn(params):
-  logits = model.apply(
-    {'params': params},
-    batch,
-    rngs={'dropout': dropout_rng}
-  )
-  labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
-  losses = optax.softmax_cross_entropy(
-    logits=logits,
-    labels=labels)
-  loss = jnp.mean(losses)
-  return loss, {
-    'logits': logits,
+    logits = model.apply(
+      {'params': params},
+      batch,
+      rngs={'dropout': dropout_rng}
+    )
+    labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+    losses = optax.softmax_cross_entropy(
+      logits=logits,
+      labels=labels)
+    loss = jnp.mean(losses)
+    return loss, {
+      'logits': logits,
   }
 
   grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
