@@ -37,8 +37,17 @@ def make_ids_path(tfrecord_path):
   return tfrecord_path.replace('.tfrecord', '-ids.json')
 
 
-def make_checkpoints_path():
+def make_experiment_id():
   now = datetime.now()
   date_str = now.strftime('%Y%m%d')
   milliseconds = int(round(time.time() * 1000))
-  return os.path.join('out', 'checkpoints', f'{date_str}-{milliseconds}')
+  return f'{date_str}-{milliseconds}'
+
+
+def make_experiment_path(exp_id):
+  return os.path.join('out', 'experiments', exp_id)
+
+
+def make_checkpoints_path(exp_id):
+  experiment_path = make_experiment_path(exp_id)
+  return os.path.join(experiment_path, 'checkpoints')

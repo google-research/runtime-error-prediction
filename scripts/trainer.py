@@ -318,7 +318,8 @@ class Trainer:
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
     rng = jax.random.PRNGKey(0)
-    checkpoint_dir = codenet_paths.make_checkpoints_path()
+    exp_id = codenet_paths.make_experiment_id()
+    checkpoint_dir = codenet_paths.make_checkpoints_path(exp_id)
     print(f'Checkpoints: {checkpoint_dir}')
 
     rng, init_rng = jax.random.split(rng)
