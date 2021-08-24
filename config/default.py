@@ -1,3 +1,5 @@
+from typing import List, Optional, Text
+
 import ml_collections
 
 Config = ml_collections.ConfigDict
