@@ -161,6 +161,7 @@ class Trainer:
     rng = jax.random.PRNGKey(0)
     exp_id = codenet_paths.make_experiment_id()
     checkpoint_dir = codenet_paths.make_checkpoints_path(exp_id)
+    log_dir = codenet_paths.make_log_dir(exp_id)
     print(f'Checkpoints: {checkpoint_dir}')
 
     rng, init_rng = jax.random.split(rng)
@@ -173,10 +174,10 @@ class Trainer:
 
     # TODO(rishab): Store the state of the early stopping.
     es = early_stopping.EarlyStopping(
-      min_delta=config.runner.early_stopping_delta,
-      patience=config.runner.early_stopping_threshold,
+        min_delta=config.early_stopping_delta,
+        patience=config.early_stopping_threshold,
     )
-    summary_writer = tensorboard.SummaryWriter(config.checkpoint.path)
+    summary_writer = tensorboard.SummaryWriter(log_dir)
     summary_writer.hparams(config.to_dict())
 
     recent_accuracies = []
@@ -199,7 +200,7 @@ Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
       if step % config.save_freq == 0:
-        misc_utils.save_checkpoint(train_state, checkpoint_dir)
+        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
 
       if step % config.eval_freq == 0:
         if eval_dataset is None:
@@ -231,4 +232,4 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           break
 
     # Save final state.
-    misc_utils.save_checkpoint(train_state, checkpoint_dir)
+    checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)

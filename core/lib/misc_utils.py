@@ -12,12 +12,6 @@ from core.lib import evaluation
 NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
-def save_checkpoint(state, workdir):
-  os.makedirs(workdir, exist_ok=True)
-  step = int(state.step)
-  checkpoints.save_checkpoint(workdir, state, step, keep=3)
-
-
 def compute_metrics(logits, ground_truth, eval_metric):
   predictions = np.array(jnp.argmax(logits, -1))
   ground_truth = np.array(ground_truth)

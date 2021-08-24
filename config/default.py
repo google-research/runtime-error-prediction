@@ -25,6 +25,9 @@ def default_config():
   config.eval_freq = 1000
   config.save_freq = 1000
   config.eval_metric = 'F1-score'
+
+  config.early_stopping_delta = 0.001
+  config.early_stopping_threshold = 4
   return config
 
 
