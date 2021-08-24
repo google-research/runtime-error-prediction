@@ -324,7 +324,7 @@ class Trainer:
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
     if self.restore_checkpoint_dir is not None:
-      state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir)
+      state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir, None)
       print(type(state))
     else:
       state = self.create_train_state(init_rng, model)
