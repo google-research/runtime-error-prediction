@@ -12,7 +12,6 @@ import itertools
 from typing import Any, List, Optional, Text
 
 import fire
-from flax import linen as nn
 from flax.training import checkpoints
 from flax.training import common_utils
 from flax.training import train_state
@@ -29,7 +28,6 @@ from core.lib import optimizer_lib
 from core.models import ipagnn
 from core.models import mlp
 from core.models import transformer
-from third_party.flax_examples import transformer_modules
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
