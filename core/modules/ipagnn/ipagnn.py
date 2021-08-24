@@ -40,7 +40,7 @@ class IPAGNNLayer(nn.Module):
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
 
-    cells = rnn.create_lstm_cells(config.model.rnn_layers)
+    cells = rnn.create_lstm_cells(config.rnn_layers)
     self.lstm = rnn.StackedRNNCell(cells)
 
   def __call__(
@@ -66,7 +66,7 @@ class IPAGNNLayer(nn.Module):
     # Inputs.
     vocab_size = info.vocab_size
     output_token_vocabulary_size = info.vocab_size
-    hidden_size = config.model.hidden_size
+    hidden_size = config.hidden_size
     batch_size, num_nodes, unused_hidden_size = node_embeddings.shape
     # exit_indexes.shape: batch_size
 
@@ -236,7 +236,7 @@ class IPAGNNModule(nn.Module):
     config = self.config
 
     # Inputs.
-    hidden_size = config.model.hidden_size
+    hidden_size = config.hidden_size
     batch_size, num_nodes, unused_hidden_size = node_embeddings.shape
     # exit_indexes.shape: batch_size, 1
     exit_indexes = jnp.squeeze(exit_indexes, axis=-1)

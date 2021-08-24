@@ -119,7 +119,7 @@ class NodeSpanEncoder(nn.Module):
 
   def setup(self):
     vocab_size = self.info.vocab_size
-    hidden_size = self.config.model.hidden_size
+    hidden_size = self.config.hidden_size
 
     transformer_config = transformer_modules.TransformerConfig(
         vocab_size=vocab_size,
