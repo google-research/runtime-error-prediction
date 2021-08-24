@@ -122,6 +122,7 @@ class IPAGNN(nn.Module):
     max_num_edges = config.max_num_edges
     max_steps = config.max_steps
     info = ipagnn.Info(vocab_size=vocab_size)
+    # TODO(dbieber): transformer_config is unused.
     transformer_config = transformer_modules.TransformerConfig(
         vocab_size=vocab_size,
         output_vocab_size=vocab_size,
