@@ -208,7 +208,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           eval_loss = None
         else:
           eval_loss, eval_classification_score = evaluator.evaluate(
-              eval_dataset, train_state, config
+              eval_dataset, state, config
           )
         logging.info(
             f'Validation loss: {eval_loss}\n '
@@ -218,7 +218,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             _,
             batch_loss,
             batch_classification_score,
-        ) = evaluator.evaluate_batch(batch, train_state, config)
+        ) = evaluator.evaluate_batch(batch, state, config)
         summary_writer.scalar('train_loss', batch_loss, step)
         summary_writer.scalar('train_metric', batch_classification_score, step)
         summary_writer.scalar('eval_loss', eval_loss, step)

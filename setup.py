@@ -11,6 +11,7 @@ DEPENDENCIES = [
     'jaxlib>=0.1.69',
     'ml_collections',
     'python-graphs>=1.0.0',
+    'sklearn',
     'tensorflow',
     'tensorflow_datasets',
     'transformers>=4.6.0',
