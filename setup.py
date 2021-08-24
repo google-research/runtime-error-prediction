@@ -21,7 +21,7 @@ packages = [
     'core.data',
     'core.distributed',
     'core.lib',
-    'core.models.ipagnn',
+    'core.modules.ipagnn',
     'scripts',
     'third_party', 'third_party.flax_examples',
     'experimental',

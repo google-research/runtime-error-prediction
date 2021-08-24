@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 from jax import lax
 
-from core.models.ipagnn import rnn
+from core.modules.ipagnn import rnn
 
 
 @dataclasses.dataclass

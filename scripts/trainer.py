@@ -26,9 +26,9 @@ from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
 from core.lib import optimizer_lib
-from core.models.ipagnn import encoder
-from core.models.ipagnn import ipagnn
-from core.models.ipagnn import spans
+from core.modules.ipagnn import encoder
+from core.modules.ipagnn import ipagnn
+from core.modules.ipagnn import spans
 from third_party.flax_examples import transformer_modules
 
 
