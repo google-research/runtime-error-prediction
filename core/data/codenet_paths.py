@@ -4,7 +4,7 @@ import os
 import socket
 import time
 
-DEFAULT_DATASET_PATH = 'out/data/default'
+DEFAULT_DATASET_PATH = 'datasets/codenet/f=0.01-noudf'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 
