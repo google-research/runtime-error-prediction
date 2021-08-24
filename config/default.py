@@ -11,7 +11,7 @@ def default_config():
   config.rnn_layers = 2
   config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / move to Info.
   config.model_class: Text = 'IPAGNN'
-  config.epochs: Optional[int] = None
+  config.epochs: Optional[int] = 0
   config.batch_size: int = 128
   config.max_tokens: int = 512
   config.max_num_nodes: int = 128
