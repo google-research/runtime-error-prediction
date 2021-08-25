@@ -193,6 +193,10 @@ class Trainer:
     targets = jnp.array(jnp.concatenate(targets)).flatten()
     eval_loss = jnp.sum(losses) / predictions.shape[0]
     assert predictions.shape[0] == targets.shape[0]
+    print('targets.shape')
+    print(targets.shape)
+    print('predictions.shape')
+    print(predictions.shape)
     metric = evaluation.evaluate(
         targets, predictions, config.eval_metric
     )
