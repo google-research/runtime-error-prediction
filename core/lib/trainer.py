@@ -181,7 +181,7 @@ class Trainer:
     # targets.shape: batch_size,
 
     metric = evaluation.compute_metric(
-        logits, targets, config.eval_metric
+        logits, targets, config.eval_metric_name
     )
     return logits, loss, metric
 
@@ -191,7 +191,7 @@ class Trainer:
     targets = []
     losses = []
     dataset = dataset.filter(lambda x: tf.random.uniform(shape=()) < 0.1)
-    print(f'Evaluating with metric: {config.eval_metric}')
+    print(f'Evaluating with metric: {config.eval_metric_name}')
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
         batch = common_utils.shard(batch)
@@ -207,7 +207,7 @@ class Trainer:
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
     metric = evaluation.evaluate(
-        targets, predictions, config.eval_metric
+        targets, predictions, config.eval_metric_name
     )
     return eval_loss, metric
 
@@ -271,7 +271,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           eval_loss, eval_metric = self.run_eval(eval_dataset, state)
         logging.info(
             f'Validation loss: {eval_loss}\n '
-            f'Validation {config.eval_metric}: {eval_metric}'
+            f'Validation {config.eval_metric_name}: {eval_metric}'
         )
         (
             _,
