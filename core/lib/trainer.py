@@ -251,7 +251,12 @@ class Trainer:
       batch_accuracy = jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets))
       recent_accuracies.append(batch_accuracy)
       recent_accuracies = recent_accuracies[-500:]
-      print(f"""--- Step {step}
+
+      if step % config.save_freq == 0:
+        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+
+      if step % config.eval_freq == 0:
+        print(f"""--- Step {step}
 Loss: {aux['loss']}
 Predictions:
 {predictions}
@@ -260,15 +265,8 @@ Targets:
 Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
-      if step % config.save_freq == 0:
-        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
-
-      if step % config.eval_freq == 0:
-        if eval_dataset is None:
-          logging.info('Validation dataset unspecified. Skipping evaluation.')
-          eval_loss = None
-        else:
-          eval_loss, eval_metric = self.run_eval(eval_dataset, state)
+        # Run complete evaluation:
+        eval_loss, eval_metric = self.run_eval(eval_dataset, state)
         logging.info(
             f'Validation loss: {eval_loss}\n'
             f'Validation {config.eval_metric_name}: {eval_metric}'
@@ -283,8 +281,6 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
         summary_writer.scalar('eval_loss', eval_loss, step)
         summary_writer.scalar('eval_metric', eval_metric, step)
 
-        if eval_loss is None:
-          eval_loss = batch_loss
         did_improve, es = es.update(-1 * eval_loss)
         if es.should_stop:
           logging.info('Early stopping triggered.')
