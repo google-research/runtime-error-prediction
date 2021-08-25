@@ -26,7 +26,7 @@ def default_config():
   config.save_freq = 1000
   config.eval_metric_name = 'F1-score'
   config.eval_subsample = 0.01
-  config.eval_max_batches = 300
+  config.eval_max_batches = 30
 
   config.early_stopping_delta = 0.001
   config.early_stopping_threshold = 4
