@@ -14,13 +14,13 @@ import jax
 import jax.numpy as jnp
 import ml_collections
 import optax
+import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
-from core.lib import evaluator
-from core.lib import misc_utils
+from core.lib import evaluation  # TODO(dbieber): Rename evaluation into metrics.
 from core.lib import models
 from core.lib import optimizer_lib
 
@@ -74,7 +74,7 @@ class Trainer:
         .filter(filter_fn)
         .repeat(epochs)
         .shuffle(1000)
-        .padded_batch(batch_size, padded_shapes=padded_shapes)
+        .padded_batch(batch_size, padded_shapes=padded_shapes, drop_remainder=True)
     )
 
   def make_model(self):
@@ -95,7 +95,36 @@ class Trainer:
     return TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
+  def make_loss_fn(self):
+    model = self.make_model()
+
+    def loss_fn(params, batch, dropout_rng):
+      logits = model.apply(
+          {'params': params},
+          batch,
+          rngs={'dropout': dropout_rng}
+      )
+      assert len(logits.shape) == 2
+      # logits.shape: batch_size, NUM_CLASSES
+      labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+      assert len(labels.shape) == 2
+      # labels.shape: batch_size, NUM_CLASSES
+      losses = optax.softmax_cross_entropy(
+          logits=logits,
+          labels=labels)
+      assert len(losses.shape) == 1
+      # losses.shape: batch_size
+      loss = jnp.mean(losses)
+      assert len(loss.shape) == 0
+      return loss, {
+          'logits': logits,
+      }
+
+    return loss_fn
+
   def make_train_step(self):
+    loss_fn = self.make_loss_fn()
+
     @jax.jit
     def train_step(state, batch):
       """The on-device part of a train step."""
@@ -104,30 +133,8 @@ class Trainer:
       new_rng, dropout_rng = jax.random.split(state.rng, 2)
       state = dataclasses.replace(state, rng=new_rng)
 
-      def loss_fn(params):
-        logits = model.apply(
-            {'params': params},
-            batch,
-            rngs={'dropout': dropout_rng}
-        )
-        assert len(logits.shape) == 2
-        # logits.shape: batch_size, NUM_CLASSES
-        labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
-        assert len(labels.shape) == 2
-        # labels.shape: batch_size, NUM_CLASSES
-        losses = optax.softmax_cross_entropy(
-            logits=logits,
-            labels=labels)
-        assert len(losses.shape) == 1
-        # losses.shape: batch_size
-        loss = jnp.mean(losses)
-        assert len(loss.shape) == 0
-        return loss, {
-            'logits': logits,
-        }
-
-      grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
-      (loss, aux), grads = grad_fn(state.params)
+      grad_fn = jax.value_and_grad(loss_fn, argnums=0, has_aux=True)
+      (loss, aux), grads = grad_fn(state.params, batch, dropout_rng)
       if self.config.multidevice:
         grads = jax.lax.pmean(grads, 'batch')
       # grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
@@ -145,6 +152,64 @@ class Trainer:
           out_axes=(None, 0),
       )
     return train_step
+
+  def evaluate_batch(self, batch, state):
+    config = self.config
+    loss_fn = self.make_loss_fn()
+    if config.multidevice:
+      loss_fn = jax.pmap(
+          loss_fn,
+          axis_name='batch',
+          in_axes=(None, 0, None),
+          out_axes=0,
+      )
+
+    new_rng, dropout_rng = jax.random.split(state.rng, 2)
+    state = dataclasses.replace(state, rng=new_rng)
+
+    # TODO(dbieber): Dropout shouldn't be used during the evaluation.
+    # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
+    loss, aux = loss_fn(state.params, batch, dropout_rng)
+
+    logits = aux['logits']
+    targets = jnp.squeeze(batch['target'], axis=-1)
+    if config.multidevice:
+      loss = jnp.mean(loss)
+      logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
+      targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
+    # logits.shape: batch_size, NUM_CLASSES
+    # targets.shape: batch_size,
+
+    metric = evaluation.compute_metric(
+        logits, targets, config.eval_metric_name
+    )
+    return logits, loss, metric
+
+  def run_eval(self, dataset, state):
+    config = self.config
+    predictions = []
+    targets = []
+    losses = []
+    dataset = dataset.filter(lambda x: tf.random.uniform(shape=()) < 0.1)
+    print(f'Evaluating with metric: {config.eval_metric_name}')
+    for batch in tfds.as_numpy(dataset):
+      if config.multidevice:
+        batch = common_utils.shard(batch)
+      logits, loss, _ = self.evaluate_batch(batch, state)
+      predictions.append(jnp.argmax(logits, -1))
+      targets.append(batch['target'])
+      losses.append(loss)
+    predictions = jnp.array(jnp.concatenate(predictions))
+    targets = jnp.array(jnp.concatenate(targets)).flatten()
+    eval_loss = jnp.sum(jnp.array(losses)) / predictions.shape[0]
+    # targets.shape: num_eval_examples,
+    # predictions.shape: num_eval_examples,
+    assert predictions.shape == targets.shape
+    assert len(predictions.shape) == 1
+    metric = evaluation.evaluate(
+        targets, predictions, config.eval_metric_name
+    )
+    return eval_loss, metric
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
@@ -203,22 +268,20 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           logging.info('Validation dataset unspecified. Skipping evaluation.')
           eval_loss = None
         else:
-          eval_loss, eval_classification_score = evaluator.evaluate(
-              eval_dataset, state, config
-          )
+          eval_loss, eval_metric = self.run_eval(eval_dataset, state)
         logging.info(
-            f'Validation loss: {eval_loss}\n '
-            f'Validation {config.eval_metric}: {eval_classification_score}'
+            f'Validation loss: {eval_loss}\n'
+            f'Validation {config.eval_metric_name}: {eval_metric}'
         )
         (
             _,
             batch_loss,
-            batch_classification_score,
-        ) = evaluator.evaluate_batch(batch, state, config)
+            batch_metric,
+        ) = self.evaluate_batch(batch, state)
         summary_writer.scalar('train_loss', batch_loss, step)
-        summary_writer.scalar('train_metric', batch_classification_score, step)
+        summary_writer.scalar('train_metric', batch_metric, step)
         summary_writer.scalar('eval_loss', eval_loss, step)
-        summary_writer.scalar('eval_metric', eval_classification_score, step)
+        summary_writer.scalar('eval_metric', eval_metric, step)
 
         if eval_loss is None:
           eval_loss = batch_loss
