@@ -188,6 +188,7 @@ class Trainer:
     predictions = []
     targets = []
     losses = []
+    dataset = dataset.filter(lambda x: tf.random.uniform(shape=()) < 0.001)
     print(f'Evaluating with metric: {config.eval_metric}')
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
