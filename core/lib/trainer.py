@@ -73,7 +73,7 @@ class Trainer:
         .filter(filter_fn)
         .repeat(epochs)
         .shuffle(1000)
-        .padded_batch(batch_size, padded_shapes=padded_shapes)
+        .padded_batch(batch_size, padded_shapes=padded_shapes, drop_remainder=True)
     )
 
   def make_model(self):
