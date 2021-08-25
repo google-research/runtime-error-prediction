@@ -172,7 +172,7 @@ class Trainer:
     loss, aux = loss_fn(state.params, batch, dropout_rng)
 
     logits = aux['logits']
-    metric = misc_utils.compute_metric(
+    metric = evaluation.compute_metric(
         logits, batch['target'], config.eval_metric
     )
     return logits, loss, metric
@@ -185,9 +185,6 @@ class Trainer:
     print(f'Evaluating with metric: {config.eval_metric}')
     for batch in tfds.as_numpy(dataset):
       logits, loss, _ = self.evaluate_batch(batch, state, config)
-      assert len(logits.shape) == 2
-      labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
-      assert len(labels.shape) == 2
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
