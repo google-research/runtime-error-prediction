@@ -1,11 +1,4 @@
-r"""Temporary train script.
-
-To run locally:
-python -m scripts.trainer Trainer \
-  --model_class=Transformer --batch_size=1 \
-  --nomultidevice --max_tokens=25 --max_steps=20 \
-  - run_train --dataset_path=data/codenet/f=0.01
-"""
+"""Train library."""
 
 import dataclasses
 import itertools
@@ -48,11 +41,12 @@ class Trainer:
   config: Config
 
   def load_dataset(
-    self, dataset_path=DEFAULT_DATASET_PATH, split='train',
+    self, dataset_path=DEFAULT_DATASET_PATH, split='train', epochs=None
   ):
     config = self.config
     batch_size = config.batch_size
-    epochs = config.epochs
+    if epochs is None:
+      epochs = config.epochs
     allowlist = config.allowlist
 
     padded_shapes = data_io.get_padded_shapes(
@@ -156,7 +150,7 @@ class Trainer:
     config = self.config
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
-    eval_dataset = self.load_dataset(dataset_path, split='valid')
+    eval_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
 
     rng = jax.random.PRNGKey(0)
     exp_id = codenet_paths.make_experiment_id()
@@ -185,6 +179,8 @@ class Trainer:
       if config.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
+
+      # Compute batch eval.
       predictions = jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))
       targets = jnp.squeeze(batch['target'])
       batch_accuracy = jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets))
