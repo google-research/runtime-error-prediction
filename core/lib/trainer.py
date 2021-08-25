@@ -183,6 +183,8 @@ class Trainer:
     losses = []
     print(f'Evaluating with metric: {config.eval_metric}')
     for batch in tfds.as_numpy(dataset):
+      if config.multidevice:
+        batch = common_utils.shard(batch)
       logits, loss, _ = self.evaluate_batch(batch, state)
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
