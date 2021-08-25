@@ -19,6 +19,7 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.lib import evaluation  # TODO(dbieber): Combine and rename evaluation and misc_utils into metrics.
 from core.lib import misc_utils
 from core.lib import models
 from core.lib import optimizer_lib
@@ -190,8 +191,8 @@ class Trainer:
       predictions.append(jnp.argmax(logits, -1))
       ground_truth.append(batch['target'])
       losses.append(loss)
-    predictions = np.array(jnp.concatenate(predictions))
-    ground_truth = np.array(jnp.concatenate(ground_truth)).flatten()
+    predictions = jnp.array(jnp.concatenate(predictions))
+    ground_truth = jnp.array(jnp.concatenate(ground_truth)).flatten()
     eval_loss = jnp.sum(losses) / predictions.shape[0]
     assert predictions.shape[0] == ground_truth.shape[0]
     metric = evaluation.evaluate(
