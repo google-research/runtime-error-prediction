@@ -178,7 +178,7 @@ class Trainer:
     print("batch['target'].shape")
     print(batch['target'].shape)
     metric = evaluation.compute_metric(
-        logits, batch['target'], config.eval_metric
+        logits, targets, config.eval_metric
     )
     return logits, loss, metric
 
