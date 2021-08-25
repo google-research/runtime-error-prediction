@@ -14,6 +14,7 @@ import jax
 import jax.numpy as jnp
 import ml_collections
 import optax
+import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from core.data import codenet_paths
