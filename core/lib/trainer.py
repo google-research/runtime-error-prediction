@@ -194,10 +194,10 @@ class Trainer:
     ground_truth = np.array(jnp.concatenate(ground_truth)).flatten()
     eval_loss = jnp.sum(losses) / predictions.shape[0]
     assert predictions.shape[0] == ground_truth.shape[0]
-    classification_score = evaluation.evaluate(
+    metric = evaluation.evaluate(
         ground_truth, predictions, config.eval_metric
     )
-    return eval_loss, classification_score
+    return eval_loss, metric
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
@@ -256,7 +256,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           logging.info('Validation dataset unspecified. Skipping evaluation.')
           eval_loss = None
         else:
-          eval_loss, eval_classification_score = self.evaluate(
+          eval_loss, eval_classification_score = self.run_eval(
               eval_dataset, state, config
           )
         logging.info(
