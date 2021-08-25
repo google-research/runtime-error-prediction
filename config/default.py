@@ -22,7 +22,7 @@ def default_config():
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = None
 
-  config.eval_freq = 1000
+  config.eval_freq = 10000
   config.save_freq = 1000
   config.eval_metric_name = 'F1-score'
   config.eval_subsample = 0.01
