@@ -270,7 +270,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
         else:
           eval_loss, eval_metric = self.run_eval(eval_dataset, state)
         logging.info(
-            f'Validation loss: {eval_loss}\n '
+            f'Validation loss: {eval_loss}\n'
             f'Validation {config.eval_metric_name}: {eval_metric}'
         )
         (
