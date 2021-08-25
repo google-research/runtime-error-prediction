@@ -28,6 +28,7 @@ def default_config():
   config.eval_subsample = 0.01
   config.eval_max_batches = 30
 
+  config.early_stopping_on = False
   config.early_stopping_delta = 0.001
   config.early_stopping_threshold = 4
   return config

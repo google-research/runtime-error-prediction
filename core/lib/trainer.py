@@ -290,7 +290,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
         summary_writer.scalar('eval_metric', eval_metric, step)
 
         did_improve, es = es.update(-1 * eval_loss)
-        if es.should_stop:
+        if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')
           break
 
