@@ -1,7 +1,10 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from sklearn import metrics
+
+from core.data import error_kinds
 
 NUM_CLASSES = error_kinds.NUM_CLASSES
 
