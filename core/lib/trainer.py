@@ -153,7 +153,7 @@ class Trainer:
       )
     return train_step
 
-  def evaluate_batch(self, batch, state):
+  def make_evaluate_batch(self):
     config = self.config
     loss_fn = self.make_loss_fn()
     if config.multidevice:
@@ -163,29 +163,30 @@ class Trainer:
           in_axes=(None, 0, None),
           out_axes=0,
       )
+    def evaluate_batch(batch, state):
+      new_rng, dropout_rng = jax.random.split(state.rng, 2)
+      state = dataclasses.replace(state, rng=new_rng)
 
-    new_rng, dropout_rng = jax.random.split(state.rng, 2)
-    state = dataclasses.replace(state, rng=new_rng)
+      # TODO(dbieber): Dropout shouldn't be used during the evaluation.
+      # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
+      loss, aux = loss_fn(state.params, batch, dropout_rng)
 
-    # TODO(dbieber): Dropout shouldn't be used during the evaluation.
-    # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
-    loss, aux = loss_fn(state.params, batch, dropout_rng)
+      logits = aux['logits']
+      targets = jnp.squeeze(batch['target'], axis=-1)
+      if config.multidevice:
+        loss = jnp.mean(loss)
+        logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
+        targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
+      # logits.shape: batch_size, NUM_CLASSES
+      # targets.shape: batch_size,
 
-    logits = aux['logits']
-    targets = jnp.squeeze(batch['target'], axis=-1)
-    if config.multidevice:
-      loss = jnp.mean(loss)
-      logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
-      targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
-    # logits.shape: batch_size, NUM_CLASSES
-    # targets.shape: batch_size,
+      metric = evaluation.compute_metric(
+          logits, targets, config.eval_metric_name
+      )
+      return logits, loss, metric
+    return evaluate_batch
 
-    metric = evaluation.compute_metric(
-        logits, targets, config.eval_metric_name
-    )
-    return logits, loss, metric
-
-  def run_eval(self, dataset, state):
+  def run_eval(self, dataset, state, evaluate_batch):
     config = self.config
     predictions = []
     targets = []
@@ -199,7 +200,7 @@ class Trainer:
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
         batch = common_utils.shard(batch)
-      logits, loss, _ = self.evaluate_batch(batch, state)
+      logits, loss, _ = evaluate_batch(batch, state)
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
@@ -221,6 +222,7 @@ class Trainer:
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
     eval_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
+    evaluate_batch = self.make_evaluate_batch()
 
     rng = jax.random.PRNGKey(0)
     exp_id = codenet_paths.make_experiment_id()
@@ -271,7 +273,8 @@ Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
         # Run complete evaluation:
-        eval_loss, eval_metric, num_examples = self.run_eval(eval_dataset, state)
+        eval_loss, eval_metric, num_examples = self.run_eval(
+            eval_dataset, state, evaluate_batch)
         logging.info(
             f'Validation loss ({num_examples} Examples): {eval_loss}\n'
             f'Validation {config.eval_metric_name}: {eval_metric}'
@@ -280,7 +283,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             _,
             batch_loss,
             batch_metric,
-        ) = self.evaluate_batch(batch, state)
+        ) = evaluate_batch(batch, state)
         summary_writer.scalar('train_loss', batch_loss, step)
         summary_writer.scalar('train_metric', batch_metric, step)
         summary_writer.scalar('eval_loss', eval_loss, step)
