@@ -200,7 +200,7 @@ class Trainer:
       losses.append(loss)
     predictions = jnp.array(jnp.concatenate(predictions))
     targets = jnp.array(jnp.concatenate(targets)).flatten()
-    eval_loss = jnp.sum(losses) / predictions.shape[0]
+    eval_loss = jnp.sum(jnp.array(losses)) / predictions.shape[0]
     assert predictions.shape[0] == targets.shape[0]
     print('targets.shape')
     print(targets.shape)
