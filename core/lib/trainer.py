@@ -170,7 +170,13 @@ class Trainer:
     # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
     loss, aux = loss_fn(state.params, batch, dropout_rng)
 
-    logits = aux['logits']
+    logits = aux['logits'].flatten()
+    targets = batch['target'].flatten()
+    print('logits.shape')
+    print(logits.shape)
+    print(aux['logits'].shape)
+    print("batch['target'].shape")
+    print(batch['target'].shape)
     metric = evaluation.compute_metric(
         logits, batch['target'], config.eval_metric
     )
