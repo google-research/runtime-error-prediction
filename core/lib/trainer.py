@@ -170,13 +170,16 @@ class Trainer:
     # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
     loss, aux = loss_fn(state.params, batch, dropout_rng)
 
-    logits = aux['logits'].flatten()
-    targets = batch['target'].flatten()
+    logits = aux['logits']
+    targets = batch['target']
+    if config.multidevice:
+      logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
+      targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
+
     print('logits.shape')
     print(logits.shape)
-    print(aux['logits'].shape)
-    print("batch['target'].shape")
-    print(batch['target'].shape)
+    print('targets.shape')
+    print(targets.shape)
     metric = evaluation.compute_metric(
         logits, targets, config.eval_metric
     )
