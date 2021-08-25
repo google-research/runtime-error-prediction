@@ -11,7 +11,7 @@ def default_config():
   config.rnn_layers = 2
   config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / move to Info.
   config.model_class: Text = 'IPAGNN'
-  config.epochs: Optional[int] = None
+  config.epochs: Optional[int] = 0
   config.batch_size: int = 128
   config.max_tokens: int = 512
   config.max_num_nodes: int = 128
@@ -21,6 +21,13 @@ def default_config():
   config.allowlist: Optional[List[int]] = None
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = None
+
+  config.eval_freq = 1000
+  config.save_freq = 1000
+  config.eval_metric = 'F1-score'
+
+  config.early_stopping_delta = 0.001
+  config.early_stopping_threshold = 4
   return config
 
 

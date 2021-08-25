@@ -11,8 +11,11 @@ import dataclasses
 import itertools
 from typing import Any, List, Optional, Text
 
+from absl import logging
+from flax.metrics import tensorboard
 from flax.training import checkpoints
 from flax.training import common_utils
+from flax.training import early_stopping
 from flax.training import train_state
 import jax
 import jax.numpy as jnp
@@ -23,10 +26,10 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.lib import evaluator
+from core.lib import misc_utils
+from core.lib import models
 from core.lib import optimizer_lib
-from core.models import ipagnn
-from core.models import mlp
-from core.models import transformer
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
@@ -81,16 +84,7 @@ class Trainer:
     )
 
   def make_model(self):
-    config = self.config
-    model_class = config.model_class
-    if model_class == 'MlpModel':
-      return mlp.MlpModel()
-    elif model_class == 'Transformer':
-      return transformer.Transformer(config=config)
-    elif model_class == 'IPAGNN':
-      return ipagnn.IPAGNN(config=config)
-    else:
-      raise ValueError('Unexpected model_class.')
+    return models.make_model(self.config)
 
   def create_train_state(self, rng, model):
     """Creates initial TrainState."""
@@ -159,24 +153,36 @@ class Trainer:
     return train_step
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
+    config = self.config
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
+    eval_dataset = self.load_dataset(dataset_path, split='valid')
+
     rng = jax.random.PRNGKey(0)
     exp_id = codenet_paths.make_experiment_id()
     checkpoint_dir = codenet_paths.make_checkpoints_path(exp_id)
+    log_dir = codenet_paths.make_log_dir(exp_id)
     print(f'Checkpoints: {checkpoint_dir}')
 
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
 
     state = self.create_train_state(init_rng, model)
-    if self.config.restore_checkpoint_dir is not None:
-      state = checkpoints.restore_checkpoint(self.restore_checkpoint_dir, state)
+    if config.restore_checkpoint_dir is not None:
+      state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
+
+    # TODO(rishab): Store the state of the early stopping.
+    es = early_stopping.EarlyStopping(
+        min_delta=config.early_stopping_delta,
+        patience=config.early_stopping_threshold,
+    )
+    summary_writer = tensorboard.SummaryWriter(log_dir)
+    summary_writer.hparams(config.to_dict())
 
     recent_accuracies = []
     for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
-      if self.config.multidevice:
+      if config.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
       predictions = jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))
@@ -193,8 +199,37 @@ Targets:
 Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
-      if step % 2000 == 0:
+      if step % config.save_freq == 0:
         checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+
+      if step % config.eval_freq == 0:
+        if eval_dataset is None:
+          logging.info('Validation dataset unspecified. Skipping evaluation.')
+          eval_loss = None
+        else:
+          eval_loss, eval_classification_score = evaluator.evaluate(
+              eval_dataset, state, config
+          )
+        logging.info(
+            f'Validation loss: {eval_loss}\n '
+            f'Validation {config.eval_metric}: {eval_classification_score}'
+        )
+        (
+            _,
+            batch_loss,
+            batch_classification_score,
+        ) = evaluator.evaluate_batch(batch, state, config)
+        summary_writer.scalar('train_loss', batch_loss, step)
+        summary_writer.scalar('train_metric', batch_classification_score, step)
+        summary_writer.scalar('eval_loss', eval_loss, step)
+        summary_writer.scalar('eval_metric', eval_classification_score, step)
+
+        if eval_loss is None:
+          eval_loss = batch_loss
+        did_improve, es = es.update(-1 * eval_loss)
+        if es.should_stop:
+          logging.info('Early stopping triggered.')
+          break
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
