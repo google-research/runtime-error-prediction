@@ -180,7 +180,7 @@ class Trainer:
   def run_eval(self, dataset, state):
     config = self.config
     predictions = []
-    ground_truth = []
+    targets = []
     losses = []
     print(f'Evaluating with metric: {config.eval_metric}')
     for batch in tfds.as_numpy(dataset):
@@ -189,14 +189,14 @@ class Trainer:
       labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
       assert len(labels.shape) == 2
       predictions.append(jnp.argmax(logits, -1))
-      ground_truth.append(batch['target'])
+      targets.append(batch['target'])
       losses.append(loss)
     predictions = jnp.array(jnp.concatenate(predictions))
-    ground_truth = jnp.array(jnp.concatenate(ground_truth)).flatten()
+    targets = jnp.array(jnp.concatenate(targets)).flatten()
     eval_loss = jnp.sum(losses) / predictions.shape[0]
-    assert predictions.shape[0] == ground_truth.shape[0]
+    assert predictions.shape[0] == targets.shape[0]
     metric = evaluation.evaluate(
-        ground_truth, predictions, config.eval_metric
+        targets, predictions, config.eval_metric
     )
     return eval_loss, metric
 
@@ -257,9 +257,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           logging.info('Validation dataset unspecified. Skipping evaluation.')
           eval_loss = None
         else:
-          eval_loss, eval_classification_score = self.run_eval(
-              eval_dataset, state, config
-          )
+          eval_loss, eval_classification_score = self.run_eval(eval_dataset, state)
         logging.info(
             f'Validation loss: {eval_loss}\n '
             f'Validation {config.eval_metric}: {eval_classification_score}'
