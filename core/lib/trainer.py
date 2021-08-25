@@ -19,8 +19,7 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
-from core.lib import evaluation  # TODO(dbieber): Combine and rename evaluation and misc_utils into metrics.
-from core.lib import misc_utils
+from core.lib import evaluation  # TODO(dbieber): Rename evaluation into metrics.
 from core.lib import models
 from core.lib import optimizer_lib
 
