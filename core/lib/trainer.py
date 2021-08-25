@@ -183,7 +183,7 @@ class Trainer:
     losses = []
     print(f'Evaluating with metric: {config.eval_metric}')
     for batch in tfds.as_numpy(dataset):
-      logits, loss, _ = self.evaluate_batch(batch, state, config)
+      logits, loss, _ = self.evaluate_batch(batch, state)
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
@@ -262,7 +262,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             _,
             batch_loss,
             batch_classification_score,
-        ) = self.evaluate_batch(batch, state, config)
+        ) = self.evaluate_batch(batch, state)
         summary_writer.scalar('train_loss', batch_loss, step)
         summary_writer.scalar('train_metric', batch_classification_score, step)
         summary_writer.scalar('eval_loss', eval_loss, step)
