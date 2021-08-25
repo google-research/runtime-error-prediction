@@ -44,7 +44,7 @@ class Evaluator:
     loss = []
     print(f'Evaluating with metric: {config.eval_metric}')
     for batch in tfds.as_numpy(dataset):
-      logits, _, _ = evaluate_batch(batch, state, config)
+      logits, _, _ = self.evaluate_batch(batch, state, config)
       assert len(logits.shape) == 2
       labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
       assert len(labels.shape) == 2
