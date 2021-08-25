@@ -22,6 +22,5 @@ def evaluate(targets, predictions, eval_metric):
 def compute_metric(logits, targets, eval_metric):
   predictions = np.array(jnp.argmax(logits, -1))
   targets = np.array(targets)
-  labels = jax.nn.one_hot(jnp.squeeze(targets, axis=-1), NUM_CLASSES)
-  metric = evaluate(labels, predictions, eval_metric)
+  metric = evaluate(targets, predictions, eval_metric)
   return metric

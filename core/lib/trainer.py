@@ -171,15 +171,13 @@ class Trainer:
     loss, aux = loss_fn(state.params, batch, dropout_rng)
 
     logits = aux['logits']
-    targets = batch['target']
+    targets = jnp.squeeze(batch['target'], axis=-1)
     if config.multidevice:
       logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
       targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
+    # logits.shape: batch_size, NUM_CLASSES
+    # targets.shape: batch_size,
 
-    print('logits.shape')
-    print(logits.shape)
-    print('targets.shape')
-    print(targets.shape)
     metric = evaluation.compute_metric(
         logits, targets, config.eval_metric
     )
