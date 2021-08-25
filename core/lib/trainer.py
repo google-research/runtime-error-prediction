@@ -232,7 +232,7 @@ class Trainer:
     model = self.make_model()
 
     state = self.create_train_state(init_rng, model)
-    if config.restore_checkpoint_dir is not None:
+    if config.restore_checkpoint_dir:
       state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
