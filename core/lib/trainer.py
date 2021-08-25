@@ -247,7 +247,8 @@ class Trainer:
     summary_writer.hparams(config.to_dict())
 
     recent_accuracies = []
-    for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+    for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      step = state.step
       if config.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
