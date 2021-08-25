@@ -174,6 +174,7 @@ class Trainer:
     logits = aux['logits']
     targets = jnp.squeeze(batch['target'], axis=-1)
     if config.multidevice:
+      loss = jnp.mean(loss)
       logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
       targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
     # logits.shape: batch_size, NUM_CLASSES
@@ -201,11 +202,10 @@ class Trainer:
     predictions = jnp.array(jnp.concatenate(predictions))
     targets = jnp.array(jnp.concatenate(targets)).flatten()
     eval_loss = jnp.sum(jnp.array(losses)) / predictions.shape[0]
-    assert predictions.shape[0] == targets.shape[0]
-    print('targets.shape')
-    print(targets.shape)
-    print('predictions.shape')
-    print(predictions.shape)
+    # targets.shape: num_eval_examples,
+    # predictions.shape: num_eval_examples,
+    assert predictions.shape == targets.shape
+    assert len(predictions.shape) == 1
     metric = evaluation.evaluate(
         targets, predictions, config.eval_metric
     )
@@ -276,12 +276,12 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
         (
             _,
             batch_loss,
-            batch_classification_score,
+            batch_metric,
         ) = self.evaluate_batch(batch, state)
         summary_writer.scalar('train_loss', batch_loss, step)
-        summary_writer.scalar('train_metric', batch_classification_score, step)
+        summary_writer.scalar('train_metric', batch_metric, step)
         summary_writer.scalar('eval_loss', eval_loss, step)
-        summary_writer.scalar('eval_metric', eval_classification_score, step)
+        summary_writer.scalar('eval_metric', eval_metric, step)
 
         if eval_loss is None:
           eval_loss = batch_loss
