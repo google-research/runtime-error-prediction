@@ -18,6 +18,7 @@ def default_config():
   config.max_num_edges: int = 128
   config.max_steps: int = 174
   config.hidden_size: int = 16
+  config.raise_in_ipagnn: bool = False
   config.allowlist: Optional[List[int]] = None
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = ''

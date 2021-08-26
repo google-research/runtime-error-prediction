@@ -49,6 +49,7 @@ class Trainer:
       epochs = config.epochs
     allowlist = config.allowlist
 
+    # TODO(dbieber): If using Exception IPA-GNN, add an extra node.
     padded_shapes = data_io.get_padded_shapes(
         config.max_tokens, config.max_num_nodes, config.max_num_edges)
     if allowlist == 'TIER1_ERROR_IDS':

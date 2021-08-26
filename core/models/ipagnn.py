@@ -65,7 +65,6 @@ class IPAGNN(nn.Module):
     # ipagnn_output['exit_node_embeddings'].shape: batch_size, hidden_size
     # ipagnn_output['exception_node_embeddings'].shape: batch_size, hidden_size
 
-    # TODO(dbieber): Reevaluate how to go from transformer encodings to output.
     exit_node_embeddings = ipagnn_output['exit_node_embeddings']
     # exit_node_embeddings.shape: batch_size, emb_dim
     logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
