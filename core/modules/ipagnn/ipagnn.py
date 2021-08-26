@@ -297,6 +297,8 @@ class IPAGNNModule(nn.Module):
     raise_indexes = exit_indexes + 1
     if config.raise_in_ipagnn:
       # raise_indexes.shape: batch_size,
+      num_nodes += 1
+
       # Pad true_indexes and false_indexes.
       true_indexes = jnp.pad(
           true_indexes,
