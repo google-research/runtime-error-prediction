@@ -258,7 +258,7 @@ class IPAGNNModule(nn.Module):
         IPAGNNLayerRemat,
         variable_broadcast='params',
         split_rngs={'params': False},
-        in_axes=(nn.broadcast,) * 8,
+        in_axes=nn.broadcast,
         length=self.max_steps,
     )(info=info, config=config)
 
