@@ -114,7 +114,7 @@ class IPAGNNLayer(nn.Module):
       false_contributions = jax.ops.segment_sum(
           p_false * instruction_pointer, false_indexes,
           num_segments=num_nodes)
-      return true_contributions + false_contributions
+      return raise_contributions + true_contributions + false_contributions
     update_instruction_pointer = jax.vmap(update_instruction_pointer_single_example)
 
     def aggregate_single_example(
@@ -211,7 +211,8 @@ class IPAGNNLayer(nn.Module):
     # instruction_pointer_new.shape: batch_size, num_nodes
 
     hidden_states_new = aggregate(
-        hidden_state_contributions, instruction_pointer, branch_decisions,
+        hidden_state_contributions, instruction_pointer,
+        raise_decisions, branch_decisions,
         true_indexes, false_indexes)
     # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
 
