@@ -285,19 +285,6 @@ class IPAGNNModule(nn.Module):
     exit_indexes = jnp.squeeze(exit_indexes, axis=-1)
     # exit_indexes.shape: batch_size
 
-    # Initialize hidden states and soft instruction pointer.
-    current_step = jnp.zeros((batch_size,), dtype=jnp.int32)
-    hidden_states = self.ipagnn_layer_scan.lstm.initialize_carry(
-        jax.random.PRNGKey(0),
-        (batch_size, num_nodes,), hidden_size)
-    # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
-    instruction_pointer = jax.ops.index_add(
-        jnp.zeros((batch_size, num_nodes,)),
-        jax.ops.index[:, 0],  # TODO(dbieber): Use "start_indexes" instead of 0.
-        1
-    )
-    # instruction_pointer.shape: batch_size, num_nodes,
-
     def zero_node_embedding_single_example(node_embeddings, index):
       # node_embeddings.shape: num_nodes, hidden_size
       return node_embeddings.at[index, :].set(0)
@@ -337,6 +324,19 @@ class IPAGNNModule(nn.Module):
       add_self_loop_batch = jax.vmap(add_self_loop)
       true_indexes = add_self_loop_batch(true_indexes, raise_indexes)
       false_indexes = add_self_loop_batch(false_indexes, raise_indexes)
+
+    # Initialize hidden states and soft instruction pointer.
+    current_step = jnp.zeros((batch_size,), dtype=jnp.int32)
+    hidden_states = self.ipagnn_layer_scan.lstm.initialize_carry(
+        jax.random.PRNGKey(0),
+        (batch_size, num_nodes,), hidden_size)
+    # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
+    instruction_pointer = jax.ops.index_add(
+        jnp.zeros((batch_size, num_nodes,)),
+        jax.ops.index[:, 0],  # TODO(dbieber): Use "start_indexes" instead of 0.
+        1
+    )
+    # instruction_pointer.shape: batch_size, num_nodes,
 
     # Run self.max_steps steps of IPAGNNLayer.
     (hidden_states, instruction_pointer, current_step), _ = self.ipagnn_layer_scan(
