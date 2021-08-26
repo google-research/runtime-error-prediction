@@ -29,9 +29,14 @@ class IPAGNNLayer(nn.Module):
     config = self.config
     output_token_vocabulary_size = info.vocab_size
 
+    self.raise_decide_dense = nn.Dense(
+        name='raise_decide_dense',
+        features=2,  # raise or don't raise.
+        kernel_init=nn.initializers.xavier_uniform(),
+        bias_init=nn.initializers.normal(stddev=1e-6))
     self.branch_decide_dense = nn.Dense(
         name='branch_decide_dense',
-        features=2,
+        features=2,  # true branch or false branch.
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
     self.output_dense = nn.Dense(
@@ -75,6 +80,13 @@ class IPAGNNLayer(nn.Module):
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
     # instruction_pointer.shape: batch_size, num_nodes,
 
+    def raise_decide_single_node(hidden_state):
+      # leaves(hidden_state).shape: hidden_size
+      hidden_state_embedding = _rnn_state_to_embedding(hidden_state)
+      return self.raise_decide_dense(hidden_state_embedding)
+    raise_decide_single_example = jax.vmap(raise_decide_single_node)
+    raise_decide = jax.vmap(raise_decide_single_example)
+
     def branch_decide_single_node(hidden_state):
       # leaves(hidden_state).shape: hidden_size
       hidden_state_embedding = _rnn_state_to_embedding(hidden_state)
@@ -83,13 +95,19 @@ class IPAGNNLayer(nn.Module):
     branch_decide = jax.vmap(branch_decide_single_example)
 
     def update_instruction_pointer_single_example(
-        instruction_pointer, branch_decisions, true_indexes, false_indexes):
+        instruction_pointer, raise_decisions, branch_decisions,
+        true_indexes, false_indexes):
       # instruction_pointer.shape: num_nodes,
       # branch_decisions.shape: num_nodes, 2,
       # true_indexes.shape: num_nodes,
       # false_indexes.shape: num_nodes
-      p_true = branch_decisions[:, 0]
-      p_false = branch_decisions[:, 1]
+      p_raise = raise_decisions[:, 0]
+      p_noraise = raise_decisions[:, 1]
+      p_true = p_noraise * branch_decisions[:, 0]
+      p_false = p_noraise * branch_decisions[:, 1]
+      raise_contributions = jax.ops.segment_sum(
+          p_raise * instruction_pointer, XXX,
+          num_segments=num_nodes)
       true_contributions = jax.ops.segment_sum(
           p_true * instruction_pointer, true_indexes,
           num_segments=num_nodes)
@@ -100,17 +118,21 @@ class IPAGNNLayer(nn.Module):
     update_instruction_pointer = jax.vmap(update_instruction_pointer_single_example)
 
     def aggregate_single_example(
-        hidden_states, instruction_pointer, branch_decisions,
+        hidden_states, instruction_pointer, raise_decisions, branch_decisions,
         true_indexes, false_indexes):
       # leaves(hidden_states).shape: num_nodes, hidden_size
       # instruction_pointer.shape: num_nodes,
+      # raise_decisions.shape: num_nodes, 2,
       # branch_decisions.shape: num_nodes, 2,
       # true_indexes.shape: num_nodes,
       # false_indexes.shape: num_nodes,
-      p_true = branch_decisions[:, 0]
-      p_false = branch_decisions[:, 1]
+      p_raise = raise_decisions[:, 0]
+      p_noraise = raise_decisions[:, 1]
+      p_true = p_noraise * branch_decisions[:, 0]
+      p_false = p_noraise * branch_decisions[:, 1]
       denominators = update_instruction_pointer_single_example(
-          instruction_pointer, branch_decisions, true_indexes, false_indexes)
+          instruction_pointer, raise_decisions, branch_decisions,
+          true_indexes, false_indexes)
       denominators += 1e-7
       # denominator.shape: num_nodes,
 
@@ -118,6 +140,9 @@ class IPAGNNLayer(nn.Module):
         # h.shape: num_nodes
         # p_true.shape: num_nodes
         # instruction_pointer.shape: num_nodes
+        raise_contributions = jax.ops.segment_sum(
+            h * p_raise * instruction_pointer, XXX,
+            num_segments=num_nodes)
         true_contributions = jax.ops.segment_sum(
             h * p_true * instruction_pointer, true_indexes,
             num_segments=num_nodes)
@@ -125,7 +150,7 @@ class IPAGNNLayer(nn.Module):
             h * p_false * instruction_pointer, false_indexes,
             num_segments=num_nodes)
         # *_contributions.shape: num_nodes, hidden_size
-        return (true_contributions + false_contributions) / denominators
+        return (raise_contributions + true_contributions + false_contributions) / denominators
       aggregate_states = jax.vmap(aggregate_state_component, in_axes=1, out_axes=1)
 
       return jax.tree_map(aggregate_states, hidden_states)
@@ -165,6 +190,12 @@ class IPAGNNLayer(nn.Module):
         hidden_state_contributions, hidden_states)
     # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
+    # Raise decisions:
+    raise_decision_logits = raise_decide(hidden_state_contributions)
+    # raise_decision_logits.shape: batch_size, num_nodes, 2
+    raise_decisions = nn.softmax(branch_decision_logits, axis=-1)
+    # raise_decision.shape: batch_size, num_nodes, 2
+
     # Branch decisions:
     branch_decision_logits = branch_decide(hidden_state_contributions)
     # branch_decision_logits.shape: batch_size, num_nodes, 2
@@ -175,7 +206,8 @@ class IPAGNNLayer(nn.Module):
     # true_indexes.shape: batch_size, num_nodes
     # false_indexes.shape: batch_size, num_nodes
     instruction_pointer_new = update_instruction_pointer(
-        instruction_pointer, branch_decisions, true_indexes, false_indexes)
+        instruction_pointer, raise_decisions, branch_decisions,
+        true_indexes, false_indexes)
     # instruction_pointer_new.shape: batch_size, num_nodes
 
     hidden_states_new = aggregate(
