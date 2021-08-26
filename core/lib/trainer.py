@@ -153,7 +153,7 @@ class Trainer:
       )
     return train_step
 
-  def evaluate_batch(self, batch, state):
+  def make_evaluate_batch(self):
     config = self.config
     loss_fn = self.make_loss_fn()
     if config.multidevice:
@@ -163,59 +163,66 @@ class Trainer:
           in_axes=(None, 0, None),
           out_axes=0,
       )
+    def evaluate_batch(batch, state):
+      new_rng, dropout_rng = jax.random.split(state.rng, 2)
+      state = dataclasses.replace(state, rng=new_rng)
 
-    new_rng, dropout_rng = jax.random.split(state.rng, 2)
-    state = dataclasses.replace(state, rng=new_rng)
+      # TODO(dbieber): Dropout shouldn't be used during the evaluation.
+      # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
+      loss, aux = loss_fn(state.params, batch, dropout_rng)
 
-    # TODO(dbieber): Dropout shouldn't be used during the evaluation.
-    # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
-    loss, aux = loss_fn(state.params, batch, dropout_rng)
+      logits = aux['logits']
+      targets = jnp.squeeze(batch['target'], axis=-1)
+      if config.multidevice:
+        loss = jnp.mean(loss)
+        logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
+        targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
+      # logits.shape: batch_size, NUM_CLASSES
+      # targets.shape: batch_size,
 
-    logits = aux['logits']
-    targets = jnp.squeeze(batch['target'], axis=-1)
-    if config.multidevice:
-      loss = jnp.mean(loss)
-      logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
-      targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
-    # logits.shape: batch_size, NUM_CLASSES
-    # targets.shape: batch_size,
+      metric = evaluation.compute_metric(
+          logits, targets, config.eval_metric_name
+      )
+      return logits, loss, metric
+    return evaluate_batch
 
-    metric = evaluation.compute_metric(
-        logits, targets, config.eval_metric_name
-    )
-    return logits, loss, metric
-
-  def run_eval(self, dataset, state):
+  def run_eval(self, dataset, state, evaluate_batch):
     config = self.config
     predictions = []
     targets = []
     losses = []
-    dataset = dataset.filter(lambda x: tf.random.uniform(shape=()) < 0.1)
+    dataset = (
+        dataset
+        .filter(lambda x: tf.random.uniform(shape=()) < config.eval_subsample)
+        .take(config.eval_max_batches)
+    )
     print(f'Evaluating with metric: {config.eval_metric_name}')
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
         batch = common_utils.shard(batch)
-      logits, loss, _ = self.evaluate_batch(batch, state)
+      logits, loss, _ = evaluate_batch(batch, state)
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
     predictions = jnp.array(jnp.concatenate(predictions))
     targets = jnp.array(jnp.concatenate(targets)).flatten()
-    eval_loss = jnp.sum(jnp.array(losses)) / predictions.shape[0]
+    num_examples = targets.shape[0]
+    eval_loss = jnp.mean(jnp.array(losses))
     # targets.shape: num_eval_examples,
     # predictions.shape: num_eval_examples,
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
-    metric = evaluation.evaluate(
+    eval_metric = evaluation.evaluate(
         targets, predictions, config.eval_metric_name
     )
-    return eval_loss, metric
+    return eval_loss, eval_metric, num_examples
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
     eval_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
+    evaluate_batch = self.make_evaluate_batch()
 
     rng = jax.random.PRNGKey(0)
     exp_id = codenet_paths.make_experiment_id()
@@ -227,7 +234,7 @@ class Trainer:
     model = self.make_model()
 
     state = self.create_train_state(init_rng, model)
-    if config.restore_checkpoint_dir is not None:
+    if config.restore_checkpoint_dir:
       state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
@@ -240,7 +247,8 @@ class Trainer:
     summary_writer.hparams(config.to_dict())
 
     recent_accuracies = []
-    for step, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+    for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      step = state.step
       if config.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
@@ -251,7 +259,12 @@ class Trainer:
       batch_accuracy = jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets))
       recent_accuracies.append(batch_accuracy)
       recent_accuracies = recent_accuracies[-500:]
-      print(f"""--- Step {step}
+
+      if step % config.save_freq == 0:
+        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+
+      if step % config.eval_freq == 0:
+        print(f"""--- Step {step}
 Loss: {aux['loss']}
 Predictions:
 {predictions}
@@ -260,35 +273,27 @@ Targets:
 Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
-      if step % config.save_freq == 0:
-        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
-
-      if step % config.eval_freq == 0:
-        if eval_dataset is None:
-          logging.info('Validation dataset unspecified. Skipping evaluation.')
-          eval_loss = None
-        else:
-          eval_loss, eval_metric = self.run_eval(eval_dataset, state)
+        # Run complete evaluation:
+        eval_loss, eval_metric, num_examples = self.run_eval(
+            eval_dataset, state, evaluate_batch)
         logging.info(
-            f'Validation loss: {eval_loss}\n'
+            f'Validation loss ({num_examples} Examples): {eval_loss}\n'
             f'Validation {config.eval_metric_name}: {eval_metric}'
         )
         (
             _,
             batch_loss,
             batch_metric,
-        ) = self.evaluate_batch(batch, state)
+        ) = evaluate_batch(batch, state)
         summary_writer.scalar('train_loss', batch_loss, step)
         summary_writer.scalar('train_metric', batch_metric, step)
         summary_writer.scalar('eval_loss', eval_loss, step)
         summary_writer.scalar('eval_metric', eval_metric, step)
 
-        if eval_loss is None:
-          eval_loss = batch_loss
         did_improve, es = es.update(-1 * eval_loss)
-        if es.should_stop:
+        if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')
           break
 
     # Save final state.
-    checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+    checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
