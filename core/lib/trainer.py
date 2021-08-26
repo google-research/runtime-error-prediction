@@ -296,4 +296,4 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           break
 
     # Save final state.
-    checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+    checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
