@@ -63,10 +63,41 @@ class IPAGNN(nn.Module):
     # ipagnn_output['node_embeddings'].shape: batch_size, max_num_nodes, hidden_size
     # ipagnn_output['instruction_pointer'].shape: batch_size, max_num_nodes
     # ipagnn_output['exit_node_embeddings'].shape: batch_size, hidden_size
-    # ipagnn_output['exception_node_embeddings'].shape: batch_size, hidden_size
+    # ipagnn_output['raise_node_embeddings'].shape: batch_size, hidden_size
 
     exit_node_embeddings = ipagnn_output['exit_node_embeddings']
-    # exit_node_embeddings.shape: batch_size, emb_dim
-    logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
+    # exit_node_embeddings.shape: batch_size, hidden_size
+    raise_node_embeddings = ipagnn_output['raise_node_embeddings']
+    # raise_node_embeddings.shape: batch_size, hidden_size
+    exit_node_instruction_pointer = ipagnn_output['exit_node_instruction_pointer']
+    # exit_node_instruction_pointer.shape: batch_size
+
+    if config.raise_in_ipagnn:
+      logits = nn.Dense(features=NUM_CLASSES)(raise_node_embeddings)
+      # logits.shape: batch_size, NUM_CLASSES
+
+      def get_no_error_logit(exit_node_instruction_pointer, logits):
+        # exit_node_instruction_pointer.shape: scalar
+        # logits.shape: NUM_CLASSES
+
+        # Find no_error_logit such that:
+        # - softmax([no_error_logit, logits]) == exit_node_instruction_pointer (enip)
+        # - exp(no_error_logit) / sum(exp([no_error_logit, logits])) == enip
+        # - exp(no_error_logit) == enip * sum(exp[logits]) + enip * exp(no_error_logit)
+        # - (1 - enip) * exp(no_error_logit) == enip * sum(exp[logits])
+        # - exp(no_error_logit) == enip * sum(exp[logits]) / (1 - enip)
+        # - no_error_logit == log(enip/(1 - enip) * sum(exp[logits]))
+        # - no_error_logit == log(enip/(1 - enip)) + log(sum(exp[logits]))
+        no_error_logit = (
+            jnp.log(exit_node_instruction_pointer / (1 - exit_node_instruction_pointer))
+            + jax.scipy.special.logsumexp(logits)
+        )
+        # no_error_logit.shape: scalar.
+        return no_error_logit
+      no_error_logits = jax.vmap(get_no_error_logit)(exit_node_instruction_pointer, logits)
+      # no_error_logits.shape: batch_size
+      logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
+    else:
+      logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
     # logits.shape: batch_size, NUM_CLASSES
     return logits

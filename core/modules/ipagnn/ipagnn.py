@@ -73,9 +73,9 @@ class IPAGNNLayer(nn.Module):
     # raise_indexes.shape: batch_size
 
     # State.
-    # current_step.shape: batch_size,
+    # current_step.shape: batch_size
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
-    # instruction_pointer.shape: batch_size, num_nodes,
+    # instruction_pointer.shape: batch_size, num_nodes
 
     def raise_decide_single_node(hidden_state):
       # leaves(hidden_state).shape: hidden_size
@@ -94,11 +94,11 @@ class IPAGNNLayer(nn.Module):
     def update_instruction_pointer_single_example(
         instruction_pointer, raise_decisions, branch_decisions,
         raise_index, true_indexes, false_indexes):
-      # instruction_pointer.shape: num_nodes,
-      # branch_decisions.shape: num_nodes, 2,
+      # instruction_pointer.shape: num_nodes
+      # branch_decisions.shape: num_nodes, 2
       # raise_index.shape: scalar.
-      # true_indexes.shape: num_nodes,
-      # false_indexes.shape: num_nodes,
+      # true_indexes.shape: num_nodes
+      # false_indexes.shape: num_nodes
       p_raise = raise_decisions[:, 0]
       p_noraise = raise_decisions[:, 1]
       p_true = p_noraise * branch_decisions[:, 0]
@@ -120,12 +120,12 @@ class IPAGNNLayer(nn.Module):
         hidden_states, instruction_pointer, raise_decisions, branch_decisions,
         raise_index, true_indexes, false_indexes):
       # leaves(hidden_states).shape: num_nodes, hidden_size
-      # instruction_pointer.shape: num_nodes,
-      # raise_decisions.shape: num_nodes, 2,
-      # branch_decisions.shape: num_nodes, 2,
+      # instruction_pointer.shape: num_nodes
+      # raise_decisions.shape: num_nodes, 2
+      # branch_decisions.shape: num_nodes, 2
       # raise_index.shape: scalar.
-      # true_indexes.shape: num_nodes,
-      # false_indexes.shape: num_nodes,
+      # true_indexes.shape: num_nodes
+      # false_indexes.shape: num_nodes
       p_raise = raise_decisions[:, 0]
       p_noraise = raise_decisions[:, 1]
       p_true = p_noraise * branch_decisions[:, 0]
@@ -134,7 +134,7 @@ class IPAGNNLayer(nn.Module):
           instruction_pointer, raise_decisions, branch_decisions,
           raise_index, true_indexes, false_indexes)
       denominators += 1e-7
-      # denominator.shape: num_nodes,
+      # denominator.shape: num_nodes
 
       def aggregate_state_component(h):
         # h.shape: num_nodes
@@ -225,8 +225,8 @@ class IPAGNNLayer(nn.Module):
         raise_indexes, true_indexes, false_indexes)
     # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
 
-    # current_step.shape: batch_size,
-    # step_limits.shape: batch_size,
+    # current_step.shape: batch_size
+    # step_limits.shape: batch_size
     hidden_states, instruction_pointer = keep_old_if_done(
         (hidden_states, instruction_pointer),
         (hidden_states_new, instruction_pointer_new),
@@ -236,7 +236,7 @@ class IPAGNNLayer(nn.Module):
     current_step = current_step + 1
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
     # instruction_pointer.shape: batch_size, num_nodes
-    # current_step.shape: batch_size,
+    # current_step.shape: batch_size
     return (hidden_states, instruction_pointer, current_step), None
 
 
@@ -296,7 +296,7 @@ class IPAGNNModule(nn.Module):
     # Create a new exception node after the exit node
     raise_indexes = exit_indexes + 1
     if config.raise_in_ipagnn:
-      # raise_indexes.shape: batch_size,
+      # raise_indexes.shape: batch_size
       num_nodes += 1
 
       # Pad true_indexes and false_indexes.
@@ -338,7 +338,7 @@ class IPAGNNModule(nn.Module):
         jax.ops.index[:, 0],  # TODO(dbieber): Use "start_indexes" instead of 0.
         1
     )
-    # instruction_pointer.shape: batch_size, num_nodes,
+    # instruction_pointer.shape: batch_size, num_nodes
 
     # Run self.max_steps steps of IPAGNNLayer.
     (hidden_states, instruction_pointer, current_step), _ = self.ipagnn_layer_scan(
@@ -356,16 +356,30 @@ class IPAGNNModule(nn.Module):
         step_limits,
     )
 
-    def get_hidden_state(hidden_states, node_index):
+    def get_hidden_state_single_example(hidden_states, node_index):
       # leaves(hidden_states).shape: num_nodes, hidden_size
       # exit_index.shape: scalar.
       return jax.tree_map(lambda hs: hs[node_index], hidden_states)
+    get_hidden_state = jax.vmap(get_hidden_state_single_example)
     # exit_indexes.shape: batch_size
-    exit_node_hidden_states = jax.vmap(get_hidden_state)(hidden_states, exit_indexes)
+    exit_node_hidden_states = get_hidden_state(hidden_states, exit_indexes)
     # leaves(exit_node_hidden_states).shape: batch_size, hidden_size
     exit_node_embeddings = jax.vmap(_rnn_state_to_embedding)(exit_node_hidden_states)
     # exit_node_embeddings.shape: batch_size, full_hidden_size
+    raise_node_hidden_states = get_hidden_state(hidden_states, raise_indexes)
+    # leaves(raise_node_hidden_states).shape: batch_size, hidden_size
+    raise_node_embeddings = jax.vmap(_rnn_state_to_embedding)(raise_node_hidden_states)
+    # raise_node_embeddings.shape: batch_size, full_hidden_size
+
+    get_instruction_pointer_value = jax.vmap(lambda ip, node_index: ip[node_index])
+    exit_node_instruction_pointer = get_instruction_pointer_value(instruction_pointer, exit_indexes)
+    # exit_node_instruction_pointer.shape: batch_size
+    raise_node_instruction_pointer = get_instruction_pointer_value(instruction_pointer, raise_indexes)
+    # raise_node_instruction_pointer.shape: batch_size
 
     return {
+        'exit_node_instruction_pointer': exit_node_instruction_pointer,
         'exit_node_embeddings': exit_node_embeddings,
+        'raise_node_instruction_pointer': raise_node_instruction_pointer,
+        'raise_node_embeddings': raise_node_embeddings,
     }

@@ -178,7 +178,7 @@ class Trainer:
         logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
         targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
       # logits.shape: batch_size, NUM_CLASSES
-      # targets.shape: batch_size,
+      # targets.shape: batch_size
 
       metric = evaluation.compute_metric(
           logits, targets, config.eval_metric_name
@@ -208,8 +208,8 @@ class Trainer:
     targets = jnp.array(jnp.concatenate(targets)).flatten()
     num_examples = targets.shape[0]
     eval_loss = jnp.mean(jnp.array(losses))
-    # targets.shape: num_eval_examples,
-    # predictions.shape: num_eval_examples,
+    # targets.shape: num_eval_examples
+    # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
     eval_metric = evaluation.evaluate(
