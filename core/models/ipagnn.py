@@ -8,6 +8,7 @@ import jax.numpy as jnp
 
 from core.data import error_kinds
 from core.modules.ipagnn import ipagnn
+from core.modules.ipagnn import logit_math
 from core.modules.ipagnn import spans
 from third_party.flax_examples import transformer_modules
 
@@ -76,29 +77,7 @@ class IPAGNN(nn.Module):
       logits.at[:, error_kinds.NO_DATA_ID].set(-jnp.inf)
       logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
 
-      def get_no_error_logit(exit_node_instruction_pointer, logits):
-        # exit_node_instruction_pointer.shape: scalar
-        # logits.shape: NUM_CLASSES
-
-        # Find no_error_logit such that:
-        # - softmax([no_error_logit, logits]) == exit_node_instruction_pointer (enip)
-        # - exp(no_error_logit) / sum(exp([no_error_logit, logits])) == enip
-        # - exp(no_error_logit) == enip * sum(exp([no_error_logit, logits]))
-        # - exp(no_error_logit) == enip * sum(exp[logits]) + enip * exp(no_error_logit)
-        # - (1 - enip) * exp(no_error_logit) == enip * sum(exp[logits])
-        # - exp(no_error_logit) == enip * sum(exp[logits]) / (1 - enip)
-        # - no_error_logit == log(enip/(1 - enip) * sum(exp[logits]))
-        # - no_error_logit == log(enip) - log(1 - enip) + log(sum(exp[logits]))
-        no_error_logit = (  # enforces P(no exception)
-            # TODO(dbieber): Make numerically stable. log(1-x).
-            jnp.log(exit_node_instruction_pointer)
-            - jnp.log1p(-exit_node_instruction_pointer)
-            + jax.scipy.special.logsumexp(logits)
-        )
-        # TODO(dbieber): Test this.
-        # no_error_logit.shape: scalar.
-        return no_error_logit
-      no_error_logits = jax.vmap(get_no_error_logit)(exit_node_instruction_pointer, logits)
+      no_error_logits = jax.vmap(logit_math.get_additional_logit)(exit_node_instruction_pointer, logits)
       # no_error_logits.shape: batch_size
       logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
     else:
