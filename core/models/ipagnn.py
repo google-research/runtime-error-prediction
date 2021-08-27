@@ -3,9 +3,12 @@
 from typing import Any
 
 from flax import linen as nn
+import jax
+import jax.numpy as jnp
 
 from core.data import error_kinds
 from core.modules.ipagnn import ipagnn
+from core.modules.ipagnn import logit_math
 from core.modules.ipagnn import spans
 from third_party.flax_examples import transformer_modules
 
@@ -24,11 +27,6 @@ class IPAGNN(nn.Module):
     max_num_edges = config.max_num_edges
     max_steps = config.max_steps
     info = ipagnn.Info(vocab_size=vocab_size)
-    # TODO(dbieber): transformer_config is unused.
-    transformer_config = transformer_modules.TransformerConfig(
-        vocab_size=vocab_size,
-        output_vocab_size=vocab_size,
-    )
     self.node_span_encoder = spans.NodeSpanEncoder(
         info=info,
         config=config,
@@ -44,6 +42,7 @@ class IPAGNN(nn.Module):
 
   @nn.compact
   def __call__(self, x):
+    config = self.config
     tokens = x['tokens']
     # tokens.shape: batch_size, max_tokens
     batch_size = tokens.shape[0]
@@ -60,14 +59,29 @@ class IPAGNN(nn.Module):
         exit_indexes=x['exit_index'],
         step_limits=x['step_limit'],
     )
-    # ipagnn_output['node_embeddings'].shape: batch_size, max_num_nodes, hidden_size
-    # ipagnn_output['instruction_pointer'].shape: batch_size, max_num_nodes
     # ipagnn_output['exit_node_embeddings'].shape: batch_size, hidden_size
-    # ipagnn_output['exception_node_embeddings'].shape: batch_size, hidden_size
+    # ipagnn_output['raise_node_embeddings'].shape: batch_size, hidden_size
+    # ipagnn_output['exit_node_instruction_pointer'].shape: batch_size
+    # ipagnn_output['raise_node_instruction_pointer'].shape: batch_size
 
-    # TODO(dbieber): Reevaluate how to go from transformer encodings to output.
     exit_node_embeddings = ipagnn_output['exit_node_embeddings']
-    # exit_node_embeddings.shape: batch_size, emb_dim
-    logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
+    # exit_node_embeddings.shape: batch_size, hidden_size
+    raise_node_embeddings = ipagnn_output['raise_node_embeddings']
+    # raise_node_embeddings.shape: batch_size, hidden_size
+    exit_node_instruction_pointer = ipagnn_output['exit_node_instruction_pointer']
+    # exit_node_instruction_pointer.shape: batch_size
+
+    if config.raise_in_ipagnn:
+      logits = nn.Dense(features=NUM_CLASSES)(raise_node_embeddings)  # P(e | yes exception)
+      # logits.shape: batch_size, NUM_CLASSES
+      logits = logits.at[:, error_kinds.NO_DATA_ID].set(-jnp.inf)
+      logits = logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
+
+      no_error_logits = jax.vmap(logit_math.get_additional_logit)(exit_node_instruction_pointer, logits)
+      # no_error_logits.shape: batch_size
+      logits = logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
+    else:
+      logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
+      logits = logits.at[:, error_kinds.NO_DATA_ID].set(-jnp.inf)
     # logits.shape: batch_size, NUM_CLASSES
     return logits

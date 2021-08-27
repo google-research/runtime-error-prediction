@@ -12,7 +12,7 @@ from third_party.flax_examples import transformer_modules
 def add_at_span(x, value, start, end):
   # Inclusive [start, end]
   # x.shape: length, features
-  # value.shape: features,
+  # value.shape: features
   arange = jnp.arange(x.shape[0])
   # arange.shape: length
   mask = jnp.logical_and(start <= arange, arange <= end)
@@ -44,17 +44,17 @@ class SpanIndexEncoder(nn.Module):
 
   def __call__(self, node_span_starts, node_span_ends):
     """Assume no batch dimension."""
-    # node_span_starts.shape: num_nodes,
-    # node_span_ends.shape: num_nodes,
+    # node_span_starts.shape: num_nodes
+    # node_span_ends.shape: num_nodes
     zeros = jnp.zeros((self.max_tokens, self.features))
     # zeros.shape: tokens, features
     indexes = jnp.arange(self.max_num_nodes)
-    # indexes.shape: num_nodes,
+    # indexes.shape: num_nodes
     embeddings = self.embed(indexes)
     # embeddings.shape: num_nodes, features
 
     def get_node_contribution(embedding, span_start, span_end):
-      # embedding.shape: features,
+      # embedding.shape: features
       # span_start: scalar
       # span_end: scalar
       return add_at_span(zeros, embedding, span_start, span_end)
