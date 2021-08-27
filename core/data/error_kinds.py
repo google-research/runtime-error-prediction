@@ -83,7 +83,7 @@ TIER1_ERROR_KINDS = [
     'NameError',
 ]
 TIER1_ERROR_IDS = [to_index(e) for e in TIER1_ERROR_KINDS]
-
+NO_ERROR_ID = to_index(NO_ERROR)
 
 if __name__ == '__main__':
   fire.Fire()

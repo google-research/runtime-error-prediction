@@ -169,11 +169,12 @@ class IPAGNNLayer(nn.Module):
 
     # Use the exit node's hidden state as it's hidden state contribution
     # to avoid "executing" the exit node.
-    def mask_h(h_contribution, h, exit_index):
+    # We do the same for the raise node.
+    def mask_h(h_contribution, h, node_index):
       # h_contribution.shape: num_nodes, hidden_size
       # h.shape: num_nodes, hidden_size
-      # exit_index.shape: scalar.
-      return h_contribution.at[exit_index, :].set(h[exit_index, :])
+      # node_index.shape: scalar.
+      return h_contribution.at[node_index, :].set(h[node_index, :])
     batch_mask_h = jax.vmap(mask_h)
 
     # If we've taken allowed_steps steps already, keep the old values.
@@ -187,6 +188,7 @@ class IPAGNNLayer(nn.Module):
     hidden_state_contributions = execute(hidden_states, node_embeddings)
     # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
+    # Don't execute the exit node.
     hidden_state_contributions = jax.tree_multimap(
         lambda h1, h2: batch_mask_h(h1, h2, exit_indexes),
         hidden_state_contributions, hidden_states)
@@ -194,6 +196,11 @@ class IPAGNNLayer(nn.Module):
 
     # Raise decisions:
     if config.raise_in_ipagnn:
+      # Don't execute the raise node.
+      hidden_state_contributions = jax.tree_multimap(
+          lambda h1, h2: batch_mask_h(h1, h2, raise_indexes),
+          hidden_state_contributions, hidden_states)
+
       raise_decision_logits = raise_decide(hidden_state_contributions)
       # raise_decision_logits.shape: batch_size, num_nodes, 2
       raise_decisions = nn.softmax(raise_decision_logits, axis=-1)

@@ -24,11 +24,6 @@ class IPAGNN(nn.Module):
     max_num_edges = config.max_num_edges
     max_steps = config.max_steps
     info = ipagnn.Info(vocab_size=vocab_size)
-    # TODO(dbieber): transformer_config is unused.
-    transformer_config = transformer_modules.TransformerConfig(
-        vocab_size=vocab_size,
-        output_vocab_size=vocab_size,
-    )
     self.node_span_encoder = spans.NodeSpanEncoder(
         info=info,
         config=config,
@@ -73,8 +68,10 @@ class IPAGNN(nn.Module):
     # exit_node_instruction_pointer.shape: batch_size
 
     if config.raise_in_ipagnn:
-      logits = nn.Dense(features=NUM_CLASSES)(raise_node_embeddings)
+      logits = nn.Dense(features=NUM_CLASSES)(raise_node_embeddings)  # P(e | yes exception)
       # logits.shape: batch_size, NUM_CLASSES
+      logits.at[:, error_kinds.NO_DATA].set(-jnp.inf)
+      logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
 
       def get_no_error_logit(exit_node_instruction_pointer, logits):
         # exit_node_instruction_pointer.shape: scalar
@@ -83,15 +80,19 @@ class IPAGNN(nn.Module):
         # Find no_error_logit such that:
         # - softmax([no_error_logit, logits]) == exit_node_instruction_pointer (enip)
         # - exp(no_error_logit) / sum(exp([no_error_logit, logits])) == enip
+        # - exp(no_error_logit) == enip * sum(exp([no_error_logit, logits]))
         # - exp(no_error_logit) == enip * sum(exp[logits]) + enip * exp(no_error_logit)
         # - (1 - enip) * exp(no_error_logit) == enip * sum(exp[logits])
         # - exp(no_error_logit) == enip * sum(exp[logits]) / (1 - enip)
         # - no_error_logit == log(enip/(1 - enip) * sum(exp[logits]))
-        # - no_error_logit == log(enip/(1 - enip)) + log(sum(exp[logits]))
-        no_error_logit = (
-            jnp.log(exit_node_instruction_pointer / (1 - exit_node_instruction_pointer))
+        # - no_error_logit == log(enip) - log(1 - enip) + log(sum(exp[logits]))
+        no_error_logit = (  # enforces P(no exception)
+            # TODO(dbieber): Make numerically stable. log(1-x).
+            jnp.log(exit_node_instruction_pointer)
+            - jnp.log1p(-exit_node_instruction_pointer)
             + jax.scipy.special.logsumexp(logits)
         )
+        # TODO(dbieber): Test this.
         # no_error_logit.shape: scalar.
         return no_error_logit
       no_error_logits = jax.vmap(get_no_error_logit)(exit_node_instruction_pointer, logits)
@@ -99,5 +100,6 @@ class IPAGNN(nn.Module):
       logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
     else:
       logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
+      logits.at[:, error_kinds.NO_DATA].set(-jnp.inf)
     # logits.shape: batch_size, NUM_CLASSES
     return logits
