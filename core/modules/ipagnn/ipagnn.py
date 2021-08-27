@@ -95,6 +95,7 @@ class IPAGNNLayer(nn.Module):
         instruction_pointer, raise_decisions, branch_decisions,
         raise_index, true_indexes, false_indexes):
       # instruction_pointer.shape: num_nodes
+      # raise_decisions.shape: num_nodes, 2
       # branch_decisions.shape: num_nodes, 2
       # raise_index.shape: scalar.
       # true_indexes.shape: num_nodes
