@@ -3,6 +3,8 @@
 from typing import Any
 
 from flax import linen as nn
+import jax
+import jax.numpy as jnp
 
 from core.data import error_kinds
 from core.modules.ipagnn import ipagnn
@@ -39,6 +41,7 @@ class IPAGNN(nn.Module):
 
   @nn.compact
   def __call__(self, x):
+    config = self.config
     tokens = x['tokens']
     # tokens.shape: batch_size, max_tokens
     batch_size = tokens.shape[0]
