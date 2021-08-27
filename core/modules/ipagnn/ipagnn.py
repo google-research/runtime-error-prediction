@@ -168,9 +168,8 @@ class IPAGNNLayer(nn.Module):
       return hidden_state
     execute = jax.vmap(execute_single_node)
 
-    # Use the exit node's hidden state as it's hidden state contribution
-    # to avoid "executing" the exit node.
-    # We do the same for the raise node.
+    # We'll use the exit node's hidden state as it's hidden state contribution
+    # to avoid "executing" the exit node. We'll do the same for the raise node.
     def mask_h(h_contribution, h, node_index):
       # h_contribution.shape: num_nodes, hidden_size
       # h.shape: num_nodes, hidden_size
