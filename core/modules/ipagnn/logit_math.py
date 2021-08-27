@@ -8,7 +8,7 @@ def get_additional_logit(target_p, logits):
   Args:
     target_p: The target probability the additional logit should correspond to.
       softmax(concat([logits, result])) should give target_p as the probability
-      for the final class.
+      for the result class.
     logits: The existing logits.
   Returns:
     A new logit, that when concatenated to logits, corresponds to a probability
