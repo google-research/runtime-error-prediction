@@ -59,10 +59,10 @@ class IPAGNN(nn.Module):
         exit_indexes=x['exit_index'],
         step_limits=x['step_limit'],
     )
-    # ipagnn_output['node_embeddings'].shape: batch_size, max_num_nodes, hidden_size
-    # ipagnn_output['instruction_pointer'].shape: batch_size, max_num_nodes
     # ipagnn_output['exit_node_embeddings'].shape: batch_size, hidden_size
     # ipagnn_output['raise_node_embeddings'].shape: batch_size, hidden_size
+    # ipagnn_output['exit_node_instruction_pointer'].shape: batch_size
+    # ipagnn_output['raise_node_instruction_pointer'].shape: batch_size
 
     exit_node_embeddings = ipagnn_output['exit_node_embeddings']
     # exit_node_embeddings.shape: batch_size, hidden_size
