@@ -27,10 +27,8 @@ def get_additional_logit(target_p, logits):
   #   target_logit == log(target_p / (1 - target_p) * sum(exp(logits)))
   #   target_logit == log(target_p) - log(1 - target_p) + log(sum(exp(logits)))
   target_logit = (
-      # TODO(dbieber): Make numerically stable. log(1-x).
       jnp.log(target_p) - jnp.log1p(-target_p)
       + jax.scipy.special.logsumexp(logits)
   )
-  # TODO(dbieber): Test this.
   # target_logit.shape: scalar.
   return target_logit
