@@ -71,8 +71,8 @@ Span 2: {source[next_span_start:next_span_end + 1]}
 
 Source: {' '.join(source)}
 
-Problem ID: {example['problem_id'].decode('utf-8')}
-Submission ID: {example['submission_id'].decode('utf-8')}
+Problem ID: {example['problem_id']}
+Submission ID: {example['submission_id']}
           """)
           raise ValueError(example, source, source[span_start:span_end])
 
