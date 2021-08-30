@@ -12,6 +12,7 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.data import process
 from core.data import tokenization
 
 
@@ -84,8 +85,10 @@ Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_i
       span_starts = example['node_token_span_starts']
       span_ends = example['node_token_span_ends']
       # Recall, spans are inclusive.
-      source = tokenizer.convert_ids_to_tokens(example['tokens'])
-      print(f"""Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_id'][0].decode('utf-8')}
+      submission_id = example['submission_id'][0].decode('utf-8')
+      problem_id = example['problem_id'][0].decode('utf-8')
+      source, target = process.get_source_and_target_for_submission(example['tokens'])
+      print(f"""Submission ID: {submission_id} {problem_id}
 Source: {' '.join(source)}""")
       for (span_start, span_end), (next_span_start, next_span_end) in pairwise(zip(span_starts, span_ends)):
           print(f"""
