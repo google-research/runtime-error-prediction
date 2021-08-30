@@ -136,6 +136,7 @@ class NodeSpanEncoder(nn.Module):
 
   def __call__(self, tokens, node_span_starts, node_span_ends):
     # tokens.shape: batch_size, max_tokens
+    # TODO(dbieber): Add indicator to start-of-span tokens.
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
     # token_embeddings.shape: batch_size, max_tokens, hidden_size
     tokens_mask = tokens > 0
