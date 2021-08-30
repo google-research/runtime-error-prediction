@@ -74,7 +74,7 @@ Source: {' '.join(source)}
 Problem ID: {example['problem_id']}
 Submission ID: {example['submission_id']}
           """)
-          raise ValueError(example, source, source[span_start:span_end])
+          # raise ValueError('Overlapping span detected')
 
   def run(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
