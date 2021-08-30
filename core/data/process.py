@@ -34,6 +34,9 @@ class RawRuntimeErrorProblem:
   step_limit: int
   target: int
 
+  def __str__(self):
+    return 
+
 
 @dataclasses.dataclass
 class RuntimeErrorProblem:
@@ -142,8 +145,7 @@ def examine_udfs(graph, problem_id, submission_id):
     return 'UDFs called at most once'
 
 
-def make_rawruntimeerrorproblem_for_submission(problem_id, submission_id):
-  """Constructs a RawRuntimeErrorProblem from the provided problem_id and submission_id."""
+def get_source_and_target_for_submission(problem_id, submission_id):
   python_path = codenet.get_python_path(problem_id, submission_id)
   with open(python_path, 'r') as f:
     source = f.read()
@@ -151,7 +153,21 @@ def make_rawruntimeerrorproblem_for_submission(problem_id, submission_id):
     if error_kind == error_kinds.NO_DATA:
       raise RuntimeError('No data available for python_path', python_path)
     target = error_kinds.to_index(error_kind)
-  return make_rawruntimeerrorproblem(source, target, problem_id=problem_id, submission_id=submission_id)
+  return source, target
+
+
+def make_runtimeerrorproblem_for_submission(problem_id, submission_id, tokenizer=None):
+  """Constructs a RuntimeErrorProblem from the provided problem_id and submission_id."""
+  source, target = get_source_and_target_for_submission(problem_id, submission_id)
+  return make_runtimeerrorproblem(
+      source, target, tokenizer=tokenizer, problem_id=problem_id, submission_id=submission_id)
+
+
+def make_rawruntimeerrorproblem_for_submission(problem_id, submission_id):
+  """Constructs a RawRuntimeErrorProblem from the provided problem_id and submission_id."""
+  source, target = get_source_and_target_for_submission(problem_id, submission_id)
+  return make_rawruntimeerrorproblem(
+      source, target, problem_id=problem_id, submission_id=submission_id)
 
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
