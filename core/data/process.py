@@ -13,8 +13,6 @@ import numpy as np
 from python_graphs import control_flow
 from python_graphs import instruction as instruction_module
 
-from core.data import codenet
-from core.data import error_kinds
 from core.data import tokenization
 
 
