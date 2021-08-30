@@ -1,10 +1,14 @@
 import fire
 
+from core.data import codenet_paths
 from core.data import process
 from core.data import tokenization
 
 
-def get_spans(problem_id, submission_id, tokenizer_path=None):
+DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
+
+
+def get_spans(problem_id, submission_id, tokenizer_path=DEFAULT_TOKENIZER_PATH):
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
   source, target = process.get_source_and_target_for_submission(problem_id, submission_id)
 
