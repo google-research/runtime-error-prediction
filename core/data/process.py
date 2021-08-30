@@ -105,7 +105,7 @@ def examine_udfs(graph, problem_id, submission_id):
   total_function_calls = 0
   calls_by_function_name = collections.defaultdict(int)
   for node in nodes:
-    if not isinstance(node.instruction.node, instruction_module.INSTRUCTION_AST_NODES):
+    if isinstance(node.instruction.node, (ast.FunctionDef, ast.ClassDef)):
       continue
 
     num_func_calls = 0
