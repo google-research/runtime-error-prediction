@@ -12,7 +12,7 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
-from core.data import process
+from core.data import explore
 from core.data import tokenization
 
 
@@ -87,7 +87,7 @@ Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_i
       # Recall, spans are inclusive.
       submission_id = example['submission_id'][0].decode('utf-8')
       problem_id = example['problem_id'][0].decode('utf-8')
-      source, target = process.get_source_and_target_for_submission(problem_id, submission_id)
+      source, target = explore.get_source_and_target_for_submission(problem_id, submission_id)
       print(f"""Submission ID: {submission_id} {problem_id}
 Source: {source}""")
       tokens = tokenizer.convert_ids_to_tokens(example['tokens'])
