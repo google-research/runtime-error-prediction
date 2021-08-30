@@ -45,7 +45,7 @@ class Analyzer:
 
     # Return the requested dataset.
     return (
-        data_io.load_dataset(dataset_path, split=split)
+        data_io.load_dataset(dataset_path, split=split, include_strings=True)
         .filter(filter_fn)
     )
 
