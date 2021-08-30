@@ -90,8 +90,9 @@ Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_i
       source, target = process.get_source_and_target_for_submission(problem_id, submission_id)
       print(f"""Submission ID: {submission_id} {problem_id}
 Source: {source}""")
+      tokens = tokenizer.convert_ids_to_tokens(example['tokens'])
       for span_start, span_end in zip(span_starts, span_ends):
-          print(f"""Span: {source[span_start:span_end + 1]}""")
+          print(f"""Span: {tokens[span_start:span_end + 1]}""")
           # raise ValueError('Overlapping span detected')
 
   def run(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
