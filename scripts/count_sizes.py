@@ -40,6 +40,13 @@ class Analyzer:
         .filter(filter_fn)
     )
 
+  def look_for_overlapping_spans(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
+    dataset = self.load_dataset(dataset_path, split=split)
+    for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      span_starts = example['node_token_span_starts']
+      span_ends = example['node_token_span_ends']
+      print(zip(span_starts, span_ends))
+
   def run(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
