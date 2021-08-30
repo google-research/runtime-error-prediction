@@ -58,11 +58,11 @@ class Analyzer:
       span_ends = example['node_token_span_ends']
       # Recall, spans are inclusive.
       for (span_start, span_end), (next_span_start, next_span_end) in pairwise(zip(span_starts, span_ends)):
-        print((span_start, span_end), (next_span_start, next_span_end))
         if (span_start <= next_span_start <= span_end
             or span_start <= next_span_end <= span_end
             or next_span_start <= span_start <= next_span_end
             or next_span_start <= span_end <= next_span_end):
+          print((span_start, span_end), (next_span_start, next_span_end))
           source = tokenizer.convert_ids_to_tokens(example['tokens'])
           print(f"""
 Span 1: {source[span_start:span_end + 1]}
