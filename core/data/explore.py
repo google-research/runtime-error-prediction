@@ -12,7 +12,7 @@ def get_spans(problem_id, submission_id, tokenizer_path=DEFAULT_TOKENIZER_PATH):
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
   source, target = process.get_source_and_target_for_submission(problem_id, submission_id)
 
-  problem = make_runtimeerrorproblem(
+  problem = process.make_runtimeerrorproblem(
       source, target, tokenizer=tokenizer, problem_id=problem_id, submission_id=submission_id)
 
   print(source)
