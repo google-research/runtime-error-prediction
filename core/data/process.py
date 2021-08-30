@@ -13,6 +13,8 @@ import numpy as np
 from python_graphs import control_flow
 from python_graphs import instruction as instruction_module
 
+from core.data import codenet
+from core.data import error_kinds
 from core.data import tokenization
 
 
@@ -138,6 +140,18 @@ def examine_udfs(graph, problem_id, submission_id):
     return 'No UDFs called'
   else:
     return 'UDFs called at most once'
+
+
+def make_rawruntimeerrorproblem_for_submission(problem_id, submission_id):
+  """Constructs a RawRuntimeErrorProblem from the provided problem_id and submission_id."""
+  python_path = codenet.get_python_path(problem_id, submission_id)
+  with open(python_path, 'r') as f:
+    source = f.read()
+    error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
+    if error_kind == error_kinds.NO_DATA:
+      raise RuntimeError('No data available for python_path', python_path)
+    target = error_kinds.to_index(error_kind)
+  return make_rawruntimeerrorproblem(source, target, problem_id=problem_id, submission_id=submission_id)
 
 
 def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
