@@ -66,14 +66,13 @@ class Analyzer:
           source = tokenizer.convert_ids_to_tokens(example['tokens'])
           print(f"""
 Span 1: {source[span_start:span_end + 1]}
-
 Span 2: {source[next_span_start:next_span_end + 1]}
 
 Source: {' '.join(source)}
 
-Problem ID: {example['problem_id']}
-Submission ID: {example['submission_id']}
-          """)
+Submission ID: {example['problem_id'][0].decode('utf-8')}, {example['submission_id'][0].decode('utf-8')}
+
+""")
           # raise ValueError('Overlapping span detected')
 
   def run(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
