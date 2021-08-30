@@ -74,7 +74,6 @@ Source: {' '.join(source)}
 Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_id'][0].decode('utf-8')}
 
 """)
-          # raise ValueError('Overlapping span detected')
 
   def inspect_spans(
       self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
@@ -93,9 +92,8 @@ Source: {source}""")
       tokens = tokenizer.convert_ids_to_tokens(example['tokens'])
       for span_start, span_end in zip(span_starts, span_ends):
           print(f"""Span: {tokens[span_start:span_end + 1]}""")
-          # raise ValueError('Overlapping span detected')
 
-  def run(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
+  def run_counter(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
     targets = []
