@@ -14,6 +14,12 @@ def _float_feature(value):
   return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 
+def _bytes_feature(values):
+  """Constructs a tf.train.Feature for the given str value list."""
+  values = [v.encode('utf-8') for v in values]
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=values))
+
+
 def to_tf_example(problem):
   """Constructs a tf.train.Example for the process.RuntimeErrorProblem."""
   return tf.train.Example(features=tf.train.Features(feature={
@@ -29,6 +35,9 @@ def to_tf_example(problem):
       'exit_index': _int64_feature([problem.exit_index]),
       'step_limit': _int64_feature([problem.step_limit]),
       'target': _int64_feature([problem.target]),
+
+      'problem_id': _bytes_feature([problem.problem_id]),
+      'submission_id': _bytes_feature([problem.submission_id]),
 
       'num_tokens': _int64_feature([len(problem.tokens)]),
       'num_nodes': _int64_feature([len(problem.true_branch_nodes)]),
@@ -57,6 +66,9 @@ def decode_fn(record_bytes):
           'exit_index': tf.io.FixedLenFeature([1], dtype=tf.int64),
           'step_limit': tf.io.FixedLenFeature([1], dtype=tf.int64),
           'target': tf.io.FixedLenFeature([1], dtype=tf.int64),
+
+          'problem_id': tf.io.FixedLenFeature([1], dtype=tf.string),
+          'submission_id': tf.io.FixedLenFeature([1], dtype=tf.string),
 
           'num_tokens': tf.io.FixedLenFeature([1], dtype=tf.int64),
           'num_nodes': tf.io.FixedLenFeature([1], dtype=tf.int64),

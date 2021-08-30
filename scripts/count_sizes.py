@@ -12,9 +12,17 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.data import tokenization
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
+DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
+
+
+def pairwise(iterable):
+  a, b = itertools.tee(iterable)
+  next(b, None)
+  return zip(a, b)
 
 
 @dataclasses.dataclass
@@ -40,12 +48,30 @@ class Analyzer:
         .filter(filter_fn)
     )
 
-  def look_for_overlapping_spans(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
+  def look_for_overlapping_spans(
+      self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
+      split='train', steps=None):
+    tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
     dataset = self.load_dataset(dataset_path, split=split)
     for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       span_starts = example['node_token_span_starts']
       span_ends = example['node_token_span_ends']
-      print(zip(span_starts, span_ends))
+      # Recall, spans are inclusive.
+      for (span_start, span_end), (next_span_start, next_span_end) in pairwise(zip(span_starts, span_ends)):
+        print((span_start, span_end), (next_span_start, next_span_end))
+        if (span_start <= next_span_start <= span_end
+            or span_start <= next_span_end <= span_end
+            or next_span_start <= span_start <= next_span_end
+            or next_span_start <= span_end <= next_span_end):
+          source = tokenizer.convert_ids_to_tokens(example['tokens'])
+          print(f"""
+Span 1: {source[span_start:span_end + 1]}
+
+Span 2: {source[next_span_start:next_span_end + 1]}
+
+Source: {' '.join(source)}
+          """)
+          raise ValueError(example, source, source[span_start:span_end])
 
   def run(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
