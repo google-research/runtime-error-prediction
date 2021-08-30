@@ -34,9 +34,6 @@ class RawRuntimeErrorProblem:
   step_limit: int
   target: int
 
-  def __str__(self):
-    return 
-
 
 @dataclasses.dataclass
 class RuntimeErrorProblem:
