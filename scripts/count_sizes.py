@@ -89,7 +89,7 @@ Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_i
       problem_id = example['problem_id'][0].decode('utf-8')
       source, target = process.get_source_and_target_for_submission(problem_id, submission_id)
       print(f"""Submission ID: {submission_id} {problem_id}
-Source: {' '.join(source)}""")
+Source: {source}""")
       for span_start, span_end in zip(span_starts, span_ends):
           print(f"""Span: {source[span_start:span_end + 1]}""")
           # raise ValueError('Overlapping span detected')
