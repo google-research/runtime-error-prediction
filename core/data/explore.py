@@ -2,7 +2,9 @@
 
 import fire
 
+from core.data import codenet
 from core.data import codenet_paths
+from core.data import error_kinds
 from core.data import process
 from core.data import tokenization
 
@@ -25,14 +27,14 @@ def get_source_and_target_for_submission(problem_id, submission_id):
 def make_runtimeerrorproblem_for_submission(problem_id, submission_id, tokenizer=None):
   """Constructs a RuntimeErrorProblem from the provided problem_id and submission_id."""
   source, target = get_source_and_target_for_submission(problem_id, submission_id)
-  return make_runtimeerrorproblem(
+  return process.make_runtimeerrorproblem(
       source, target, tokenizer=tokenizer, problem_id=problem_id, submission_id=submission_id)
 
 
 def make_rawruntimeerrorproblem_for_submission(problem_id, submission_id):
   """Constructs a RawRuntimeErrorProblem from the provided problem_id and submission_id."""
   source, target = get_source_and_target_for_submission(problem_id, submission_id)
-  return make_rawruntimeerrorproblem(
+  return process.make_rawruntimeerrorproblem(
       source, target, problem_id=problem_id, submission_id=submission_id)
 
 
