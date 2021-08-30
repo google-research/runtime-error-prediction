@@ -70,6 +70,9 @@ Span 1: {source[span_start:span_end + 1]}
 Span 2: {source[next_span_start:next_span_end + 1]}
 
 Source: {' '.join(source)}
+
+Problem ID: {example['problem_id']}
+Submission ID: {example['submission_id']}
           """)
           raise ValueError(example, source, source[span_start:span_end])
 
