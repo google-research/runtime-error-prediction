@@ -70,8 +70,27 @@ Span 2: {source[next_span_start:next_span_end + 1]}
 
 Source: {' '.join(source)}
 
-Submission ID: {example['problem_id'][0].decode('utf-8')}, {example['submission_id'][0].decode('utf-8')}
+Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_id'][0].decode('utf-8')}
 
+""")
+          # raise ValueError('Overlapping span detected')
+
+  def inspect_spans(
+      self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
+      split='train', steps=None):
+    tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
+    dataset = self.load_dataset(dataset_path, split=split)
+    for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      span_starts = example['node_token_span_starts']
+      span_ends = example['node_token_span_ends']
+      # Recall, spans are inclusive.
+      source = tokenizer.convert_ids_to_tokens(example['tokens'])
+      print(f"""Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_id'][0].decode('utf-8')}
+Source: {' '.join(source)}""")
+      for (span_start, span_end), (next_span_start, next_span_end) in pairwise(zip(span_starts, span_ends)):
+          print(f"""
+Span    : {source[span_start:span_end + 1]}
+Next Span: {source[next_span_start:next_span_end + 1]}
 """)
           # raise ValueError('Overlapping span detected')
 
