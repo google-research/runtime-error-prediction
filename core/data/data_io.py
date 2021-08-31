@@ -1,3 +1,5 @@
+import functools
+
 import tensorflow as tf
 
 import jax.numpy as jnp
@@ -12,6 +14,12 @@ def _int64_feature(value):
 def _float_feature(value):
   """Constructs a tf.train.Feature for the given float value list."""
   return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+
+def _bytes_feature(values):
+  """Constructs a tf.train.Feature for the given str value list."""
+  values = [v.encode('utf-8') for v in values]
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=values))
 
 
 def to_tf_example(problem):
@@ -30,6 +38,9 @@ def to_tf_example(problem):
       'step_limit': _int64_feature([problem.step_limit]),
       'target': _int64_feature([problem.target]),
 
+      'problem_id': _bytes_feature([problem.problem_id]),
+      'submission_id': _bytes_feature([problem.submission_id]),
+
       'num_tokens': _int64_feature([len(problem.tokens)]),
       'num_nodes': _int64_feature([len(problem.true_branch_nodes)]),
       'num_edges': _int64_feature([len(problem.edge_sources)]),
@@ -41,28 +52,31 @@ def _int64_sequence_feature():
       [], dtype=tf.int64, allow_missing=True, default_value=0)
 
 
-def decode_fn(record_bytes):
-  return tf.io.parse_single_example(
-      record_bytes,
-      {
-          'tokens': _int64_sequence_feature(),
-          'edge_sources': _int64_sequence_feature(),
-          'edge_dests': _int64_sequence_feature(),
-          'edge_types': _int64_sequence_feature(),
-          'node_token_span_starts': _int64_sequence_feature(),
-          'node_token_span_ends': _int64_sequence_feature(),
-          'token_node_indexes': _int64_sequence_feature(),
-          'true_branch_nodes': _int64_sequence_feature(),
-          'false_branch_nodes': _int64_sequence_feature(),
-          'exit_index': tf.io.FixedLenFeature([1], dtype=tf.int64),
-          'step_limit': tf.io.FixedLenFeature([1], dtype=tf.int64),
-          'target': tf.io.FixedLenFeature([1], dtype=tf.int64),
+def decode_fn(record_bytes, include_strings=False):
+  features = {
+      'tokens': _int64_sequence_feature(),
+      'edge_sources': _int64_sequence_feature(),
+      'edge_dests': _int64_sequence_feature(),
+      'edge_types': _int64_sequence_feature(),
+      'node_token_span_starts': _int64_sequence_feature(),
+      'node_token_span_ends': _int64_sequence_feature(),
+      'token_node_indexes': _int64_sequence_feature(),
+      'true_branch_nodes': _int64_sequence_feature(),
+      'false_branch_nodes': _int64_sequence_feature(),
+      'exit_index': tf.io.FixedLenFeature([1], dtype=tf.int64),
+      'step_limit': tf.io.FixedLenFeature([1], dtype=tf.int64),
+      'target': tf.io.FixedLenFeature([1], dtype=tf.int64),
 
-          'num_tokens': tf.io.FixedLenFeature([1], dtype=tf.int64),
-          'num_nodes': tf.io.FixedLenFeature([1], dtype=tf.int64),
-          'num_edges': tf.io.FixedLenFeature([1], dtype=tf.int64),
-      }
-  )
+      'num_tokens': tf.io.FixedLenFeature([1], dtype=tf.int64),
+      'num_nodes': tf.io.FixedLenFeature([1], dtype=tf.int64),
+      'num_edges': tf.io.FixedLenFeature([1], dtype=tf.int64),
+  }
+  if include_strings:
+    features.update({
+        'problem_id': tf.io.FixedLenFeature([1], dtype=tf.string),
+        'submission_id': tf.io.FixedLenFeature([1], dtype=tf.string),
+    })
+  return tf.io.parse_single_example(record_bytes, features)
 
 
 def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
@@ -78,6 +92,11 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       'exit_index': jnp.full((batch_size, 1), max_num_nodes - 1, dtype=jnp.int32),
       'step_limit': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
       'target': jnp.zeros((batch_size, 1), dtype=jnp.int32),
+
+      # We exclude problem_id and submission_id from fake_input, as they are not
+      # model inputs.
+      # 'problem_id': jnp.full((batch_size,), 'p12345', dtype=jnp.string),
+      # 'submission_id': jnp.full((batch_size,), 's123456789', dtype=jnp.string),
 
       'num_tokens': jnp.full((batch_size, 1), max_tokens, dtype=jnp.int32),
       'num_nodes': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
@@ -151,13 +170,13 @@ def make_filter(
   return fn
 
 
-def load_tfrecord_dataset(tfrecord_path):
+def load_tfrecord_dataset(tfrecord_path, include_strings=False):
   return tf.data.TFRecordDataset(
       [tfrecord_path],
       compression_type=None, buffer_size=None, num_parallel_reads=None
-  ).map(decode_fn)
+  ).map(functools.partial(decode_fn, include_strings=include_strings))
 
 
-def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train'):
+def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train', include_strings=False):
   tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
-  return load_tfrecord_dataset(tfrecord_path)
+  return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)

@@ -6,7 +6,7 @@ import time
 
 DEFAULT_CONFIG_PATH = 'config/default.py'
 DEFAULT_DATASET_PATH = 'datasets/codenet/f=0.01-noudf'
-DEFAULT_TOKENIZER_PATH = 'out/tokenizers/default.json'
+DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
