@@ -2,6 +2,9 @@ import jax
 import jax.numpy as jnp
 
 
+epsilon = 1e-9
+
+
 def get_additional_logit(target_p, current_p, logits):
   """Computes an additional logit that when added to logits has probability target_p.
 
@@ -27,7 +30,7 @@ def get_additional_logit(target_p, current_p, logits):
   #   target_logit == log(target_p / (1 - target_p) * sum(exp(logits)))
   #   target_logit == log(target_p) - log(1 - target_p) + log(sum(exp(logits)))
   target_logit = (
-      jnp.log(target_p) - jnp.log(current_p)
+      jnp.log(target_p + epsilon) - jnp.log(current_p + epsilon)
       + jax.scipy.special.logsumexp(logits)
   )
   # target_logit.shape: scalar.
