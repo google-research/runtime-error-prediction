@@ -70,6 +70,8 @@ class IPAGNN(nn.Module):
     # raise_node_embeddings.shape: batch_size, hidden_size
     exit_node_instruction_pointer = ipagnn_output['exit_node_instruction_pointer']
     # exit_node_instruction_pointer.shape: batch_size
+    raise_node_instruction_pointer = ipagnn_output['raise_node_instruction_pointer']
+    # raise_node_instruction_pointer.shape: batch_size
 
     if config.raise_in_ipagnn:
       logits = nn.Dense(features=NUM_CLASSES)(raise_node_embeddings)  # P(e | yes exception)
@@ -77,7 +79,8 @@ class IPAGNN(nn.Module):
       logits = logits.at[:, error_kinds.NO_DATA_ID].set(-jnp.inf)
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
 
-      no_error_logits = jax.vmap(logit_math.get_additional_logit)(exit_node_instruction_pointer, logits)
+      no_error_logits = jax.vmap(logit_math.get_additional_logit)(
+          exit_node_instruction_pointer, raise_node_instruction_pointer, logits)
       # no_error_logits.shape: batch_size
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
     else:
