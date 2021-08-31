@@ -93,6 +93,8 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       'step_limit': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
       'target': jnp.zeros((batch_size, 1), dtype=jnp.int32),
 
+      # We exclude problem_id and submission_id from fake_input, as they are not
+      # model inputs.
       # 'problem_id': jnp.full((batch_size,), 'p12345', dtype=jnp.string),
       # 'submission_id': jnp.full((batch_size,), 's123456789', dtype=jnp.string),
 
