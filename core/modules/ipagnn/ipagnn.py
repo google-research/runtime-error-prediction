@@ -102,12 +102,15 @@ class IPAGNNLayer(nn.Module):
       # false_indexes.shape: num_nodes
       p_raise = raise_decisions[:, 0]
       p_noraise = raise_decisions[:, 1]
+      # assert p_raise + p_noraise == 1
       p_true = p_noraise * branch_decisions[:, 0]
       p_false = p_noraise * branch_decisions[:, 1]
+      raise_contribution = jnp.sum(p_raise * instruction_pointer)
+      # raise_contribution.shape: scalar.
       raise_contributions = (
-          jnp.zeros_like(true_indexes).at[raise_index]
-          .set(jnp.sum(p_raise * instruction_pointer))
+          jnp.zeros((num_nodes,)).at[raise_index].set(raise_contribution)
       )
+      # raise_contributions.shape: num_nodes
       true_contributions = jax.ops.segment_sum(
           p_true * instruction_pointer, true_indexes,
           num_segments=num_nodes)
@@ -142,17 +145,18 @@ class IPAGNNLayer(nn.Module):
         # p_true.shape: num_nodes
         # instruction_pointer.shape: num_nodes
         raise_contribution = jnp.sum(h * p_raise * instruction_pointer)
+        # raise_contribution.shape: scalar.
         raise_contributions = (
-            jnp.zeros_like(true_indexes).at[raise_index]
-            .set(raise_contribution)
+            jnp.zeros((num_nodes,)).at[raise_index].set(raise_contribution)
         )
+        # raise_contributions.shape: num_nodes
         true_contributions = jax.ops.segment_sum(
             h * p_true * instruction_pointer, true_indexes,
             num_segments=num_nodes)
         false_contributions = jax.ops.segment_sum(
             h * p_false * instruction_pointer, false_indexes,
             num_segments=num_nodes)
-        # *_contributions.shape: num_nodes, hidden_size
+        # *_contributions.shape: num_nodes
         return (raise_contributions + true_contributions + false_contributions) / denominators
       aggregate_states = jax.vmap(aggregate_state_component, in_axes=1, out_axes=1)
 
