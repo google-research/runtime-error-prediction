@@ -123,18 +123,27 @@ class NodeAwareTokenEmbedder(nn.Module):
   features: int
   max_tokens: int
   max_num_nodes: int
-  use_span_encoder: bool = True
+  use_span_index_encoder: bool = False
+  use_span_start_indicators: bool = False
 
   def setup(self):
     self.embed = nn.Embed(
         num_embeddings=self.num_embeddings,
         features=self.features,
         embedding_init=nn.initializers.normal(stddev=1.0))
-    self.span_index_encoder = SpanIndexEncoder(
-        max_tokens=self.max_tokens,
-        max_num_nodes=self.max_num_nodes,
-        features=self.features
-    )
+    if self.use_span_index_encoder:
+      self.span_index_encoder = SpanIndexEncoder(
+          max_tokens=self.max_tokens,
+          max_num_nodes=self.max_num_nodes,
+          features=self.features
+      )
+    if self.use_span_start_indicators:
+      self.span_start_embedding = self.param(
+          'span_start_embedding',
+          nn.initializers.variance_scaling(1.0, 'fan_in', 'normal', out_axis=0),
+          (1, self.features,),
+          jnp.float32
+      )
     self.add_position_embeds = transformer_modules.AddPositionEmbs(
         config=self.transformer_config, decode=False, name='posembed_input')
 
@@ -143,11 +152,14 @@ class NodeAwareTokenEmbedder(nn.Module):
     # x.shape: batch_size, max_tokens
     x = self.embed(x)
     # x.shape: batch_size, max_tokens, features
-    if self.use_span_encoder:
+    if self.use_span_index_encoder:
       token_span_encodings = jax.vmap(self.span_index_encoder)(
           node_span_starts, node_span_ends)
       # token_span_encodings.shape: batch_size, max_tokens, features
       x = x + token_span_encodings
+    if self.use_span_start_indicators:
+      # TODO(dbieber): Be careful not to add start indicators to padding spans.
+      raise NotImplementedError()
     # x.shape: batch_size, max_tokens, features
     x = self.add_position_embeds(x)
     return x
@@ -161,6 +173,8 @@ class NodeSpanEncoder(nn.Module):
 
   max_tokens: int  # TODO(dbieber): Move these into info or config.
   max_num_nodes: int
+  use_span_index_encoder: bool = False
+  use_span_start_indicators: bool = False
 
   def setup(self):
     vocab_size = self.info.vocab_size
@@ -176,10 +190,14 @@ class NodeSpanEncoder(nn.Module):
         features=hidden_size,
         max_tokens=self.max_tokens,
         max_num_nodes=self.max_num_nodes,
+        use_span_index_encoder=self.use_span_index_encoder,
+        use_span_start_indicators=self.use_span_start_indicators,
     )
     self.encoder = encoder.TransformerEncoder(config=transformer_config)
 
   def __call__(self, tokens, node_span_starts, node_span_ends):
+    config = self.config
+
     # tokens.shape: batch_size, max_tokens
     # TODO(dbieber): Add indicator to start-of-span tokens.
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)

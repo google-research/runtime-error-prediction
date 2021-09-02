@@ -32,6 +32,8 @@ class IPAGNN(nn.Module):
         config=config,
         max_tokens=max_tokens,
         max_num_nodes=max_num_nodes,
+        use_span_index_encoder=False,
+        use_span_start_indicators=False,
     )
 
     self.ipagnn = ipagnn.IPAGNNModule(
