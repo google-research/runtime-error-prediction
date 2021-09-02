@@ -158,6 +158,7 @@ class NodeAwareTokenEmbedder(nn.Module):
       # token_span_encodings.shape: batch_size, max_tokens, features
       x = x + token_span_encodings
     if self.use_span_start_indicators:
+      # TODO(dbieber): Add indicator to start-of-span tokens.
       # TODO(dbieber): Be careful not to add start indicators to padding spans.
       raise NotImplementedError()
     # x.shape: batch_size, max_tokens, features
@@ -199,7 +200,6 @@ class NodeSpanEncoder(nn.Module):
     config = self.config
 
     # tokens.shape: batch_size, max_tokens
-    # TODO(dbieber): Add indicator to start-of-span tokens.
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
     # token_embeddings.shape: batch_size, max_tokens, hidden_size
     tokens_mask = tokens > 0
