@@ -80,7 +80,9 @@ class IPAGNN(nn.Module):
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
 
       no_error_logits = jax.vmap(logit_math.get_additional_logit)(
-          exit_node_instruction_pointer, raise_node_instruction_pointer, logits)
+          exit_node_instruction_pointer + 1e-9,
+          raise_node_instruction_pointer + 1e-9,
+          logits)
       # no_error_logits.shape: batch_size
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
     else:
