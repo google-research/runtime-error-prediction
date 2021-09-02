@@ -46,7 +46,8 @@ class Trainer:
     config = self.config
     batch_size = config.batch_size
     if epochs is None:
-      epochs = config.epochs
+      # config.epochs == 0 -> None
+      epochs = config.epochs or None
     allowlist = config.allowlist
 
     padded_shapes = data_io.get_padded_shapes(
