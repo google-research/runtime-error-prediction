@@ -22,6 +22,7 @@ def default_config():
   config.allowlist: Optional[List[int]] = None
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = ''
+  config.span_encoding_method = 'first'  # first, mean, max, sum
 
   config.eval_freq = 10000
   config.save_freq = 1000

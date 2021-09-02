@@ -10,7 +10,7 @@ from third_party.flax_examples import transformer_modules
 
 
 def add_at_span(x, value, start, end):
-  # Inclusive [start, end]
+  # start and end are inclusive.
   # x.shape: length, features
   # value.shape: features
   arange = jnp.arange(x.shape[0])
@@ -18,6 +18,51 @@ def add_at_span(x, value, start, end):
   mask = jnp.logical_and(start <= arange, arange <= end)
   # mask.shape: length
   return jnp.where(~mask[:, None], x, x + value[None, :])
+
+
+def get_span_encoding_first(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  return x[start]
+
+
+def get_span_encoding_mean(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  arange = jnp.arange(x.shape[0])
+  # arange.shape: length
+  mask = jnp.logical_and(start <= arange, arange <= end)
+  # mask.shape: length
+  values = jnp.where(mask[:, None], x, 0)
+  total = jnp.sum(values, axis=0)
+  # total.shape: hidden_size
+  count = jnp.sum(mask)
+  return total / count
+
+
+def get_span_encoding_max(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  arange = jnp.arange(x.shape[0])
+  # arange.shape: length
+  mask = jnp.logical_and(start <= arange, arange <= end)
+  # mask.shape: length
+  min_value = jnp.min(x, axis=0)
+  # min_value.shape: hidden_size
+  values = jnp.where(mask[:, None], x, min_value)
+  # values.shape: length, hidden_size
+  return jnp.max(values, axis=0)
+
+
+def get_span_encoding_sum(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  arange = jnp.arange(x.shape[0])
+  # arange.shape: length
+  mask = jnp.logical_and(start <= arange, arange <= end)
+  values = jnp.where(mask[:, None], x, 0)
+  return jnp.sum(values, axis=0)
+
 
 
 class SpanIndexEncoder(nn.Module):
@@ -147,7 +192,19 @@ class NodeSpanEncoder(nn.Module):
     # encoding.shape: batch_size, length, hidden_size
 
     # Get just the encoding of the first token in each span.
-    # TODO(dbieber): Replace first with some kind of pooling.
-    span_encodings = jax.vmap(lambda a, b: a[b])(encoding, node_span_starts)
+    span_encoding_method = config.span_encoding_method
+    if span_encoding_method == 'first':
+      span_encodings = jax.vmap(get_span_encoding_first)(
+          encoding, node_span_starts, node_span_ends)
+    elif span_encoding_method == 'mean':
+      span_encodings = jax.vmap(get_span_encoding_mean)(
+          encoding, node_span_starts, node_span_ends)
+    elif span_encoding_method == 'max':
+      span_encodings = jax.vmap(get_span_encoding_max)(
+          encoding, node_span_starts, node_span_ends)
+    elif span_encoding_method == 'sum':
+      span_encodings = jax.vmap(get_span_encoding_sum)(
+          encoding, node_span_starts, node_span_ends)
+
     # span_encodings.shape: batch_size, num_nodes, hidden_size
     return span_encodings
