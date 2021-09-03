@@ -16,6 +16,7 @@ Config = ml_collections.ConfigDict
 def make_sample_config():
   config = Config()
   config.hidden_size = 10
+  config.span_encoding_method = 'first'
   return config
 
 

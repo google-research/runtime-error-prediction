@@ -10,7 +10,7 @@ from third_party.flax_examples import transformer_modules
 
 
 def add_at_span(x, value, start, end):
-  # Inclusive [start, end]
+  # start and end are inclusive.
   # x.shape: length, features
   # value.shape: features
   arange = jnp.arange(x.shape[0])
@@ -18,6 +18,51 @@ def add_at_span(x, value, start, end):
   mask = jnp.logical_and(start <= arange, arange <= end)
   # mask.shape: length
   return jnp.where(~mask[:, None], x, x + value[None, :])
+
+
+def get_span_encoding_first(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  return x[start]
+
+
+def get_span_encoding_mean(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  arange = jnp.arange(x.shape[0])
+  # arange.shape: length
+  mask = jnp.logical_and(start <= arange, arange <= end)
+  # mask.shape: length
+  values = jnp.where(mask[:, None], x, 0)
+  total = jnp.sum(values, axis=0)
+  # total.shape: hidden_size
+  count = jnp.sum(mask)
+  return total / count
+
+
+def get_span_encoding_max(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  arange = jnp.arange(x.shape[0])
+  # arange.shape: length
+  mask = jnp.logical_and(start <= arange, arange <= end)
+  # mask.shape: length
+  min_value = jnp.min(x, axis=0)
+  # min_value.shape: hidden_size
+  values = jnp.where(mask[:, None], x, min_value)
+  # values.shape: length, hidden_size
+  return jnp.max(values, axis=0)
+
+
+def get_span_encoding_sum(x, start, end):
+  # x.shape: length, hidden_size
+  # start and end are inclusive.
+  arange = jnp.arange(x.shape[0])
+  # arange.shape: length
+  mask = jnp.logical_and(start <= arange, arange <= end)
+  values = jnp.where(mask[:, None], x, 0)
+  return jnp.sum(values, axis=0)
+
 
 
 class SpanIndexEncoder(nn.Module):
@@ -78,18 +123,27 @@ class NodeAwareTokenEmbedder(nn.Module):
   features: int
   max_tokens: int
   max_num_nodes: int
-  use_span_encoder: bool = True
+  use_span_index_encoder: bool = False
+  use_span_start_indicators: bool = False
 
   def setup(self):
     self.embed = nn.Embed(
         num_embeddings=self.num_embeddings,
         features=self.features,
         embedding_init=nn.initializers.normal(stddev=1.0))
-    self.span_index_encoder = SpanIndexEncoder(
-        max_tokens=self.max_tokens,
-        max_num_nodes=self.max_num_nodes,
-        features=self.features
-    )
+    if self.use_span_index_encoder:
+      self.span_index_encoder = SpanIndexEncoder(
+          max_tokens=self.max_tokens,
+          max_num_nodes=self.max_num_nodes,
+          features=self.features
+      )
+    if self.use_span_start_indicators:
+      self.span_start_embedding = self.param(
+          'span_start_embedding',
+          nn.initializers.variance_scaling(1.0, 'fan_in', 'normal', out_axis=0),
+          (1, self.features,),
+          jnp.float32
+      )
     self.add_position_embeds = transformer_modules.AddPositionEmbs(
         config=self.transformer_config, decode=False, name='posembed_input')
 
@@ -98,11 +152,15 @@ class NodeAwareTokenEmbedder(nn.Module):
     # x.shape: batch_size, max_tokens
     x = self.embed(x)
     # x.shape: batch_size, max_tokens, features
-    if self.use_span_encoder:
+    if self.use_span_index_encoder:
       token_span_encodings = jax.vmap(self.span_index_encoder)(
           node_span_starts, node_span_ends)
       # token_span_encodings.shape: batch_size, max_tokens, features
       x = x + token_span_encodings
+    if self.use_span_start_indicators:
+      # TODO(dbieber): Add indicator to start-of-span tokens.
+      # TODO(dbieber): Be careful not to add start indicators to padding spans.
+      raise NotImplementedError()
     # x.shape: batch_size, max_tokens, features
     x = self.add_position_embeds(x)
     return x
@@ -116,6 +174,8 @@ class NodeSpanEncoder(nn.Module):
 
   max_tokens: int  # TODO(dbieber): Move these into info or config.
   max_num_nodes: int
+  use_span_index_encoder: bool = False
+  use_span_start_indicators: bool = False
 
   def setup(self):
     vocab_size = self.info.vocab_size
@@ -131,10 +191,14 @@ class NodeSpanEncoder(nn.Module):
         features=hidden_size,
         max_tokens=self.max_tokens,
         max_num_nodes=self.max_num_nodes,
+        use_span_index_encoder=self.use_span_index_encoder,
+        use_span_start_indicators=self.use_span_start_indicators,
     )
     self.encoder = encoder.TransformerEncoder(config=transformer_config)
 
   def __call__(self, tokens, node_span_starts, node_span_ends):
+    config = self.config
+
     # tokens.shape: batch_size, max_tokens
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
     # token_embeddings.shape: batch_size, max_tokens, hidden_size
@@ -146,7 +210,19 @@ class NodeSpanEncoder(nn.Module):
     # encoding.shape: batch_size, length, hidden_size
 
     # Get just the encoding of the first token in each span.
-    # TODO(dbieber): Replace first with some kind of pooling.
-    span_encodings = jax.vmap(lambda a, b: a[b])(encoding, node_span_starts)
+    span_encoding_method = config.span_encoding_method
+    if span_encoding_method == 'first':
+      span_encodings = jax.vmap(get_span_encoding_first)(
+          encoding, node_span_starts, node_span_ends)
+    elif span_encoding_method == 'mean':
+      span_encodings = jax.vmap(get_span_encoding_mean)(
+          encoding, node_span_starts, node_span_ends)
+    elif span_encoding_method == 'max':
+      span_encodings = jax.vmap(get_span_encoding_max)(
+          encoding, node_span_starts, node_span_ends)
+    elif span_encoding_method == 'sum':
+      span_encodings = jax.vmap(get_span_encoding_sum)(
+          encoding, node_span_starts, node_span_ends)
+
     # span_encodings.shape: batch_size, num_nodes, hidden_size
     return span_encodings
