@@ -296,5 +296,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           logging.info('Early stopping triggered.')
           break
 
+        summary_writer.flush()
+
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
