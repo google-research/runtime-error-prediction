@@ -8,3 +8,8 @@ cd compressive-ipagnn
 sudo apt-get update
 sudo apt install libgraphviz-dev -y
 python3 -m pip install -r requirements.txt
+
+# Connect to GCS Bucket
+sudo mkdir -p /mnt/runtime-error-problems-experiments
+sudo chown $(whoami) /mnt/runtime-error-problems-experiments
+gcsfuse runtime-error-problems-experiments /mnt/runtime-error-problems-experiments/

@@ -8,6 +8,7 @@ DEFAULT_CONFIG_PATH = 'config/default.py'
 DEFAULT_DATASET_PATH = 'datasets/codenet/f=0.01-noudf'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
+DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
@@ -28,6 +29,12 @@ elif HOSTNAME == 'dev-000':
   DATA_ROOT = '/home/veetee/Project_CodeNet/'
   EVALS_ROOT = '/home/veetee/out/evals'
 
+# On TPUs, this we mount the GCS bucket "runtime-error-problems-experiments"
+# at /mnt/runtime-error-problems-experiments.
+GCS_EXPERIMENT_DIR = '/mnt/runtime-error-problems-experiments/experiments'
+if os.path.exists(GCS_EXPERIMENT_DIR):
+  DEFAULT_EXPERIMENTS_DIR = GCS_EXPERIMENT_DIR
+
 CLOUD_DATA_ROOT = 'gs://project-codenet/'
 
 
@@ -47,7 +54,7 @@ def make_experiment_id():
 
 
 def make_experiment_path(exp_id):
-  return os.path.join('out', 'experiments', exp_id)
+  return os.path.join(DEFAULT_EXPERIMENTS_DIR, exp_id)
 
 
 def make_checkpoints_path(exp_id):
