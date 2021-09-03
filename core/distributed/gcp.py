@@ -10,6 +10,7 @@ import termcolor
 
 
 WORKER_PREFIX = 'worker'
+DEFAULT_PROJECT = 'runtime-error-problems'
 
 
 def call(args):
@@ -51,6 +52,22 @@ def _zone(index):
     raise ValueError('Unhandled zone index')
 
 
+def _tpu_hostname(index):
+  return f'tpu-host-{index:03d}'
+
+
+def _tpu_zone(index):
+  """Chooses a GCP TPU zone based on the index."""
+  if index < 118:
+    return 'europe-west4-a'
+  elif index < 128:
+    return 'us-central1-b'
+  elif index < 138:
+    return 'us-central1-c'
+  else:
+    raise ValueError('Unhandled zone index')
+
+
 def as_shell_string(args):
   """Turns the args representing a command into a string for running in a shell.
 
@@ -76,7 +93,7 @@ def as_shell_string(args):
 
 def up_args(
     index,
-    project='runtime-error-problems',
+    project=DEFAULT_PROJECT,
     machine_type='c2-standard-4',
 ):
   """Starts a single worker."""
@@ -119,6 +136,17 @@ def create_instances(n):
   fix_firewall().wait()
 
 
+def fix_firewall_args():
+  return (
+      'gcloud compute firewall-rules create default-allow-ssh --allow tcp:22'
+      .split())
+
+
+def fix_firewall():
+  args = fix_firewall_args()
+  return call(args)
+
+
 def down_args(index):
   hostname = _hostname(index)
   zone = _zone(index)
@@ -136,15 +164,48 @@ def down_n(n):
   return wait(parallel(down, n=n))
 
 
-def fix_firewall_args():
-  return (
-      'gcloud compute firewall-rules create default-allow-ssh --allow tcp:22'
-      .split())
+def tpu_up_args(
+    index,
+    project=DEFAULT_PROJECT,
+):
+  hostname = _tpu_hostname(index)
+  zone = _tpu_zone(index)
+  return f"""
+gcloud alpha compute tpus tpu-vm create {hostname} \
+--project={project} \
+--zone={zone} \
+--version=v2-alpha \
+--accelerator-type=v2-8
+  """.split()
 
 
-def fix_firewall():
-  args = fix_firewall_args()
+def tpu_up(index):
+  args = tpu_up_args(index)
   return call(args)
+
+
+def tpu_down_args(
+    index,
+    project=DEFAULT_PROJECT,
+):
+  hostname = _tpu_hostname(index)
+  zone = _tpu_zone(index)
+  return f"""
+gcloud alpha compute tpus tpu-vm delete {hostname} \
+--project={project} \
+--zone={zone} \
+--version=v2-alpha \
+--accelerator-type=v2-8
+  """.split()
+
+
+def tpu_down(index):
+  args = tpu_down_args(index)
+  return call(args)
+
+
+def tpu_up_n(n):
+  return wait(parallel(tpu_up, n=n))
 
 
 def _do_single_run(index, run_command_fn):
