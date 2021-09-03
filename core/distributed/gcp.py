@@ -136,17 +136,6 @@ def create_instances(n):
   fix_firewall().wait()
 
 
-def fix_firewall_args():
-  return (
-      'gcloud compute firewall-rules create default-allow-ssh --allow tcp:22'
-      .split())
-
-
-def fix_firewall():
-  args = fix_firewall_args()
-  return call(args)
-
-
 def down_args(index):
   hostname = _hostname(index)
   zone = _zone(index)
@@ -162,6 +151,17 @@ def down(index):
 
 def down_n(n):
   return wait(parallel(down, n=n))
+
+
+def fix_firewall_args():
+  return (
+      'gcloud compute firewall-rules create default-allow-ssh --allow tcp:22'
+      .split())
+
+
+def fix_firewall():
+  args = fix_firewall_args()
+  return call(args)
 
 
 def tpu_up_args(
