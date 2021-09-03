@@ -62,6 +62,6 @@ def make_checkpoints_path(exp_id):
   return os.path.join(experiment_path, 'checkpoints')
 
 
-def make_log_dir(exp_id):
+def make_log_dir(exp_id, split='train'):
   experiment_path = make_experiment_path(exp_id)
-  return os.path.join(experiment_path, 'logs')
+  return os.path.join(experiment_path, split)

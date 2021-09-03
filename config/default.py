@@ -8,26 +8,33 @@ Config = ml_collections.ConfigDict
 def default_config():
   """The default config."""
   config = Config()
+
+  # Trainer configs
+  config.multidevice: bool = True
+  config.restore_checkpoint_dir: Optional[Text] = ''
+
+  # Model HParams
+  config.model_class: Text = 'IPAGNN'  # IPAGNN, Transformer
+  config.raise_in_ipagnn: bool = False
   config.rnn_layers = 2
-  config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / move to Info.
-  config.model_class: Text = 'IPAGNN'
+  config.hidden_size: int = 16
+  config.span_encoding_method = 'first'  # first, mean, max, sum
+
+  # Dataset filtering and configs
   config.epochs: Optional[int] = 0
   config.batch_size: int = 128
+  config.allowlist: Optional[List[int]] = None
+  config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / move to Info.
   config.max_tokens: int = 512
   config.max_num_nodes: int = 128
   config.max_num_edges: int = 128
   config.max_steps: int = 174
-  config.hidden_size: int = 16
-  config.raise_in_ipagnn: bool = False
-  config.allowlist: Optional[List[int]] = None
-  config.multidevice: bool = True
-  config.restore_checkpoint_dir: Optional[Text] = ''
-  config.span_encoding_method = 'first'  # first, mean, max, sum
 
+  # Runner configs
   config.eval_freq = 10000
   config.save_freq = 1000
   config.eval_metric_name = 'F1-score'
-  config.eval_subsample = 0.01
+  config.eval_subsample = 1.0
   config.eval_max_batches = 30
 
   config.early_stopping_on = False

@@ -228,7 +228,8 @@ class Trainer:
     rng = jax.random.PRNGKey(0)
     exp_id = codenet_paths.make_experiment_id()
     checkpoint_dir = codenet_paths.make_checkpoints_path(exp_id)
-    log_dir = codenet_paths.make_log_dir(exp_id)
+    train_dir = codenet_paths.make_log_dir(exp_id, 'train')
+    valid_dir = codenet_paths.make_log_dir(exp_id, 'valid')
     print(f'Checkpoints: {checkpoint_dir}')
 
     rng, init_rng = jax.random.split(rng)
@@ -244,8 +245,9 @@ class Trainer:
         min_delta=config.early_stopping_delta,
         patience=config.early_stopping_threshold,
     )
-    summary_writer = tensorboard.SummaryWriter(log_dir)
-    summary_writer.hparams(config.to_dict())
+    train_writer = tensorboard.SummaryWriter(train_dir)
+    valid_writer = tensorboard.SummaryWriter(valid_dir)
+    train_writer.hparams(config.to_dict())
 
     recent_accuracies = []
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
@@ -286,17 +288,20 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             batch_loss,
             batch_metric,
         ) = evaluate_batch(batch, state)
-        summary_writer.scalar('train_loss', batch_loss, step)
-        summary_writer.scalar('train_metric', batch_metric, step)
-        summary_writer.scalar('eval_loss', eval_loss, step)
-        summary_writer.scalar('eval_metric', eval_metric, step)
+        train_writer.scalar('loss', batch_loss, step)
+        train_writer.scalar(
+            'recent_accuracy', jnp.mean(jnp.array(recent_accuracies)), step)
+        train_writer.scalar('train_metric', batch_metric, step)
+        valid_writer.scalar('loss', eval_loss, step)
+        valid_writer.scalar('eval_metric', eval_metric, step)
 
         did_improve, es = es.update(-1 * eval_loss)
         if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')
           break
 
-        summary_writer.flush()
+        train_writer.flush()
+        valid_writer.flush()
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
