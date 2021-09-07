@@ -15,11 +15,16 @@ EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
 
+PERSONAL_ACCESS_TOKEN_PATH = ''
+
 PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
 if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/googleprivate/compressive-ipagnn/data/Project_CodeNet'
+elif HOSTNAME == 'dbieber-macbookpro4.roam.corp.google.com':
+  PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
+  PERSONAL_ACCESS_TOKEN_PATH = '/Users/dbieber/secrets/colab_github_access_token'
 elif HOSTNAME == 'code-executor-001':
   PYTHON3 = '/home/dbieber/_39/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
@@ -28,6 +33,9 @@ elif HOSTNAME == 'dev-000':
   PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
   DATA_ROOT = '/home/veetee/Project_CodeNet/'
   EVALS_ROOT = '/home/veetee/out/evals'
+elif HOSTNAME.startswith('t1v-'):  # TPU
+  PYTHON3 = '/usr/bin/python3'
+  FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids'
 
 # On TPUs, this we mount the GCS bucket "runtime-error-problems-experiments"
 # at /mnt/runtime-error-problems-experiments.
@@ -65,3 +73,8 @@ def make_checkpoints_path(exp_id):
 def make_log_dir(exp_id, split='train'):
   experiment_path = make_experiment_path(exp_id)
   return os.path.join(experiment_path, split)
+
+
+def get_personal_access_token():
+  with open(PERSONAL_ACCESS_TOKEN_PATH, 'r') as f:
+    return f.read().strip()

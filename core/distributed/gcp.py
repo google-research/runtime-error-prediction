@@ -13,12 +13,12 @@ WORKER_PREFIX = 'worker'
 DEFAULT_PROJECT = 'runtime-error-problems'
 
 
-def call(args):
+def call(args, stdin=None):
   """Uses subprocess to call the command given by the args."""
   shell_str = as_shell_string(args)
   logging.info(shell_str)
   print(termcolor.colored('RUNNING: ', 'green') + shell_str)
-  return subprocess.Popen(args)
+  return subprocess.Popen(args, stdin=stdin)
 
 
 def parallel(f, n):
@@ -217,6 +217,16 @@ def _do_single_run(index, run_command_fn):
   return call(args)
 
 
+def _tpu_do_single_run(index, run_command_fn):
+  command = run_command_fn(index)
+  hostname = _tpu_hostname(index)
+  zone = _tpu_zone(index)
+  args = ['gcloud', 'alpha', 'compute', 'tpus', 'tpu-vm', 'ssh',
+          hostname, '--command', command,
+          '--zone', zone]
+  return call(args)
+
+
 def list_instances_args():
   return 'gcloud compute instances list'.split()
 
@@ -234,6 +244,38 @@ def run_command(command, n):
     worker_command = f'echo {hostname} && {command}'
     calls.append(call(['gcloud', 'compute', 'ssh', hostname, '--command',
                        worker_command, '--zone', zone]))
+  wait(calls)
+
+
+def tpu_run_command(command, n):
+  calls = []
+  for index in range(n):
+    hostname = _tpu_hostname(index)
+    zone = _tpu_zone(index)
+    worker_command = f'echo {hostname} && {command}'
+    calls.append(call([
+        'gcloud', 'alpha', 'compute', 'tpus', 'tpu-vm', 'ssh',
+        hostname, '--command', worker_command,
+        '--zone', zone]))
+  wait(calls)
+
+
+def tpu_run_script(filepath, n, environment):
+  calls = []
+  for index in range(n):
+    hostname = _tpu_hostname(index)
+    zone = _tpu_zone(index)
+    environment_tokens = [
+        f'{key}={value}'
+        for key, value in environment.items()
+    ]
+    command = [
+        'gcloud', 'alpha', 'compute', 'tpus', 'tpu-vm', 'ssh',
+        hostname, '--zone', zone, '--',
+    ] + environment_tokens + [
+        'bash', '-s'
+    ]
+    calls.append(call(command, stdin=open(filepath)))
   wait(calls)
 
 

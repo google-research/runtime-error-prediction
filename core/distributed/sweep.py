@@ -1,21 +1,33 @@
+from core.data import codenet_paths
+from core.distributed import gcp
+
 # Calculate number of TPUs needed for sweep.
+n = 2
 
 # Ensure TPUs are up and unused.
+# gcp.tpu_up_n(n)
+gcp.fix_firewall().wait()
 
-from collections import Counter
-import socket
-import time
+access_token = codenet_paths.get_personal_access_token()
 
-import ray
+gcp.tpu_run_script(
+    'scripts/setup-tpu.sh', n, {
+        'PERSONAL_ACCESS_TOKEN': access_token
+    }
+)
 
-ray.init()
+gcp.tpu_run_command('time echo "Hello world"', n)
 
-@ray.remote
-def f():
-    time.sleep(0.001)
-    # Return IP address.
-    return socket.gethostbyname(socket.gethostname())
-
-object_ids = [f.remote() for _ in range(10000)]
-ip_addresses = ray.get(object_ids)
-print(Counter(ip_addresses))
+gcp.tpu_run_command(
+    'cd compressive-ipagnn && '
+    'python3 -m scripts.runner '
+    '--config.model_class=Transformer '
+    '--config.batch_size=8 '
+    '--dataset_path=/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids '
+    '--config.epochs=1 '
+    '--config.eval_freq=50000 '
+    '--config.eval_subsample=1 '
+    '--config.eval_max_batches=2500 '
+    '--config.save_freq=25000 ', 
+    n
+)

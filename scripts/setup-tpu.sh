@@ -13,3 +13,5 @@ python3 -m pip install -r requirements.txt
 sudo mkdir -p /mnt/runtime-error-problems-experiments
 sudo chown $(whoami) /mnt/runtime-error-problems-experiments
 gcsfuse runtime-error-problems-experiments /mnt/runtime-error-problems-experiments/
+
+# TODO(dbieber): Possibly copy data out of bucket for faster access.

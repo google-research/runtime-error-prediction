@@ -25,7 +25,8 @@ packages = [
     'core.models',
     'core.modules.ipagnn',
     'scripts',
-    'third_party', 'third_party.flax_examples',
+    'third_party',
+    'third_party.flax_examples',
     'experimental',
 ]
 setuptools.setup(
