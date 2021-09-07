@@ -19,7 +19,12 @@ def dict_product(d):
     yield dict(zip(keys, specific_values))
 
 
-experiment_id = 1
+# Increment the global experiment id.
+with open(codenet_paths.EXPERIMENT_ID_PATH, 'r') as f:
+  experiment_id = int(f.read().strip()) + 1
+with open(codenet_paths.EXPERIMENT_ID_PATH, 'w') as f:
+  f.write(str(experiment_id))
+
 commands = []
 for index, params in enumerate(dict_product(hparams)):
   flags = []

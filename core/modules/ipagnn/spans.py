@@ -42,6 +42,7 @@ def get_span_encoding_mean(x, start, end):
 
 def get_span_encoding_max(x, start, end):
   # x.shape: length, hidden_size
+  # start.shape: 
   # start and end are inclusive.
   arange = jnp.arange(x.shape[0])
   # arange.shape: length
@@ -207,9 +208,11 @@ class NodeSpanEncoder(nn.Module):
     encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoding = self.encoder(token_embeddings, encoder_mask=encoder_mask)
-    # encoding.shape: batch_size, length, hidden_size
-    print('encoding.shape')
-    print(encoding.shape)
+    # encoding.shape: batch_size, max_tokens, hidden_size
+    print('node_span_starts.shape')
+    print(node_span_starts.shape)
+    print('node_span_ends.shape')
+    print(node_span_ends.shape)
 
     # Get just the encoding of the first token in each span.
     span_encoding_method = config.span_encoding_method
