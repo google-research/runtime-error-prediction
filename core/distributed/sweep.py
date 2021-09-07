@@ -4,10 +4,11 @@ import random
 from core.data import codenet_paths
 from core.distributed import gcp
 
+
 hparams = {
-    'config.learning_rate': [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1],
+    'config.learning_rate': [0.001, 0.003, 0.01, 0.03, 0.1, 0.3],
     # 'config.rnn_layers': [2, 4]
-    'config.hidden_size': [16, 32, 64, 128, 256, 512, 1024],
+    'config.hidden_size': [16, 32, 64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
 }
 
