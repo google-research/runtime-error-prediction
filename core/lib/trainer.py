@@ -229,6 +229,8 @@ class Trainer:
     exp_id = config.experiment_id or codenet_paths.make_experiment_id()
     run_id = config.run_id or codenet_paths.make_run_id()
     run_dir = codenet_paths.make_run_dir(study_id, exp_id, run_id)
+    metadata_path = codenet_paths.make_metadata_path()
+    metadata.write_metadata(metadata_path)
 
     checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
     train_dir = codenet_paths.make_log_dir(run_dir, 'train')

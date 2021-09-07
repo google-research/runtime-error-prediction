@@ -86,6 +86,10 @@ def make_log_dir(run_dir, split='train'):
   return os.path.join(run_dir, split)
 
 
+def make_metadata_path(run_dir):
+  return os.path.join(run_dir, 'metadata.json')
+
+
 def get_personal_access_token():
   with open(PERSONAL_ACCESS_TOKEN_PATH, 'r') as f:
     return f.read().strip()
