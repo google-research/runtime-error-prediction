@@ -208,6 +208,8 @@ class NodeSpanEncoder(nn.Module):
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoding = self.encoder(token_embeddings, encoder_mask=encoder_mask)
     # encoding.shape: batch_size, length, hidden_size
+    print('encoding.shape')
+    print(encoding.shape)
 
     # Get just the encoding of the first token in each span.
     span_encoding_method = config.span_encoding_method

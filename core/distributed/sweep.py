@@ -28,7 +28,7 @@ for index, params in enumerate(dict_product(hparams)):
   command = (
       'cd compressive-ipagnn && '
       'python3 -m scripts.runner '
-      '--config.model_class=IPA-GNN '
+      '--config.model_class=IPAGNN '
       '--config.raise_in_ipagnn=True '
       '--config.batch_size=8 '
       '--dataset_path=/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids '
