@@ -261,11 +261,12 @@ class Trainer:
     # Determine the file descriptors for the summary writers.
     pid = os.getpid()
     train_writer_fd = valid_writer_fd = None
-    for fd in os.listdir(f'/proc/{pid}/fd'):
-      if train_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
-        train_writer_fd = fd
-      if valid_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
-        valid_writer_fd = fd
+    if os.path.exists(f'/proc/{pid}/fd'):
+      for fd in os.listdir(f'/proc/{pid}/fd'):
+        if train_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
+          train_writer_fd = int(fd)
+        if valid_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
+          valid_writer_fd = int(fd)
 
     train_writer.hparams(config.to_dict())
     recent_accuracies = []
@@ -321,8 +322,10 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
         train_writer.flush()
         valid_writer.flush()
-        os.fsync(train_writer_fd)
-        os.fsync(valid_writer_fd)
+        if train_writer_fd:
+          os.fsync(train_writer_fd)
+        if valid_writer_fd:
+          os.fsync(valid_writer_fd)
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
