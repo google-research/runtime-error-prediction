@@ -36,7 +36,7 @@ def get_datetime():
 
 
 def get_metadata():
-  metadata = {
+  return {
       'command': sys.argv,
       'hostname': codenet_paths.HOSTNAME,
       'short_hostname': codenet_paths.SHORT_HOSTNAME,
