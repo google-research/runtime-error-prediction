@@ -260,6 +260,13 @@ def tpu_run_command(command, n):
   wait(calls)
 
 
+def tpu_run_commands(run_command_fn, n):
+  calls = []
+  for index in range(n):
+    calls.append(_tpu_do_single_run(index, run_command_fn))
+  wait(calls)
+
+
 def tpu_run_script(filepath, n, environment):
   calls = []
   for index in range(n):
