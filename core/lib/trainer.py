@@ -2,6 +2,7 @@
 
 import dataclasses
 import itertools
+import os
 from typing import Any, List, Optional, Text
 
 from absl import logging
