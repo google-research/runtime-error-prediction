@@ -91,7 +91,7 @@ class Trainer:
         {'params': params_rng, 'dropout': dropout_rng},
         fake_input)
     params = variables['params']
-    learning_rate = 0.03
+    learning_rate = config.learning_rate
     tx = optax.sgd(learning_rate)
     return TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
@@ -225,13 +225,17 @@ class Trainer:
     eval_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
     evaluate_batch = self.make_evaluate_batch()
 
-    rng = jax.random.PRNGKey(0)
-    exp_id = codenet_paths.make_experiment_id()
-    checkpoint_dir = codenet_paths.make_checkpoints_path(exp_id)
-    train_dir = codenet_paths.make_log_dir(exp_id, 'train')
-    valid_dir = codenet_paths.make_log_dir(exp_id, 'valid')
+    study_id = config.study_id
+    exp_id = config.experiment_id or codenet_paths.make_experiment_id()
+    run_id = config.run_id or codenet_paths.make_run_id()
+    run_dir = codenet_paths.make_run_dir(study_id, exp_id, run_id)
+
+    checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
+    train_dir = codenet_paths.make_log_dir(run_dir, 'train')
+    valid_dir = codenet_paths.make_log_dir(run_dir, 'valid')
     print(f'Checkpoints: {checkpoint_dir}')
 
+    rng = jax.random.PRNGKey(0)
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
 
