@@ -269,6 +269,10 @@ class Trainer:
           valid_writer_fd = int(fd)
 
     train_writer.hparams(config.to_dict())
+    train_writer.flush()
+    if train_writer_fd:
+      os.fsync(train_writer_fd)
+
     recent_accuracies = []
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       step = state.step
