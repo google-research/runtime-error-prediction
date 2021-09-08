@@ -49,6 +49,8 @@ def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
         f'--config.run_id={name}{index:03d} '
         + ' '.join(flags)
     )
+    command = f'tmux new -d -s remote "{command}"'
+    command = f'pgrep -l runner.py; if [ $? -ne 0 ]; then {command}; else echo "Skipping"; fi'
     commands.append(command)
   commands = random.sample(commands, n)
   return commands
