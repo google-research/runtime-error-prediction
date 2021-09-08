@@ -267,6 +267,9 @@ class Trainer:
           train_writer_fd = int(fd)
         if valid_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
           valid_writer_fd = int(fd)
+    print('writer_fds')
+    print(train_writer_fd)
+    print(valid_writer_fd)
 
     train_writer.hparams(config.to_dict())
     train_writer.flush()
