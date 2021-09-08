@@ -263,6 +263,10 @@ class Trainer:
     train_writer_fd = valid_writer_fd = None
     if os.path.exists(f'/proc/{pid}/fd'):
       for fd in os.listdir(f'/proc/{pid}/fd'):
+        print('fd')
+        print(fd)
+        print(os.path.realpath('/proc/{pid}/fd/{fd}'))
+        print()
         if train_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
           train_writer_fd = int(fd)
         if valid_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
