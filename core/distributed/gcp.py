@@ -60,10 +60,12 @@ def _tpu_zone(index):
   """Chooses a GCP TPU zone based on the index."""
   if index < 118:
     return 'europe-west4-a'
-  elif index < 128:
+  elif index < 128:  # 10
     return 'us-central1-b'
-  elif index < 138:
+  elif index < 138:  # 10
     return 'us-central1-c'
+  elif index < 168:  # 30
+    return 'asia-east1-c'
   else:
     raise ValueError('Unhandled zone index')
 
@@ -193,9 +195,7 @@ def tpu_down_args(
   return f"""
 gcloud alpha compute tpus tpu-vm delete {hostname} \
 --project={project} \
---zone={zone} \
---version=v2-alpha \
---accelerator-type=v2-8
+--zone={zone} --quiet
   """.split()
 
 
@@ -206,6 +206,10 @@ def tpu_down(index):
 
 def tpu_up_n(n, offset=0):
   return wait(parallel(tpu_up, n=n, offset=offset))
+
+
+def tpu_down_n(n, offset=0):
+  return wait(parallel(tpu_down, n=n, offset=offset))
 
 
 def _do_single_run(index, run_command_fn):

@@ -34,7 +34,7 @@ for index, params in enumerate(dict_product(hparams)):
   command = (
       'cd compressive-ipagnn && '
       'python3 -m scripts.runner '
-      '--config.model_class=IPAGNN '
+      '--config.model_class=Transformer '
       '--config.raise_in_ipagnn=False '
       '--config.batch_size=8 '
       '--dataset_path=/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids '
@@ -52,7 +52,7 @@ for index, params in enumerate(dict_product(hparams)):
 
 # Calculate number of TPUs needed for sweep.
 n = 32
-offset = 32  # The machine index to start with.
+offset = 128  # The machine index to start with.
 commands = random.sample(commands, n)
 
 def make_run_command(index):
