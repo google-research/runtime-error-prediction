@@ -265,11 +265,11 @@ class Trainer:
       for fd in os.listdir(f'/proc/{pid}/fd'):
         print('fd')
         print(fd)
-        print(os.path.realpath('/proc/{pid}/fd/{fd}'))
+        print(os.path.realpath(f'/proc/{pid}/fd/{fd}'))
         print()
-        if train_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
+        if train_dir in os.path.realpath(f'/proc/{pid}/fd/{fd}'):
           train_writer_fd = int(fd)
-        if valid_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
+        if valid_dir in os.path.realpath(f'/proc/{pid}/fd/{fd}'):
           valid_writer_fd = int(fd)
     print('writer_fds')
     print(train_writer_fd)
