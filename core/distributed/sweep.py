@@ -35,14 +35,14 @@ for index, params in enumerate(dict_product(hparams)):
       'cd compressive-ipagnn && '
       'python3 -m scripts.runner '
       '--config.model_class=IPAGNN '
-      '--config.raise_in_ipagnn=True '
+      '--config.raise_in_ipagnn=False '
       '--config.batch_size=8 '
       '--dataset_path=/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids '
       '--config.eval_freq=50000 '
       '--config.eval_subsample=1 '
       '--config.eval_max_batches=2500 '
       '--config.save_freq=25000 '
-      '--config.study_id=2021-09-07-debugging-fleet '
+      '--config.study_id=2021-09-08-experiment-001 '
       f'--config.experiment_id={experiment_id} '
       f'--config.run_id={index} '
       + ' '.join(flags)
@@ -51,24 +51,31 @@ for index, params in enumerate(dict_product(hparams)):
 
 
 # Calculate number of TPUs needed for sweep.
-n = 4
+n = 32
+offset = 32  # The machine index to start with.
 commands = random.sample(commands, n)
 
 def make_run_command(index):
-  return commands[index]
+  return commands[index - offset]
 
 
 # Ensure TPUs are up and unused.
 print(f'Starting {n} TPUs')
-gcp.tpu_up_n(n)
+gcp.tpu_up_n(n, offset=offset)
 gcp.fix_firewall().wait()
 
 access_token = codenet_paths.get_personal_access_token()
 gcp.tpu_run_script(
     'scripts/setup-tpu.sh', n, {
         'PERSONAL_ACCESS_TOKEN': access_token
-    }
+    }, offset=offset
 )
 
 gcp.fix_firewall().wait()
-gcp.tpu_run_commands(make_run_command, n)
+gcp.tpu_run_commands(make_run_command, n, offset=offset)
+
+
+# # To kill the runner processes:
+# # python -m core.distributed.gcp tpu_run_command 'pkill runner.py' --n=32 --offset=0
+# gcp.fix_firewall().wait()
+# gcp.tpu_run_command('pkill runner.py', n, offset=offset)

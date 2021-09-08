@@ -21,9 +21,9 @@ def call(args, stdin=None):
   return subprocess.Popen(args, stdin=stdin)
 
 
-def parallel(f, n):
+def parallel(f, n, offset=0):
   processes = []
-  for i in range(n):
+  for i in range(offset, n + offset):
     p = f(i)
     processes.append(p)
   return processes
@@ -126,8 +126,8 @@ def up(index):
   return call(args)
 
 
-def up_n(n):
-  return wait(parallel(up, n=n))
+def up_n(n, offset=0):
+  return wait(parallel(up, n=n, offset=offset))
 
 
 def create_instances(n):
@@ -149,8 +149,8 @@ def down(index):
   return call(args)
 
 
-def down_n(n):
-  return wait(parallel(down, n=n))
+def down_n(n, offset=0):
+  return wait(parallel(down, n=n, offset=offset))
 
 
 def fix_firewall_args():
@@ -204,8 +204,8 @@ def tpu_down(index):
   return call(args)
 
 
-def tpu_up_n(n):
-  return wait(parallel(tpu_up, n=n))
+def tpu_up_n(n, offset=0):
+  return wait(parallel(tpu_up, n=n, offset=offset))
 
 
 def _do_single_run(index, run_command_fn):
@@ -236,9 +236,9 @@ def list_instances():
   return call(args)
 
 
-def run_command(command, n):
+def run_command(command, n, offset=0):
   calls = []
-  for index in range(n):
+  for index in range(offset, n + offset):
     hostname = _hostname(index)
     zone = _zone(index)
     worker_command = f'echo {hostname} && {command}'
@@ -247,9 +247,9 @@ def run_command(command, n):
   wait(calls)
 
 
-def tpu_run_command(command, n):
+def tpu_run_command(command, n, offset=0):
   calls = []
-  for index in range(n):
+  for index in range(offset, n + offset):
     hostname = _tpu_hostname(index)
     zone = _tpu_zone(index)
     worker_command = f'echo {hostname} && {command}'
@@ -260,16 +260,16 @@ def tpu_run_command(command, n):
   wait(calls)
 
 
-def tpu_run_commands(run_command_fn, n):
+def tpu_run_commands(run_command_fn, n, offset=0):
   calls = []
-  for index in range(n):
+  for index in range(offset, n + offset):
     calls.append(_tpu_do_single_run(index, run_command_fn))
   wait(calls)
 
 
-def tpu_run_script(filepath, n, environment):
+def tpu_run_script(filepath, n, environment, offset=0):
   calls = []
-  for index in range(n):
+  for index in range(offset, n + offset):
     hostname = _tpu_hostname(index)
     zone = _tpu_zone(index)
     environment_tokens = [
