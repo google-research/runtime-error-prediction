@@ -9,17 +9,26 @@ DEFAULT_DATASET_PATH = 'datasets/codenet/f=0.01-noudf'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
+EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
 
+PERSONAL_ACCESS_TOKEN_PATH = ''
+
 PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
+SHORT_HOSTNAME = HOSTNAME
 if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/googleprivate/compressive-ipagnn/data/Project_CodeNet'
+  SHORT_HOSTNAME = 'dbieber-mac'
+elif HOSTNAME == 'dbieber-macbookpro4.roam.corp.google.com':
+  PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
+  PERSONAL_ACCESS_TOKEN_PATH = '/Users/dbieber/secrets/colab_github_access_token'
+  SHORT_HOSTNAME = 'dbieber-mac4'
 elif HOSTNAME == 'code-executor-001':
   PYTHON3 = '/home/dbieber/_39/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
@@ -28,6 +37,9 @@ elif HOSTNAME == 'dev-000':
   PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
   DATA_ROOT = '/home/veetee/Project_CodeNet/'
   EVALS_ROOT = '/home/veetee/out/evals'
+elif HOSTNAME.startswith('t1v-'):  # TPU
+  PYTHON3 = '/usr/bin/python3'
+  FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids'
 
 # On TPUs, this we mount the GCS bucket "runtime-error-problems-experiments"
 # at /mnt/runtime-error-problems-experiments.
@@ -53,15 +65,31 @@ def make_experiment_id():
   return f'{date_str}-{milliseconds}'
 
 
-def make_experiment_path(exp_id):
-  return os.path.join(DEFAULT_EXPERIMENTS_DIR, exp_id)
+def make_run_id():
+  return ''
 
 
-def make_checkpoints_path(exp_id):
-  experiment_path = make_experiment_path(exp_id)
-  return os.path.join(experiment_path, 'checkpoints')
+def make_run_dir(study_id, exp_id, run_id):
+  if study_id:
+    return os.path.join(DEFAULT_EXPERIMENTS_DIR, study_id, exp_id, run_id)
+  elif run_id:
+    return os.path.join(DEFAULT_EXPERIMENTS_DIR, exp_id, run_id)
+  else:
+    return os.path.join(DEFAULT_EXPERIMENTS_DIR, exp_id)
 
 
-def make_log_dir(exp_id, split='train'):
-  experiment_path = make_experiment_path(exp_id)
-  return os.path.join(experiment_path, split)
+def make_checkpoints_path(run_dir):
+  return os.path.join(run_dir, 'checkpoints')
+
+
+def make_log_dir(run_dir, split='train'):
+  return os.path.join(run_dir, split)
+
+
+def make_metadata_path(run_dir):
+  return os.path.join(run_dir, 'metadata.json')
+
+
+def get_personal_access_token():
+  with open(PERSONAL_ACCESS_TOKEN_PATH, 'r') as f:
+    return f.read().strip()

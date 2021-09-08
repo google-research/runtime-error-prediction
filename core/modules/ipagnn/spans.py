@@ -199,6 +199,8 @@ class NodeSpanEncoder(nn.Module):
   def __call__(self, tokens, node_span_starts, node_span_ends):
     config = self.config
 
+    # node_span_starts.shape: batch_size, num_nodes
+    # node_span_ends.shape: batch_size, num_nodes
     # tokens.shape: batch_size, max_tokens
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
     # token_embeddings.shape: batch_size, max_tokens, hidden_size
@@ -207,22 +209,23 @@ class NodeSpanEncoder(nn.Module):
     encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoding = self.encoder(token_embeddings, encoder_mask=encoder_mask)
-    # encoding.shape: batch_size, length, hidden_size
+    # encoding.shape: batch_size, max_tokens, hidden_size
 
     # Get just the encoding of the first token in each span.
     span_encoding_method = config.span_encoding_method
     if span_encoding_method == 'first':
-      span_encodings = jax.vmap(get_span_encoding_first)(
-          encoding, node_span_starts, node_span_ends)
+      get_span_encoding_fn = get_span_encoding_first
     elif span_encoding_method == 'mean':
-      span_encodings = jax.vmap(get_span_encoding_mean)(
-          encoding, node_span_starts, node_span_ends)
+      get_span_encoding_fn = get_span_encoding_mean
     elif span_encoding_method == 'max':
-      span_encodings = jax.vmap(get_span_encoding_max)(
-          encoding, node_span_starts, node_span_ends)
+      get_span_encoding_fn = get_span_encoding_max
     elif span_encoding_method == 'sum':
-      span_encodings = jax.vmap(get_span_encoding_sum)(
-          encoding, node_span_starts, node_span_ends)
+      get_span_encoding_fn = get_span_encoding_sum
+
+    get_span_encoding_fn_node = jax.vmap(get_span_encoding_fn, in_axes=(None, 0, 0))
+    get_span_encoding_fn_batch = jax.vmap(get_span_encoding_fn_node)
+    span_encodings = get_span_encoding_fn_batch(
+        encoding, node_span_starts, node_span_ends)
 
     # span_encodings.shape: batch_size, num_nodes, hidden_size
     return span_encodings

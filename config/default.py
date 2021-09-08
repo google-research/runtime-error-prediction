@@ -12,6 +12,12 @@ def default_config():
   # Trainer configs
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = ''
+  config.study_id: Optional[Text] = ''  # A study is a way of organizing experiments.
+  config.experiment_id: Optional[Text] = ''  # An experiment is launched by a single command, may have multiple runs.
+  config.run_id: Optional[Text] = ''  # A run is a single trainer run with a single set of hparams. run_id should identify hparams.
+
+  # Training configs
+  config.learning_rate = 0.03
 
   # Model HParams
   config.model_class: Text = 'IPAGNN'  # IPAGNN, Transformer
@@ -32,7 +38,7 @@ def default_config():
 
   # Runner configs
   config.eval_freq = 10000
-  config.save_freq = 1000
+  config.save_freq = 5000
   config.eval_metric_name = 'F1-score'
   config.eval_subsample = 1.0
   config.eval_max_batches = 30

@@ -2,6 +2,7 @@
 
 import dataclasses
 import itertools
+import os
 from typing import Any, List, Optional, Text
 
 from absl import logging
@@ -21,6 +22,7 @@ from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
 from core.lib import evaluation  # TODO(dbieber): Rename evaluation into metrics.
+from core.lib import metadata
 from core.lib import models
 from core.lib import optimizer_lib
 
@@ -91,7 +93,7 @@ class Trainer:
         {'params': params_rng, 'dropout': dropout_rng},
         fake_input)
     params = variables['params']
-    learning_rate = 0.03
+    learning_rate = config.learning_rate
     tx = optax.sgd(learning_rate)
     return TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
@@ -225,13 +227,21 @@ class Trainer:
     eval_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
     evaluate_batch = self.make_evaluate_batch()
 
-    rng = jax.random.PRNGKey(0)
-    exp_id = codenet_paths.make_experiment_id()
-    checkpoint_dir = codenet_paths.make_checkpoints_path(exp_id)
-    train_dir = codenet_paths.make_log_dir(exp_id, 'train')
-    valid_dir = codenet_paths.make_log_dir(exp_id, 'valid')
+    study_id = config.study_id
+    exp_id = config.experiment_id or codenet_paths.make_experiment_id()
+    run_id = config.run_id or codenet_paths.make_run_id()
+    run_dir = codenet_paths.make_run_dir(study_id, exp_id, run_id)
+
+    os.makedirs(run_dir, exist_ok=True)
+    metadata_path = codenet_paths.make_metadata_path(run_dir)
+    metadata.write_metadata(metadata_path)
+
+    checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
+    train_dir = codenet_paths.make_log_dir(run_dir, 'train')
+    valid_dir = codenet_paths.make_log_dir(run_dir, 'valid')
     print(f'Checkpoints: {checkpoint_dir}')
 
+    rng = jax.random.PRNGKey(0)
     rng, init_rng = jax.random.split(rng)
     model = self.make_model()
 
@@ -247,7 +257,21 @@ class Trainer:
     )
     train_writer = tensorboard.SummaryWriter(train_dir)
     valid_writer = tensorboard.SummaryWriter(valid_dir)
+
+    # Determine the file descriptors for the summary writers.
+    pid = os.getpid()
+    train_writer_fd = valid_writer_fd = None
+    if os.path.exists(f'/proc/{pid}/fd'):
+      for fd in os.listdir(f'/proc/{pid}/fd'):
+        if train_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
+          train_writer_fd = int(fd)
+        if valid_dir in os.path.realpath('/proc/{pid}/fd/{fd}'):
+          valid_writer_fd = int(fd)
+
     train_writer.hparams(config.to_dict())
+    train_writer.flush()
+    if train_writer_fd:
+      os.fsync(train_writer_fd)
 
     recent_accuracies = []
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
@@ -302,6 +326,10 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
         train_writer.flush()
         valid_writer.flush()
+        if train_writer_fd:
+          os.fsync(train_writer_fd)
+        if valid_writer_fd:
+          os.fsync(valid_writer_fd)
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
