@@ -3,6 +3,7 @@
 import os
 
 from absl import app, flags, logging
+import jax.numpy as jnp
 from ml_collections.config_flags import config_flags
 
 from core.data import codenet_paths
@@ -24,6 +25,7 @@ def main(argv):
 
   dataset_path = FLAGS.dataset_path
   config = FLAGS.config
+  jnp.set_printoptions(threshold=config.printoptions_threshold)
   trainer.Trainer(config=config).run_train(dataset_path=dataset_path)
 
 
