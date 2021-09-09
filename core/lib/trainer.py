@@ -1,6 +1,7 @@
 """Train library."""
 
 import dataclasses
+import functools
 import itertools
 import os
 from typing import Any, List, Optional, Text
@@ -18,6 +19,7 @@ import optax
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
+from config.default import EvaluationMetric
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
@@ -184,7 +186,7 @@ class Trainer:
       # targets.shape: batch_size
 
       metric = evaluation.compute_metric(
-          logits, targets, config.eval_metric_name
+          logits, targets, config.eval_metric_names
       )
       return logits, loss, metric
     return evaluate_batch
@@ -199,7 +201,7 @@ class Trainer:
         .filter(lambda x: tf.random.uniform(shape=()) < config.eval_subsample)
         .take(config.eval_max_batches)
     )
-    print(f'Evaluating with metric: {config.eval_metric_name}')
+    print(f'Evaluating with metrics: {config.eval_metric_names}')
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
         batch = common_utils.shard(batch)
@@ -215,10 +217,9 @@ class Trainer:
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
-    eval_metric = evaluation.evaluate(
-        targets, predictions, config.eval_metric_name
-    )
-    return eval_loss, eval_metric, num_examples
+    eval_metrics = evaluation.evaluate(targets, predictions,
+                                       config.eval_metric_names)
+    return eval_loss, eval_metrics, num_examples
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
@@ -301,23 +302,45 @@ Batch Accuracy: {100 * batch_accuracy:02.1f}
 Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
         # Run complete evaluation:
-        eval_loss, eval_metric, num_examples = self.run_eval(
+        eval_loss, eval_metrics, num_examples = self.run_eval(
             eval_dataset, state, evaluate_batch)
         logging.info(
             f'Validation loss ({num_examples} Examples): {eval_loss}\n'
-            f'Validation {config.eval_metric_name}: {eval_metric}'
+            f'Validation metrics: {eval_metrics}'
         )
         (
             _,
             batch_loss,
-            batch_metric,
+            batch_metrics,
         ) = evaluate_batch(batch, state)
+
+        # Write training metrics.
         train_writer.scalar('loss', batch_loss, step)
-        train_writer.scalar(
-            'recent_accuracy', jnp.mean(jnp.array(recent_accuracies)), step)
-        train_writer.scalar('train_metric', batch_metric, step)
+        train_writer.scalar('recent_accuracy',
+                            jnp.mean(jnp.array(recent_accuracies)), step)
+        write_metric(EvaluationMetric.F1_SCORE.value, batch_metrics,
+                     train_writer.scalar, step)
+        write_metric(
+            EvaluationMetric.CONFUSION_MATRIX.value,
+            eval_metrics,
+            train_writer.image,
+            step,
+            transform_fn=functools.partial(
+                evaluation.confusion_matrix_to_image,
+                class_names=error_kinds.ALL_ERROR_KINDS))
+
+        # Write validation metrics.
         valid_writer.scalar('loss', eval_loss, step)
-        valid_writer.scalar('eval_metric', eval_metric, step)
+        write_metric(EvaluationMetric.F1_SCORE.value, eval_metrics,
+                     valid_writer.scalar, step)
+        write_metric(
+            EvaluationMetric.CONFUSION_MATRIX.value,
+            eval_metrics,
+            valid_writer.image,
+            step,
+            transform_fn=functools.partial(
+                evaluation.confusion_matrix_to_image,
+                class_names=error_kinds.ALL_ERROR_KINDS))
 
         did_improve, es = es.update(-1 * eval_loss)
         if es.should_stop and config.early_stopping_on:
@@ -333,3 +356,12 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
+
+
+def write_metric(metric_name, metrics_dict, summary_fn, step, transform_fn=None):
+  """Writes an evaluation metric using a TensorBoard SummaryWriter function."""
+  if metric_name in metrics_dict:
+    metric = metrics_dict[metric_name]
+    if transform_fn is not None:
+      metric = transform_fn(metric)
+    summary_fn(metric_name, metric, step)

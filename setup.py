@@ -9,6 +9,7 @@ DEPENDENCIES = [
     'ipython',
     'jax>=0.2.7',
     'jaxlib>=0.1.69',
+    'matplotlib',
     'ml_collections',
     'python-graphs>=1.0.0',
     'sklearn',
