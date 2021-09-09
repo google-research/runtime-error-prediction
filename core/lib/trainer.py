@@ -130,6 +130,7 @@ class Trainer:
 
   def make_train_step(self):
     loss_fn = self.make_loss_fn()
+    grad_clip_value = self.config.grad_clip_value
 
     @jax.jit
     def train_step(state, batch):
@@ -144,7 +145,7 @@ class Trainer:
       if self.config.multidevice:
         grads = jax.lax.pmean(grads, 'batch')
       global_norm = optimizer_lib.compute_global_norm(grads)
-      if config.grad_clip_value:
+      if grad_clip_value:
         grads = optimizer_lib.clip_grads(grads, clip_by='global_norm', clip_value=config.grad_clip_value)
       state = state.apply_gradients(grads=grads)
       # TODO(dbieber): Optionally compute on-device metrics here.
