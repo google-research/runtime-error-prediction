@@ -28,12 +28,33 @@ with open(codenet_paths.EXPERIMENT_ID_PATH, 'w') as f:
   f.write(str(experiment_id))
 
 
+def make_run_id(name, params):
+  param_name_mapping = {
+      'learning_rate': 'lr',
+      'rnn_layers': 'L',
+      'grad_clip_value': 'gc',
+      'hidden_size': 'hs',
+      'span_encoding_method': 'span',
+  }
+  parts = []
+  for key, value in params.items():
+    # Strip 'config.' from the key.
+    key = key[len('config.'):]
+    if key in param_name_mapping:
+      key = param_name_mapping[key]
+    else:
+      key = ''.join(word[0] for word in key.split('_'))
+    parts.append(f'{key}={value}')
+  return f'{name}{index:03d},{",".join(parts)}'
+
+
 def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
     flags = []
     for key, value in params.items():
       flags.append(f'--{key}={value}')
+    run_id = make_run_id(name, index, params)
     command = (
         'cd compressive-ipagnn && '
         'python3 -m scripts.runner '
