@@ -47,7 +47,9 @@ SILENT_ERROR = 'Silent error. Nothing in stderr.'
 NO_ERROR_WITH_STDERR = 'No error (but using stderr anyway)'
 NO_ERROR = 'No error'
 
-NUM_CLASSES = 3 + len(ERROR_KINDS)
+ALL_ERROR_KINDS = [NO_DATA, NO_ERROR, SILENT_ERROR, OTHER_ERROR] + ERROR_KINDS
+
+NUM_CLASSES = len(ALL_ERROR_KINDS)
 
 def to_index(error_kind):
   if error_kind == NO_DATA:
@@ -64,8 +66,7 @@ def to_index(error_kind):
 
 
 def to_error(index):
-  error_kinds_list = [NO_DATA, NO_ERROR, SILENT_ERROR, OTHER_ERROR] + ERROR_KINDS
-  return error_kinds_list[index]
+  return ALL_ERROR_KINDS[index]
 
 
 # "Tier 1" errors are those that are definitively

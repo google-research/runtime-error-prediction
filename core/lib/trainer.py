@@ -1,6 +1,7 @@
 """Train library."""
 
 import dataclasses
+import functools
 import itertools
 import os
 from typing import Any, List, Optional, Text
@@ -319,15 +320,27 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
                             jnp.mean(jnp.array(recent_accuracies)), step)
         write_metric(EvaluationMetric.F1_SCORE.value, batch_metrics,
                      train_writer.scalar, step)
-        write_metric(EvaluationMetric.CONFUSION_MATRIX.value, batch_metrics,
-                     train_writer.image, step)
+        write_metric(
+            EvaluationMetric.CONFUSION_MATRIX.value,
+            eval_metrics,
+            train_writer.image,
+            step,
+            transform_fn=functools.partial(
+                evaluation.confusion_matrix_to_image,
+                class_names=error_kinds.ALL_ERROR_KINDS))
 
         # Write validation metrics.
         valid_writer.scalar('loss', eval_loss, step)
         write_metric(EvaluationMetric.F1_SCORE.value, eval_metrics,
                      valid_writer.scalar, step)
-        write_metric(EvaluationMetric.CONFUSION_MATRIX.value, eval_metrics,
-                     valid_writer.image, step)
+        write_metric(
+            EvaluationMetric.CONFUSION_MATRIX.value,
+            eval_metrics,
+            valid_writer.image,
+            step,
+            transform_fn=functools.partial(
+                evaluation.confusion_matrix_to_image,
+                class_names=error_kinds.ALL_ERROR_KINDS))
 
         did_improve, es = es.update(-1 * eval_loss)
         if es.should_stop and config.early_stopping_on:
@@ -345,7 +358,10 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
 
 
-def write_metric(metric_name, metrics_dict, summary_fn, step):
+def write_metric(metric_name, metrics_dict, summary_fn, step, transform_fn=None):
   """Writes an evaluation metric using a TensorBoard SummaryWriter function."""
   if metric_name in metrics_dict:
-    summary_fn(metric_name, metrics_dict[metric_name], step)
+    metric = metrics_dict[metric_name]
+    if transform_fn is not None:
+      metric = transform_fn(metric)
+    summary_fn(metric_name, metric, step)
