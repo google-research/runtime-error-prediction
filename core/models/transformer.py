@@ -15,6 +15,7 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 class Transformer(nn.Module):
 
   config: Any
+  transformer_config: transformer_modules.TransformerConfig
 
   def setup(self):
     config = self.config
@@ -23,18 +24,15 @@ class Transformer(nn.Module):
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
     info = ipagnn.Info(vocab_size=vocab_size)
-    transformer_config = transformer_modules.TransformerConfig(
-        vocab_size=vocab_size,
-        output_vocab_size=vocab_size,
-    )
     self.token_embedder = spans.NodeAwareTokenEmbedder(
-        transformer_config=transformer_config,
+        transformer_config=self.transformer_config,
         num_embeddings=vocab_size,
         features=config.hidden_size,
         max_tokens=max_tokens,
         max_num_nodes=max_num_nodes,
     )
-    self.encoder = encoder.TransformerEncoder(transformer_config)
+    self.encoder = encoder.TransformerEncoder(
+        self.transformer_config)
 
   @nn.compact
   def __call__(self, x):

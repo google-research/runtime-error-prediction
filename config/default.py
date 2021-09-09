@@ -45,6 +45,13 @@ def default_config():
   config.max_num_edges: int = 128
   config.max_steps: int = 174
 
+  # Transformer configs
+  config.transformer_emb_dim: int = 512
+  config.transformer_num_heads: int = 8
+  config.transformer_num_layers: int = 6
+  config.transformer_qkv_dim: int = 512
+  config.transformer_mlp_dim: int = 2048
+
   # Runner configs
   config.eval_freq = 10000
   config.save_freq = 5000

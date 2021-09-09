@@ -28,7 +28,7 @@ with open(codenet_paths.EXPERIMENT_ID_PATH, 'w') as f:
   f.write(str(experiment_id))
 
 
-def make_run_id(name, params):
+def make_run_id(name, index, params):
   param_name_mapping = {
       'learning_rate': 'lr',
       'rnn_layers': 'L',
