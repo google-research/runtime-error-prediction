@@ -143,12 +143,15 @@ class Trainer:
       (loss, aux), grads = grad_fn(state.params, batch, dropout_rng)
       if self.config.multidevice:
         grads = jax.lax.pmean(grads, 'batch')
-      # grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
+      global_norm = optimizer_lib.compute_global_norm(grads)
+      if config.grad_clip_value:
+        grads = optimizer_lib.clip_grads(grads, clip_by='global_norm', clip_value=config.grad_clip_value)
       state = state.apply_gradients(grads=grads)
       # TODO(dbieber): Optionally compute on-device metrics here.
       return state, {
           'logits': aux['logits'],
           'loss': loss,
+          'global_norm': global_norm,
       }
     if self.config.multidevice:
       train_step = jax.pmap(
@@ -316,6 +319,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
         ) = evaluate_batch(batch, state)
 
         # Write training metrics.
+        train_writer.scalar('global_norm', aux['global_norm'], step)
         train_writer.scalar('loss', batch_loss, step)
         train_writer.scalar('recent_accuracy',
                             jnp.mean(jnp.array(recent_accuracies)), step)

@@ -26,6 +26,7 @@ def default_config():
 
   # Training configs
   config.learning_rate = 0.03
+  config.grad_clip_value = 0  # 0 means no clipping.
 
   # Model HParams
   config.model_class: Text = 'IPAGNN'  # IPAGNN, Transformer
