@@ -80,7 +80,7 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
 
 def main():
   n = 20  # Machines per model
-  study_id = '2021-09-08-experiment-001'
+  study_id = '2021-09-09-understand-75'
 
   # Transformer
   offset = 0  # The machine index to start with.
