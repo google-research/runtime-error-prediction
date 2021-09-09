@@ -12,7 +12,6 @@ class EvaluationMetric(enum.Enum):
   CONFUSION_MATRIX = 'confusion-matrix'
 
 
-
 def default_config():
   """The default config."""
   config = Config()
@@ -48,7 +47,7 @@ def default_config():
   config.eval_freq = 10000
   config.save_freq = 5000
   config.eval_metric_names: List[str] = [
-    EvaluationMetric.F1_SCORE.value, EvaluationMetric.CONFUSION_MATRIX.value]
+      EvaluationMetric.F1_SCORE.value, EvaluationMetric.CONFUSION_MATRIX.value]
   config.eval_subsample = 1.0
   config.eval_max_batches = 30
 
