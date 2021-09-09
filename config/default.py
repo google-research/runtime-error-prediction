@@ -22,6 +22,7 @@ def default_config():
   config.study_id: Optional[Text] = ''  # A study is a way of organizing experiments.
   config.experiment_id: Optional[Text] = ''  # An experiment is launched by a single command, may have multiple runs.
   config.run_id: Optional[Text] = ''  # A run is a single trainer run with a single set of hparams. run_id should identify hparams.
+  config.notes: Optional[Text] = ''  # Any notes to record about the run.
 
   # Training configs
   config.learning_rate = 0.03
