@@ -55,4 +55,4 @@ def write_metadata(path):
 
 def read_metadata(path):
   with open(path, 'r') as f:
-    json.loads(f.read())
+    return json.loads(f.read())
