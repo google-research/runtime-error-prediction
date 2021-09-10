@@ -6,11 +6,41 @@ from core.distributed import gcp
 
 
 hparams = {
-    'config.learning_rate': [0.001, 0.003, 0.01, 0.03, 0.1, 0.3],
+    'config.learning_rate': [
+        1e-5, 3e-5, 1e-4, 3e-4, 0.001, 0.003,
+        # 0.01, 0.03, 0.1, 0.3,
+    ],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
     'config.hidden_size': [16, 32, 64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
+    'config.transformer_dropout_rate': [0, 0.1, 0.3],
+    'config.transformer_attention_dropout_rate': [0, 0.1, 0.3],
+    'transformer_size': ['tiny', 'small', 'default']
+}
+
+transformer_configs = {
+    'default': {
+        'config.transformer_emb_dim': 512,
+        'config.transformer_num_heads': 8,
+        'config.transformer_num_layers': 6,
+        'config.transformer_qkv_dim': 512,
+        'config.transformer_mlp_dim': 2048,
+    },
+    'small': {
+        'config.transformer_emb_dim': 256,
+        'config.transformer_num_layers': 2,
+        'config.transformer_qkv_dim': 256,
+        'config.transformer_num_heads': 4,
+        'config.transformer_mlp_dim': 1024,
+    },
+    'tiny': {
+        'config.transformer_emb_dim': 128,
+        'config.transformer_num_layers': 2,
+        'config.transformer_qkv_dim': 128,
+        'config.transformer_num_heads': 4,
+        'config.transformer_mlp_dim': 512,
+    },
 }
 
 
@@ -35,11 +65,13 @@ def make_run_id(name, index, params):
       'grad_clip_value': 'gc',
       'hidden_size': 'hs',
       'span_encoding_method': 'span',
+      'transformer_size': 'T',
   }
   parts = []
   for key, value in params.items():
     # Strip 'config.' from the key.
-    key = key[len('config.'):]
+    if key.startswith('config.'):
+      key = key[len('config.'):]
     if key in param_name_mapping:
       key = param_name_mapping[key]
     else:
@@ -51,10 +83,14 @@ def make_run_id(name, index, params):
 def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
+    run_id = make_run_id(name, index, params)
+    if 'transformer_size' in params:
+      transformer_size = params.pop('transformer_size')
+      params.update(transformer_configs[transformer_size])
+
     flags = []
     for key, value in params.items():
       flags.append(f'--{key}={value}')
-    run_id = make_run_id(name, index, params)
     command = (
         'cd compressive-ipagnn && '
         'python3 -m scripts.runner '
@@ -68,7 +104,7 @@ def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
         '--config.save_freq=25000 '
         f'--config.study_id={study_id} '
         f'--config.experiment_id={experiment_id} '
-        f'--config.run_id={name}{index:03d} '
+        f'--config.run_id={run_id} '
         + ' '.join(flags)
     )
     command = f'tmux new -d -s remote "{command}"'
@@ -101,26 +137,26 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
 
 
 def main():
-  n = 20  # Machines per model
-  study_id = '2021-09-09-understand-75'
+  n = 1  # Machines per model
+  study_id = '2021-09-10-transformer-size-dev'
 
   # Transformer
-  offset = 0  # The machine index to start with.
+  offset = 1  # The machine index to start with.
   run_sweep(n, offset, study_id, 'T', 'Transformer', False)
 
   # IPAGNN
-  offset = 20
+  offset = 2
   run_sweep(n, offset, study_id, 'I', 'IPAGNN', False)
 
-  # IPAGNN
-  offset = 40
-  run_sweep(n, offset, study_id, 'E', 'IPAGNN', False)  # Exception IPAGNN
+  # Exception IPAGNN
+  offset = 3
+  run_sweep(n, offset, study_id, 'E', 'IPAGNN', True)  # Exception IPAGNN
 
 
 # # To kill the runner processes:
-# # python -m core.distributed.gcp tpu_run_command 'pkill runner.py' --n=32 --offset=0
+# # python -m core.distributed.gcp tpu_run_command 'pkill runner.py && pkill tmux' --n=32 --offset=0
 # gcp.fix_firewall().wait()
-# gcp.tpu_run_command('pkill runner.py', n, offset=offset)
+# gcp.tpu_run_command('pkill runner.py && pkill tmux', n, offset=offset)
 
 
 if __name__ == '__main__':

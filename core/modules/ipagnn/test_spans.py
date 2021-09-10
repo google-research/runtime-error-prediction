@@ -25,6 +25,8 @@ def make_sample_config():
   config.transformer_num_layers = 2
   config.transformer_qkv_dim = 32
   config.transformer_mlp_dim = 64
+  config.transformer_dropout_rate = 0.1
+  config.transformer_attention_dropout_rate = 0.1
   return config
 
 
