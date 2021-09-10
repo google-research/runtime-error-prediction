@@ -322,7 +322,6 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
         ) = evaluate_batch(batch, state)
 
         # Write training metrics.
-        train_writer.scalar('global_norm', aux['global_norm'], step)
         train_writer.scalar('global_norm', jnp.mean(aux['global_norm']), step)
         train_writer.scalar('loss', batch_loss, step)
         train_writer.scalar('recent_accuracy',
