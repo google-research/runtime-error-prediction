@@ -16,7 +16,17 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
 def evaluate(targets, predictions, eval_metric_names):
+  # Diagnose unknown metrics.
+  unknown_metric_names = set(eval_metric_names).difference(
+      EvaluationMetric.all_metric_names())
+  if unknown_metric_names:
+    raise ValueError(f'Unknown metric names: {unknown_metric_names}')
+
+  # Compute metrics.
   results = {}
+  if EvaluationMetric.ACCURACY.value in eval_metric_names:
+    results[EvaluationMetric.ACCURACY.value] = (
+        jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets)))
   if EvaluationMetric.F1_SCORE.value in eval_metric_names:
     # TODO(dbieber): Support macro f1.
     results[EvaluationMetric.F1_SCORE.value] = metrics.f1_score(

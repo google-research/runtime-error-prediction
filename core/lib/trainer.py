@@ -231,7 +231,7 @@ class Trainer:
     config = self.config
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
-    eval_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
+    valid_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
     evaluate_batch = self.make_evaluate_batch()
 
     study_id = config.study_id
@@ -280,51 +280,58 @@ class Trainer:
     if train_writer_fd:
       os.fsync(train_writer_fd)
 
-    recent_accuracies = []
+    batch_predictions = []
+    batch_targets = []
+    batch_losses = []
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       step = state.step
       if config.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
 
-      # Compute batch eval.
+      # Record training batch evaluation data.
       predictions = jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))
       targets = jnp.squeeze(batch['target'])
-      batch_accuracy = jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets))
-      recent_accuracies.append(batch_accuracy)
-      recent_accuracies = recent_accuracies[-500:]
+      loss = jnp.mean(aux['loss'])
+      batch_predictions.append(predictions)
+      batch_targets.append(targets)
+      batch_losses.append(loss)
 
+      # Save checkpoints.
       if step % config.save_freq == 0:
         checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
 
+      # Do batch evaluation.
       if step % config.eval_freq == 0:
+        # Evaluate on training batch.
+        batch_loss = jnp.mean(jnp.array(batch_losses))
+        batch_metrics = evaluation.evaluate(
+            jnp.array(batch_targets), jnp.array(batch_predictions),
+            config.eval_metric_names)
+        batch_accuracy = batch_metrics.get(EvaluationMetric.ACCURACY.value)
+        batch_accuracy_str = (f'{100 * batch_accuracy:02.1f}'
+                              if batch_accuracy else None)
         print(f"""--- Step {step}
-Loss: {aux['loss']}
+Loss: {batch_loss}
 Predictions:
 {predictions}
 Targets:
 {targets}
-Batch Accuracy: {100 * batch_accuracy:02.1f}
-Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
+Batch Accuracy: {batch_accuracy_str}""")
 
-        # Run complete evaluation:
-        eval_loss, eval_metrics, num_examples = self.run_eval(
-            eval_dataset, state, evaluate_batch)
+        # Evaluate on validation dataset.
+        valid_loss, valid_metrics, num_examples = self.run_eval(
+            valid_dataset, state, evaluate_batch)
         logging.info(
-            f'Validation loss ({num_examples} Examples): {eval_loss}\n'
-            f'Validation metrics: {eval_metrics}'
+            f'Validation loss ({num_examples} examples): {valid_loss}\n'
+            f'Validation metrics: {valid_metrics}'
         )
-        (
-            _,
-            batch_loss,
-            batch_metrics,
-        ) = evaluate_batch(batch, state)
 
         # Write training metrics.
         train_writer.scalar('global_norm', jnp.mean(aux['global_norm']), step)
         train_writer.scalar('loss', batch_loss, step)
-        train_writer.scalar('recent_accuracy',
-                            jnp.mean(jnp.array(recent_accuracies)), step)
+        write_metric(EvaluationMetric.ACCURACY.value, batch_metrics,
+                     train_writer.scalar, step)
         write_metric(EvaluationMetric.F1_SCORE.value, batch_metrics,
                      train_writer.scalar, step)
         write_metric(
@@ -337,19 +344,21 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
                 class_names=error_kinds.ALL_ERROR_KINDS))
 
         # Write validation metrics.
-        valid_writer.scalar('loss', eval_loss, step)
-        write_metric(EvaluationMetric.F1_SCORE.value, eval_metrics,
+        valid_writer.scalar('loss', valid_loss, step)
+        write_metric(EvaluationMetric.ACCURACY.value, valid_metrics,
+                     valid_writer.scalar, step)
+        write_metric(EvaluationMetric.F1_SCORE.value, valid_metrics,
                      valid_writer.scalar, step)
         write_metric(
             EvaluationMetric.CONFUSION_MATRIX.value,
-            eval_metrics,
+            valid_metrics,
             valid_writer.image,
             step,
             transform_fn=functools.partial(
                 evaluation.confusion_matrix_to_image,
                 class_names=error_kinds.ALL_ERROR_KINDS))
 
-        did_improve, es = es.update(-1 * eval_loss)
+        did_improve, es = es.update(-1 * valid_loss)
         if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')
           break
@@ -360,6 +369,11 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
           os.fsync(train_writer_fd)
         if valid_writer_fd:
           os.fsync(valid_writer_fd)
+
+        # Clear training batch evaluation data.
+        batch_predictions.clear()
+        batch_targets.clear()
+        batch_losses.clear()
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)

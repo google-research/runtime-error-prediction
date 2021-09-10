@@ -8,8 +8,13 @@ Config = ml_collections.ConfigDict
 
 class EvaluationMetric(enum.Enum):
   """Evaluation metric kinds."""
+  ACCURACY = 'accuracy'
   F1_SCORE = 'f1-score'
   CONFUSION_MATRIX = 'confusion-matrix'
+
+  @staticmethod
+  def all_metric_names() -> List[str]:
+    return [x.value for x in EvaluationMetric]
 
 
 def default_config():
@@ -57,8 +62,7 @@ def default_config():
   # Runner configs
   config.eval_freq = 10000
   config.save_freq = 5000
-  config.eval_metric_names: List[str] = [
-      EvaluationMetric.F1_SCORE.value, EvaluationMetric.CONFUSION_MATRIX.value]
+  config.eval_metric_names: List[str] = EvaluationMetric.all_metric_names()
   config.eval_subsample = 1.0
   config.eval_max_batches = 30
 
