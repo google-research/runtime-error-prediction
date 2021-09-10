@@ -50,6 +50,7 @@ NO_ERROR = 'No error'
 ALL_ERROR_KINDS = [NO_DATA, NO_ERROR, SILENT_ERROR, OTHER_ERROR] + ERROR_KINDS
 
 NUM_CLASSES = len(ALL_ERROR_KINDS)
+NUM_CLASSES = 3 + len(ERROR_KINDS)
 
 def to_index(error_kind):
   if error_kind == NO_DATA:
