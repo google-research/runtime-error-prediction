@@ -14,4 +14,5 @@ def make_transformer_config(config, vocab_size, deterministic):
       qkv_dim=config.transformer_qkv_dim,
       mlp_dim=config.transformer_mlp_dim,
       max_len=config.max_tokens,
+      deterministic=deterministic,
   )
