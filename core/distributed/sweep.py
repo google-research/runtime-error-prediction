@@ -14,6 +14,8 @@ hparams = {
     'config.grad_clip_value': [0, 0.5, 1, 2],
     'config.hidden_size': [16, 32, 64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
+    'config.transformer_dropout_rate': [0, 0.1, 0.3],
+    'config.transformer_attention_dropout_rate': [0, 0.1, 0.3],
     'transformer_size': ['tiny', 'small', 'default']
 }
 
@@ -68,7 +70,8 @@ def make_run_id(name, index, params):
   parts = []
   for key, value in params.items():
     # Strip 'config.' from the key.
-    key = key[len('config.'):]
+    if key.startswith('config.'):
+      key = key[len('config.'):]
     if key in param_name_mapping:
       key = param_name_mapping[key]
     else:
@@ -101,7 +104,7 @@ def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
         '--config.save_freq=25000 '
         f'--config.study_id={study_id} '
         f'--config.experiment_id={experiment_id} '
-        f'--config.run_id={name}{index:03d} '
+        f'--config.run_id={run_id} '
         + ' '.join(flags)
     )
     command = f'tmux new -d -s remote "{command}"'
@@ -134,26 +137,26 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
 
 
 def main():
-  n = 20  # Machines per model
-  study_id = '2021-09-09-understand-75'
+  n = 1  # Machines per model
+  study_id = '2021-09-10-transformer-size-dev'
 
   # Transformer
-  offset = 0  # The machine index to start with.
+  offset = 1  # The machine index to start with.
   run_sweep(n, offset, study_id, 'T', 'Transformer', False)
 
   # IPAGNN
-  offset = 20
+  offset = 2
   run_sweep(n, offset, study_id, 'I', 'IPAGNN', False)
 
-  # IPAGNN
-  offset = 40
-  run_sweep(n, offset, study_id, 'E', 'IPAGNN', False)  # Exception IPAGNN
+  # Exception IPAGNN
+  offset = 3
+  run_sweep(n, offset, study_id, 'E', 'IPAGNN', True)  # Exception IPAGNN
 
 
 # # To kill the runner processes:
-# # python -m core.distributed.gcp tpu_run_command 'pkill runner.py' --n=32 --offset=0
+# # python -m core.distributed.gcp tpu_run_command 'pkill runner.py && pkill tmux' --n=32 --offset=0
 # gcp.fix_firewall().wait()
-# gcp.tpu_run_command('pkill runner.py', n, offset=offset)
+# gcp.tpu_run_command('pkill runner.py && pkill tmux', n, offset=offset)
 
 
 if __name__ == '__main__':

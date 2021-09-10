@@ -51,3 +51,8 @@ def write_metadata(path):
   metadata = get_metadata()
   with open(path, 'w') as f:
     f.write(json.dumps(metadata))
+
+
+def read_metadata(path):
+  with open(path, 'r') as f:
+    json.loads(f.read())
