@@ -77,7 +77,6 @@ class Trainer:
     return (
         data_io.load_dataset(dataset_path, split=split)
         .filter(filter_fn)
-        .take(300000)
         .repeat(epochs)
         .shuffle(1000)
         .padded_batch(batch_size, padded_shapes=padded_shapes, drop_remainder=True)
@@ -335,7 +334,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             step,
             transform_fn=functools.partial(
                 evaluation.confusion_matrix_to_image,
-                class_names=error_kinds.ALL_ERROR_KINDS[:-1]))
+                class_names=error_kinds.ALL_ERROR_KINDS))
 
         # Write validation metrics.
         valid_writer.scalar('loss', eval_loss, step)
@@ -348,7 +347,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             step,
             transform_fn=functools.partial(
                 evaluation.confusion_matrix_to_image,
-                class_names=error_kinds.ALL_ERROR_KINDS[:-1]))
+                class_names=error_kinds.ALL_ERROR_KINDS))
 
         did_improve, es = es.update(-1 * eval_loss)
         if es.should_stop and config.early_stopping_on:
