@@ -335,7 +335,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             step,
             transform_fn=functools.partial(
                 evaluation.confusion_matrix_to_image,
-                class_names=error_kinds.ALL_ERROR_KINDS))
+                class_names=error_kinds.ALL_ERROR_KINDS[:-1]))
 
         # Write validation metrics.
         valid_writer.scalar('loss', eval_loss, step)
@@ -348,7 +348,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
             step,
             transform_fn=functools.partial(
                 evaluation.confusion_matrix_to_image,
-                class_names=error_kinds.ALL_ERROR_KINDS))
+                class_names=error_kinds.ALL_ERROR_KINDS[:-1]))
 
         did_improve, es = es.update(-1 * eval_loss)
         if es.should_stop and config.early_stopping_on:
