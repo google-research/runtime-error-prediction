@@ -7,14 +7,21 @@ from core.distributed import gcp
 
 hparams = {
     'config.learning_rate': [
-        1e-5, 3e-5,
-        1e-4, 3e-4, 0.001, 0.003,
+        1e-5, 3e-5, 1e-4, 3e-4, 0.001, 0.003,
         # 0.01, 0.03, 0.1, 0.3,
     ],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
     'config.hidden_size': [16, 32, 64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
+}
+
+transformer_default_configs = {
+    'config.transformer_emb_dim': 512,
+    'config.transformer_num_heads': 8,
+    'config.transformer_num_layers': 6,
+    'config.transformer_qkv_dim': 512,
+    'config.transformer_mlp_dim': 2048,
 }
 
 
