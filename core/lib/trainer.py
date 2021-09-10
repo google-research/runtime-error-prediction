@@ -322,7 +322,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
                      train_writer.scalar, step)
         write_metric(
             EvaluationMetric.CONFUSION_MATRIX.value,
-            eval_metrics,
+            batch_metrics,
             train_writer.image,
             step,
             transform_fn=functools.partial(
