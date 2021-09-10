@@ -14,14 +14,31 @@ hparams = {
     'config.grad_clip_value': [0, 0.5, 1, 2],
     'config.hidden_size': [16, 32, 64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
+    'transformer_size': ['tiny', 'small', 'default']
 }
 
-transformer_default_configs = {
-    'config.transformer_emb_dim': 512,
-    'config.transformer_num_heads': 8,
-    'config.transformer_num_layers': 6,
-    'config.transformer_qkv_dim': 512,
-    'config.transformer_mlp_dim': 2048,
+transformer_configs = {
+    'default': {
+        'config.transformer_emb_dim': 512,
+        'config.transformer_num_heads': 8,
+        'config.transformer_num_layers': 6,
+        'config.transformer_qkv_dim': 512,
+        'config.transformer_mlp_dim': 2048,
+    },
+    'small': {
+        'config.transformer_emb_dim': 256,
+        'config.transformer_num_layers': 2,
+        'config.transformer_qkv_dim': 256,
+        'config.transformer_num_heads': 4,
+        'config.transformer_mlp_dim': 1024,
+    },
+    'tiny': {
+        'config.transformer_emb_dim': 128,
+        'config.transformer_num_layers': 2,
+        'config.transformer_qkv_dim': 128,
+        'config.transformer_num_heads': 4,
+        'config.transformer_mlp_dim': 512,
+    },
 }
 
 
@@ -46,6 +63,7 @@ def make_run_id(name, index, params):
       'grad_clip_value': 'gc',
       'hidden_size': 'hs',
       'span_encoding_method': 'span',
+      'transformer_size': 'T',
   }
   parts = []
   for key, value in params.items():
@@ -62,10 +80,14 @@ def make_run_id(name, index, params):
 def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
+    run_id = make_run_id(name, index, params)
+    if 'transformer_size' in params:
+      transformer_size = params.pop('transformer_size')
+      params.update(transformer_configs[transformer_size])
+
     flags = []
     for key, value in params.items():
       flags.append(f'--{key}={value}')
-    run_id = make_run_id(name, index, params)
     command = (
         'cd compressive-ipagnn && '
         'python3 -m scripts.runner '
