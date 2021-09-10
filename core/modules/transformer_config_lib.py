@@ -13,6 +13,8 @@ def make_transformer_config(config, vocab_size, deterministic):
       num_layers=config.transformer_num_layers,
       qkv_dim=config.transformer_qkv_dim,
       mlp_dim=config.transformer_mlp_dim,
+      dropout_rate=config.transformer_dropout_rate,
+      attention_dropout_rate=config.transformer_attention_dropout_rate,
       max_len=config.max_tokens,
       deterministic=deterministic,
   )

@@ -51,6 +51,8 @@ def default_config():
   config.transformer_num_layers: int = 6
   config.transformer_qkv_dim: int = 512
   config.transformer_mlp_dim: int = 2048
+  config.transformer_dropout_rate: int = 0.1
+  config.transformer_attention_dropout_rate: int = 0.1
 
   # Runner configs
   config.eval_freq = 10000
