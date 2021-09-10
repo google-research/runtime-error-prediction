@@ -8,6 +8,7 @@ from core.distributed import gcp
 hparams = {
     'config.learning_rate': [0.001, 0.003, 0.01, 0.03, 0.1, 0.3],
     # 'config.rnn_layers': [2, 4]
+    'config.grad_clip_value': [0, 0.5, 1, 2],
     'config.hidden_size': [16, 32, 64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
 }
@@ -27,12 +28,33 @@ with open(codenet_paths.EXPERIMENT_ID_PATH, 'w') as f:
   f.write(str(experiment_id))
 
 
+def make_run_id(name, index, params):
+  param_name_mapping = {
+      'learning_rate': 'lr',
+      'rnn_layers': 'L',
+      'grad_clip_value': 'gc',
+      'hidden_size': 'hs',
+      'span_encoding_method': 'span',
+  }
+  parts = []
+  for key, value in params.items():
+    # Strip 'config.' from the key.
+    key = key[len('config.'):]
+    if key in param_name_mapping:
+      key = param_name_mapping[key]
+    else:
+      key = ''.join(word[0] for word in key.split('_'))
+    parts.append(f'{key}={value}')
+  return f'{name}{index:03d},{",".join(parts)}'
+
+
 def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
     flags = []
     for key, value in params.items():
       flags.append(f'--{key}={value}')
+    run_id = make_run_id(name, index, params)
     command = (
         'cd compressive-ipagnn && '
         'python3 -m scripts.runner '
@@ -80,7 +102,7 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
 
 def main():
   n = 20  # Machines per model
-  study_id = '2021-09-08-experiment-001'
+  study_id = '2021-09-09-understand-75'
 
   # Transformer
   offset = 0  # The machine index to start with.

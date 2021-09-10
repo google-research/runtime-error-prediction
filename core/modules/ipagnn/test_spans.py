@@ -6,6 +6,7 @@ import jax
 import jax.numpy as jnp
 
 import ml_collections
+from core.modules import transformer_config_lib
 from core.modules.ipagnn import ipagnn
 from core.modules.ipagnn import spans
 
@@ -17,6 +18,13 @@ def make_sample_config():
   config = Config()
   config.hidden_size = 10
   config.span_encoding_method = 'first'
+  config.max_tokens = 64
+
+  config.transformer_emb_dim = 32
+  config.transformer_num_heads = 4
+  config.transformer_num_layers = 2
+  config.transformer_qkv_dim = 32
+  config.transformer_mlp_dim = 64
   return config
 
 
@@ -35,9 +43,13 @@ class NodeSpanEncoderTest(unittest.TestCase):
 
     info = ipagnn.Info(vocab_size=500)
     config = make_sample_config()
+    transformer_config = transformer_config_lib.make_transformer_config(
+        config, 300, True
+    )
 
     encoder = spans.NodeSpanEncoder(
-        info, config, max_tokens=num_tokens, max_num_nodes=3)
+        info, config, transformer_config,
+        max_tokens=num_tokens, max_num_nodes=3)
     rng = jax.random.PRNGKey(0)
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = encoder.init(

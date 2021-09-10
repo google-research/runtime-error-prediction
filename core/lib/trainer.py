@@ -82,8 +82,8 @@ class Trainer:
         .padded_batch(batch_size, padded_shapes=padded_shapes, drop_remainder=True)
     )
 
-  def make_model(self):
-    return models.make_model(self.config)
+  def make_model(self, deterministic):
+    return models.make_model(self.config, deterministic)
 
   def create_train_state(self, rng, model):
     """Creates initial TrainState."""
@@ -97,11 +97,13 @@ class Trainer:
     params = variables['params']
     learning_rate = config.learning_rate
     tx = optax.sgd(learning_rate)
+    # TODO(dbieber): I don't think model.apply is used from here.
+    # Instead, it's used from make_loss_fn.
     return TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
-  def make_loss_fn(self):
-    model = self.make_model()
+  def make_loss_fn(self, deterministic):
+    model = self.make_model(deterministic)
 
     def loss_fn(params, batch, dropout_rng):
       logits = model.apply(
@@ -128,12 +130,13 @@ class Trainer:
     return loss_fn
 
   def make_train_step(self):
-    loss_fn = self.make_loss_fn()
+    loss_fn = self.make_loss_fn(deterministic=False)
+    grad_clip_value = self.config.grad_clip_value
 
     @jax.jit
     def train_step(state, batch):
       """The on-device part of a train step."""
-      model = self.make_model()
+      model = self.make_model(deterministic=False)
 
       new_rng, dropout_rng = jax.random.split(state.rng, 2)
       state = dataclasses.replace(state, rng=new_rng)
@@ -142,12 +145,15 @@ class Trainer:
       (loss, aux), grads = grad_fn(state.params, batch, dropout_rng)
       if self.config.multidevice:
         grads = jax.lax.pmean(grads, 'batch')
-      # grads = optimizer_lib.clip_grad(grads, clip_by='global_norm', clip_value=1.0)
+      global_norm = optimizer_lib.compute_global_norm(grads)
+      if grad_clip_value:
+        grads = optimizer_lib.clip_grads(grads, clip_by='global_norm', clip_value=grad_clip_value)
       state = state.apply_gradients(grads=grads)
       # TODO(dbieber): Optionally compute on-device metrics here.
       return state, {
           'logits': aux['logits'],
           'loss': loss,
+          'global_norm': global_norm,
       }
     if self.config.multidevice:
       train_step = jax.pmap(
@@ -160,7 +166,7 @@ class Trainer:
 
   def make_evaluate_batch(self):
     config = self.config
-    loss_fn = self.make_loss_fn()
+    loss_fn = self.make_loss_fn(deterministic=True)
     if config.multidevice:
       loss_fn = jax.pmap(
           loss_fn,
@@ -244,7 +250,7 @@ class Trainer:
 
     rng = jax.random.PRNGKey(0)
     rng, init_rng = jax.random.split(rng)
-    model = self.make_model()
+    model = self.make_model(deterministic=False)
 
     state = self.create_train_state(init_rng, model)
     if config.restore_checkpoint_dir:
@@ -315,6 +321,7 @@ Recent Accuracy: {100 * jnp.mean(jnp.array(recent_accuracies)):02.1f}""")
         ) = evaluate_batch(batch, state)
 
         # Write training metrics.
+        train_writer.scalar('global_norm', jnp.mean(aux['global_norm']), step)
         train_writer.scalar('loss', batch_loss, step)
         train_writer.scalar('recent_accuracy',
                             jnp.mean(jnp.array(recent_accuracies)), step)

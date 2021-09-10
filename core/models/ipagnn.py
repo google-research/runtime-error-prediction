@@ -18,6 +18,7 @@ NUM_CLASSES = error_kinds.NUM_CLASSES
 class IPAGNN(nn.Module):
 
   config: Any
+  transformer_config: transformer_modules.TransformerConfig
 
   def setup(self):
     config = self.config
@@ -30,6 +31,7 @@ class IPAGNN(nn.Module):
     self.node_span_encoder = spans.NodeSpanEncoder(
         info=info,
         config=config,
+        transformer_config=self.transformer_config,
         max_tokens=max_tokens,
         max_num_nodes=max_num_nodes,
         use_span_index_encoder=False,

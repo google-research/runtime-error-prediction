@@ -171,6 +171,7 @@ class NodeSpanEncoder(nn.Module):
 
   info: Any
   config: Any
+  transformer_config: transformer_modules.TransformerConfig
 
   max_tokens: int  # TODO(dbieber): Move these into info or config.
   max_num_nodes: int
@@ -181,12 +182,8 @@ class NodeSpanEncoder(nn.Module):
     vocab_size = self.info.vocab_size
     hidden_size = self.config.hidden_size
 
-    transformer_config = transformer_modules.TransformerConfig(
-        vocab_size=vocab_size,
-        output_vocab_size=vocab_size,
-    )
     self.embed = NodeAwareTokenEmbedder(
-        transformer_config=transformer_config,
+        transformer_config=self.transformer_config,
         num_embeddings=vocab_size,
         features=hidden_size,
         max_tokens=self.max_tokens,
@@ -194,7 +191,8 @@ class NodeSpanEncoder(nn.Module):
         use_span_index_encoder=self.use_span_index_encoder,
         use_span_start_indicators=self.use_span_start_indicators,
     )
-    self.encoder = encoder.TransformerEncoder(config=transformer_config)
+    self.encoder = encoder.TransformerEncoder(
+        config=self.transformer_config)
 
   def __call__(self, tokens, node_span_starts, node_span_ends):
     config = self.config

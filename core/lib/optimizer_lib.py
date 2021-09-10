@@ -5,16 +5,24 @@ import jax
 import jax.numpy as jnp
 
 
-def clip_grad(grad, clip_by, clip_value):
+def compute_global_norm(grads):
+  return jnp.sqrt(
+      sum([
+          jnp.sum(jnp.square(x))
+          for x in jax.tree_util.tree_leaves(grads)
+      ])
+  )
+
+
+def clip_grads(grads, clip_by, clip_value):
   """Clips the gradient using the method clip_by."""
   if clip_by == 'global_norm':
-    global_norm = jnp.sqrt(
-        sum([jnp.sum(jnp.square(x)) for x in jax.tree_util.tree_leaves(grad)]))
+    global_norm = compute_global_norm(grads)
     should_clip = global_norm > clip_value
-    grad = jax.tree_map(
+    grads = jax.tree_map(
         lambda g: jnp.where(should_clip, g * clip_value / global_norm, g),
-        grad
+        grads
     )
   else:
     raise ValueError('Unexpected value for clip_by', clip_by)
-  return grad
+  return grads
