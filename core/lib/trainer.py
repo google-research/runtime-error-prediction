@@ -280,9 +280,9 @@ class Trainer:
     if train_writer_fd:
       os.fsync(train_writer_fd)
 
-    batch_predictions = []
-    batch_targets = []
-    batch_losses = []
+    train_predictions = []
+    train_targets = []
+    train_losses = []
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       step = state.step
       if config.multidevice:
@@ -293,9 +293,9 @@ class Trainer:
       predictions = jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))
       targets = jnp.squeeze(batch['target'])
       loss = jnp.mean(aux['loss'])
-      batch_predictions.append(predictions)
-      batch_targets.append(targets)
-      batch_losses.append(loss)
+      train_predictions.append(predictions)
+      train_targets.append(targets)
+      train_losses.append(loss)
 
       # Save checkpoints.
       if step % config.save_freq == 0:
@@ -303,21 +303,23 @@ class Trainer:
 
       # Do batch evaluation.
       if step % config.eval_freq == 0:
-        # Evaluate on training batch.
-        batch_loss = jnp.mean(jnp.array(batch_losses))
-        batch_metrics = evaluation.evaluate(
-            jnp.array(batch_targets), jnp.array(batch_predictions),
+        # Evaluate on aggregated training data.
+        train_loss = jnp.mean(jnp.array(train_losses))
+        train_metrics = evaluation.evaluate(
+            jnp.reshape(jnp.array(train_targets), -1),
+            jnp.reshape(jnp.array(train_predictions), -1),
             config.eval_metric_names)
-        batch_accuracy = batch_metrics.get(EvaluationMetric.ACCURACY.value)
-        batch_accuracy_str = (f'{100 * batch_accuracy:02.1f}'
-                              if batch_accuracy else None)
+        train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
+        train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
+                              if train_accuracy else None)
         print(f"""--- Step {step}
-Loss: {batch_loss}
+Loss: {train_loss}
 Predictions:
 {predictions}
 Targets:
 {targets}
-Batch Accuracy: {batch_accuracy_str}""")
+Train Accuracy: {train_accuracy_str}
+""")
 
         # Evaluate on validation dataset.
         valid_loss, valid_metrics, num_examples = self.run_eval(
@@ -329,14 +331,14 @@ Batch Accuracy: {batch_accuracy_str}""")
 
         # Write training metrics.
         train_writer.scalar('global_norm', jnp.mean(aux['global_norm']), step)
-        train_writer.scalar('loss', batch_loss, step)
-        write_metric(EvaluationMetric.ACCURACY.value, batch_metrics,
+        train_writer.scalar('loss', train_loss, step)
+        write_metric(EvaluationMetric.ACCURACY.value, train_metrics,
                      train_writer.scalar, step)
-        write_metric(EvaluationMetric.F1_SCORE.value, batch_metrics,
+        write_metric(EvaluationMetric.F1_SCORE.value, train_metrics,
                      train_writer.scalar, step)
         write_metric(
             EvaluationMetric.CONFUSION_MATRIX.value,
-            batch_metrics,
+            train_metrics,
             train_writer.image,
             step,
             transform_fn=functools.partial(
@@ -370,10 +372,10 @@ Batch Accuracy: {batch_accuracy_str}""")
         if valid_writer_fd:
           os.fsync(valid_writer_fd)
 
-        # Clear training batch evaluation data.
-        batch_predictions.clear()
-        batch_targets.clear()
-        batch_losses.clear()
+        # Clear training evaluation data.
+        train_predictions.clear()
+        train_targets.clear()
+        train_losses.clear()
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
