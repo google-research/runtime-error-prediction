@@ -136,8 +136,6 @@ class Trainer:
     @jax.jit
     def train_step(state, batch):
       """The on-device part of a train step."""
-      model = self.make_model(deterministic=False)
-
       new_rng, dropout_rng = jax.random.split(state.rng, 2)
       state = dataclasses.replace(state, rng=new_rng)
 
