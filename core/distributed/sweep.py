@@ -137,8 +137,10 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
 
 
 def main():
+  random.seed(0)
+
   n = 20  # Machines per model
-  study_id = '2021-09-13-experiment-1-003'
+  study_id = '2021-09-13-experiment-1-004'
 
   # Exception IPAGNN
   offset = 0
