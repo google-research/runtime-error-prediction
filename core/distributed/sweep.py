@@ -137,20 +137,21 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
 
 
 def main():
-  n = 1  # Machines per model
-  study_id = '2021-09-10-transformer-size-dev'
-
-  # Transformer
-  offset = 1  # The machine index to start with.
-  run_sweep(n, offset, study_id, 'T', 'Transformer', False)
-
-  # IPAGNN
-  offset = 2
-  run_sweep(n, offset, study_id, 'I', 'IPAGNN', False)
+  n = 20  # Machines per model
+  study_id = '2021-09-13-experiment-1-003'
 
   # Exception IPAGNN
-  offset = 3
+  offset = 0
   run_sweep(n, offset, study_id, 'E', 'IPAGNN', True)  # Exception IPAGNN
+
+  # IPAGNN
+  offset = 20
+  run_sweep(n, offset, study_id, 'I', 'IPAGNN', False)
+
+  # Transformer
+  offset = 40  # The machine index to start with.
+  run_sweep(n, offset, study_id, 'T', 'Transformer', False)
+
 
 
 # # To kill the runner processes:
