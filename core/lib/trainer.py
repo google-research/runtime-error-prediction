@@ -312,14 +312,18 @@ class Trainer:
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy else None)
+        batch_metrics = evaluation.evaluate(
+            jnp.reshape(targets, -1), jnp.reshape(predictions, -1),
+            [EvaluationMetric.ACCURACY.value])
+        batch_accuracy = batch_metrics[EvaluationMetric.ACCURACY.value]
         print(f"""--- Step {step}
 Loss: {train_loss}
 Predictions:
 {predictions}
 Targets:
 {targets}
-Train Accuracy: {train_accuracy_str}
-""")
+Batch Accuracy: {100 * batch_accuracy:02.1f}
+Train Accuracy: {train_accuracy_str}""")
 
         # Evaluate on validation dataset.
         valid_loss, valid_metrics, num_examples = self.run_eval(
