@@ -322,8 +322,8 @@ Predictions:
 {predictions}
 Targets:
 {targets}
-Batch Accuracy: {100 * batch_accuracy:02.1f}
-Train Accuracy: {train_accuracy_str}""")
+Train Accuracy: {train_accuracy_str}
+Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
 
         # Evaluate on validation dataset.
         valid_loss, valid_metrics, num_examples = self.run_eval(
