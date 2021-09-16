@@ -79,3 +79,19 @@ def get_config():
   config = default_config()
   config.lock()
   return config
+
+
+def get_test_config():
+  config = default_config()
+  config.hidden_size = 10
+  config.span_encoding_method = 'first'
+  config.max_tokens = 64
+
+  config.transformer_emb_dim = 32
+  config.transformer_num_heads = 4
+  config.transformer_num_layers = 2
+  config.transformer_qkv_dim = 32
+  config.transformer_mlp_dim = 64
+  config.transformer_dropout_rate = 0.1
+  config.transformer_attention_dropout_rate = 0.1
+  return config
