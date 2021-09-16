@@ -53,4 +53,4 @@ class Transformer(nn.Module):
     # x.shape: batch_size, hidden_size
     x = nn.Dense(features=self.info.num_classes)(x)
     # x.shape: batch_size, num_classes
-    return x
+    return x, None

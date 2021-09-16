@@ -1,4 +1,8 @@
+"""Metrics utility functions."""
+
+import imageio
 import io
+import itertools
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
@@ -42,35 +46,58 @@ def compute_metric(logits, targets, num_classes, eval_metric_names):
   return metrics
 
 
-def plot_to_image(figure):
-  """Converts a matplotlib figure to a PNG image tensor.
-
-  Adapted from: https://www.tensorflow.org/tensorboard/image_summaries.
-
-  The given figure is closed and inaccessible after this call.
+def figure_to_image(figure, dpi=None, close=True):
+  """Converts the matplotlib plot specified by `figure` to a NumPy image.
 
   Args:
-    figure: A matplotlib figure.
+    figure: A matplotlib plot.
 
   Returns:
-    A `[1, height, width, channels]` PNG image tensor.
+    A 3-D NumPy array representing the image of the matplotlib plot.
   """
   # Save the plot to a PNG in memory.
   buf = io.BytesIO()
-  plt.savefig(buf, format='png')
-  # Closing the figure prevents it from being displayed directly inside
-  # notebooks.
-  plt.close(figure)
+  figure.savefig(buf, format='png', dpi=dpi, bbox_inches='tight')
   buf.seek(0)
-  # Convert the PNG buffer to a TensorFlow image.
-  image = tf.image.decode_png(buf.getvalue(), channels=4)
-  # Add a batch dimension of 1.
-  image = tf.expand_dims(image, 0)
+  # Convert PNG buffer to NumPy array.
+  image = imageio.imread(buf, format='png')
+  buf.close()
+  if close:
+    plt.close(figure)
   return image
 
 
+def make_figure(*,
+                data,
+                title,
+                xlabel,
+                ylabel,
+                interpolation='nearest',
+                **kwargs):
+  """"Creates a matplotlib plot from the given data."""
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.set_title(title)
+  plt.imshow(data, interpolation=interpolation, **kwargs)
+  ax.set_aspect('equal')
+  ax.set_xlabel(xlabel)
+  ax.set_ylabel(ylabel)
+  plt.colorbar(orientation='vertical')
+  return fig
+
+
+def instruction_pointer_to_image(instruction_pointer):
+  """Converts the given instruction pointer array to an image."""
+  instruction_pointer_figure = make_figure(
+      data=instruction_pointer,
+      title='Instruction Pointer',
+      xlabel='Timestep',
+      ylabel='Node')
+  return figure_to_image(instruction_pointer_figure)
+
+
 def confusion_matrix_to_image(cm, class_names):
-  """Returns an image tensor representing the plotted confusion matrix.
+  """Returns an image tensor representing the confusion matrix plotted.
 
   Args:
     cm: a `[num_classes, num_classes]` confusion matrix of integer classes.
@@ -83,4 +110,5 @@ def confusion_matrix_to_image(cm, class_names):
   cm_display = metrics.ConfusionMatrixDisplay(cm, display_labels=class_names)
   cm_display.plot(xticks_rotation=45)
   figure = cm_display.figure_
-  return plot_to_image(figure)
+  image = figure_to_image(figure)
+  return np.expand_dims(image, 0)
