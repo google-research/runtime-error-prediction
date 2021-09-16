@@ -17,11 +17,9 @@ def restore_training(
   metadata_path = codenet_paths.make_metadata_path(run_dir)
   metadata = metadata_lib.read_metadata(metadata_path)
   command = metadata['command']
-  restore_flag = f'--config.restore_checkpoint_dir={checkpoint_path}'
 
-  # Either add restore_flag as a new flag, or replace an existing restore flag.
-  # if 'restore_checkpoint_dir' in command:
-  print(command)
+  machine = metadata['hostname']
+  print(machine, command)
 
 
 if __name__ == '__main__':
