@@ -1,6 +1,7 @@
 import os
 
 from core.data import codenet_paths
+from core.distributed import gcp
 from core.lib import metadata as metadata_lib
 
 import fire
@@ -19,7 +20,8 @@ def restore_training(
   command = metadata['command']
 
   machine = metadata['hostname']
-  print(machine, command)
+  print(machine, gcp.as_shell_string(command))
+
 
 
 if __name__ == '__main__':
