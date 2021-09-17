@@ -33,8 +33,8 @@ def process_control_flow_programs(
       continue
 
     python_path = f'{tfrecord_pattern}:{index}'
-    source = example['human_readable_code'].decode('utf-8')
-    target = example['target_output']
+    source = example['human_readable_code'][0].decode('utf-8')
+    target = example['target_output'][0]
 
     problem = process.make_runtimeerrorproblem(
         source, target, tokenizer=tokenizer,
