@@ -15,8 +15,11 @@ _string_scalar_feature = tf_io.string_scalar_feature
 
 def decode_fn(record_bytes, include_strings=False):
   features = {
-      'cfg_forward/steps': _int64_scalar_feature(),
-      'cfg/linenos': _int64_sequence_feature(),
+      # We omit all features from the dataset except the raw source.
+      # Example features omitted:
+      # 'cfg_forward/steps': _int64_scalar_feature(),
+      # 'cfg/linenos': _int64_sequence_feature(),
+      'target_output': _int64_scalar_feature(),
   }
   if include_strings:
     features.update({
