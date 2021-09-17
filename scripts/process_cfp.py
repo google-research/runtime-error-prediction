@@ -35,10 +35,12 @@ def process_control_flow_programs(
     python_path = f'{tfrecord_pattern}:{index}'
     source = example['human_readable_code'][0].numpy().decode('utf-8')
     target = example['target_output'][0].numpy()
+    original_step_limit = example['cfg_forward/steps'][0].numpy()
 
     problem = process.make_runtimeerrorproblem(
         source, target, tokenizer=tokenizer,
         problem_id=index, submission_id=0)
+    assert problem.step_limit == original_step_limit
     yield problem
 
     if count % 1000 == 0:
