@@ -1,6 +1,8 @@
 import itertools
 import random
 
+import fire
+
 from core.data import codenet_paths
 from core.distributed import gcp
 
@@ -51,13 +53,6 @@ def dict_product(d):
     yield dict(zip(keys, specific_values))
 
 
-# Increment the global experiment id.
-with open(codenet_paths.EXPERIMENT_ID_PATH, 'r') as f:
-  experiment_id = int(f.read().strip()) + 1
-with open(codenet_paths.EXPERIMENT_ID_PATH, 'w') as f:
-  f.write(str(experiment_id))
-
-
 def make_run_id(name, index, params):
   param_name_mapping = {
       'learning_rate': 'lr',
@@ -80,7 +75,7 @@ def make_run_id(name, index, params):
   return f'{name}{index:03d},{",".join(parts)}'
 
 
-def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
+def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
     run_id = make_run_id(name, index, params)
@@ -115,8 +110,8 @@ def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
   return commands
 
 
-def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
-  commands = choose_commands(n, study_id, name, model_class, raise_in_ipagnn)
+def run_sweep(n, offset, experiment_id, study_id, name, model_class, raise_in_ipagnn):
+  commands = choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn)
 
   def make_run_command(index):
     return commands[index - offset]
@@ -137,39 +132,56 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
   gcp.tpu_run_commands(make_run_command, n, offset=offset)
 
 
-def main():
+def get_and_increment_global_experiment_id():
+  # Increment the global experiment id.
+  with open(codenet_paths.EXPERIMENT_ID_PATH, 'r') as f:
+    experiment_id = int(f.read().strip()) + 1
+  with open(codenet_paths.EXPERIMENT_ID_PATH, 'w') as f:
+    f.write(str(experiment_id))
+  return experiment_id
+
+
+def main(experiment_id=None, study_id=None):
+  """Runs a sweep.
+
+  To restart any failed jobs in an existing sweep, call this with the experiment_id
+  of the sweep.
+  This will rerun the start commands on each of the TPUs. If the job is already
+  running (because it has not failed), the command will just print "Skipping".
+  If the command had failed, this will restart it from where it left off.
+
+  Args:
+    experiment_id: If set, the sweep will use this experiment id. Otherwise the id
+      will be chosen automatically. If the same experiment and study id as an existing
+      study are used, the commands may be the same as those used previously.
+      This can be used to resume failed training jobs.
+    study_id: The study_id to use for the experiment sweep.
+  """
   random.seed(0)
 
-  # To restart any failed jobs in an existing sweep, uncomment the following, setting the
-  # experiment_id appropriately.
-  # This will rerun the start commands on each of the TPUs. If the job is already
-  # running (because it has not failed), the command will just print "Skipping".
-  # If the command had failed, this will restart it from where it left off.
-  # global experiment_id
-  # experiment_id = 30
+  if experiment_id is None:
+    experiment_id = get_and_increment_global_experiment_id()
 
   n = 20  # Machines per model
-  study_id = '2021-09-13-experiment-1-004'
 
   # Exception IPAGNN
   offset = 0
-  run_sweep(n, offset, study_id, 'E', 'IPAGNN', True)  # Exception IPAGNN
+  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True)  # Exception IPAGNN
 
   # IPAGNN
   offset = 20
-  run_sweep(n, offset, study_id, 'I', 'IPAGNN', False)
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False)
 
   # Transformer
   offset = 40  # The machine index to start with.
-  run_sweep(n, offset, study_id, 'T', 'Transformer', False)
-
+  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False)
 
 
 # # To kill the runner processes:
-# # python -m core.distributed.gcp tpu_run_command 'pkill runner.py && pkill tmux' --n=32 --offset=0
+# # python -m core.distributed.gcp tpu_run_command 'pkill runner.py && pkill tmux' --n=60 --offset=0
 # gcp.fix_firewall().wait()
 # gcp.tpu_run_command('pkill runner.py && pkill tmux', n, offset=offset)
 
 
 if __name__ == '__main__':
-  main()
+  fire.Fire(main)
