@@ -20,36 +20,37 @@ def generate_codenet_dataset(
     tfrecord_pattern=DEFAULT_CFP_DATA_PATTERN,
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_CFP_DATASET_PATH,
-    fraction=1.0,
-    max_files=None):
+    fraction=1.0):
   """Generates a TFRecord dataset from the control flow programs data.
 
   Args:
     tokenizer_path: The tokenizer data to use when generating the dataset.
     dataset_path: The path to write the dataset to.
-    max_files: (optional) The maximum number of submissions to use for
-      generating the tokenizer.
   """
-  problems_gen = process_control_flow_programs(
-      tfrecord_pattern=tfrecord_pattern,
-      tokenizer_path=tokenizer_path,
-      fraction=fraction)
+  tfrecord_paths = glob.glob(tfrecord_pattern)
+  for tfrecord_path in tfrecord_paths:
+    problems_gen = process_control_flow_programs(
+        tfrecord_path=tfrecord_path,
+        tokenizer_path=tokenizer_path,
+        fraction=fraction)
+    basename = os.path.basename(tfrecord_path)
 
-  with tf.io.TFRecordWriter(dataset_path) as file_writer:
-    for problem in itertools.islice(problems_gen, max_files):
-      record_bytes = data_io.to_tf_example(problem).SerializeToString()
-      file_writer.write(record_bytes)
+    dataset_tfrecord_path = os.path.join(dataset_path, basename)
+    with tf.io.TFRecordWriter(dataset_tfrecord_path) as file_writer:
+      for problem in problems_gen:
+        record_bytes = data_io.to_tf_example(problem).SerializeToString()
+        file_writer.write(record_bytes)
 
 
 def process_control_flow_programs(
-    tfrecord_pattern=DEFAULT_CFP_DATA_PATTERN,
+    tfrecord_path,
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     fraction=1.0,
     start_at=0):
   """Makes RuntimeErrorProblem objects per program using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
-  tfrecord_paths = glob.glob(tfrecord_pattern)
+  tfrecord_paths = [tfrecord_path]
   dataset = cfp_data_io.load_dataset(tfrecord_paths, include_strings=True)
 
   count = 0
