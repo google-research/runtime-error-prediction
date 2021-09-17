@@ -70,13 +70,14 @@ def make_run_id():
   return ''
 
 
-def make_run_dir(study_id, exp_id, run_id):
+def make_run_dir(study_id, exp_id, run_id, experiments_dir=None):
+  experiments_dir = experiments_dir or DEFAULT_EXPERIMENTS_DIR
   if study_id:
-    return os.path.join(DEFAULT_EXPERIMENTS_DIR, study_id, exp_id, run_id)
+    return os.path.join(experiments_dir, study_id, exp_id, run_id)
   elif run_id:
-    return os.path.join(DEFAULT_EXPERIMENTS_DIR, exp_id, run_id)
+    return os.path.join(experiments_dir, exp_id, run_id)
   else:
-    return os.path.join(DEFAULT_EXPERIMENTS_DIR, exp_id)
+    return os.path.join(experiments_dir, exp_id)
 
 
 def make_checkpoints_path(run_dir):

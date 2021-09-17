@@ -245,7 +245,7 @@ def run_command(command, n, offset=0):
   for index in range(offset, n + offset):
     hostname = _hostname(index)
     zone = _zone(index)
-    worker_command = f'echo {hostname} && {command}'
+    worker_command = f'echo -n "{hostname} " && {command}'
     calls.append(call(['gcloud', 'compute', 'ssh', hostname, '--command',
                        worker_command, '--zone', zone]))
   wait(calls)
@@ -256,7 +256,7 @@ def tpu_run_command(command, n, offset=0):
   for index in range(offset, n + offset):
     hostname = _tpu_hostname(index)
     zone = _tpu_zone(index)
-    worker_command = f'echo {hostname} && {command}'
+    worker_command = f'echo -n {hostname} && {command}'
     calls.append(call([
         'gcloud', 'alpha', 'compute', 'tpus', 'tpu-vm', 'ssh',
         hostname, '--command', worker_command,

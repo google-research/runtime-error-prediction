@@ -2,7 +2,9 @@
 
 import os
 
-from absl import app, flags, logging
+from absl import app
+from absl import flags
+from absl import logging
 import jax.numpy as jnp
 from ml_collections.config_flags import config_flags
 

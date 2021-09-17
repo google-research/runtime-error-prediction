@@ -251,7 +251,11 @@ class Trainer:
     model = self.make_model(deterministic=False)
 
     state = self.create_train_state(init_rng, model)
-    if config.restore_checkpoint_dir:
+    if os.path.exists(checkpoint_dir):
+      # If we're restoring an interrupted run, that takes priority.
+      state = checkpoints.restore_checkpoint(checkpoint_dir, state)
+    elif config.restore_checkpoint_dir:
+      # Next, if the config says to start from some checkpoint, do so.
       state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
