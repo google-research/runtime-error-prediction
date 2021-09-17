@@ -106,6 +106,7 @@ def choose_commands(n, study_id, name, model_class, raise_in_ipagnn):
         f'--config.experiment_id={experiment_id} '
         f'--config.run_id={run_id} '
         + ' '.join(flags)
+        + ' > out/stdout.txt 2> out/stderr.txt'
     )
     command = f'tmux new -d -s remote "{command}"'
     command = f'pgrep -l runner.py; if [ $? -ne 0 ]; then {command}; else echo "Skipping"; fi'
@@ -138,6 +139,14 @@ def run_sweep(n, offset, study_id, name, model_class, raise_in_ipagnn):
 
 def main():
   random.seed(0)
+
+  # To restart any failed jobs in an existing sweep, uncomment the following, setting the
+  # experiment_id appropriately.
+  # This will rerun the start commands on each of the TPUs. If the job is already
+  # running (because it has not failed), the command will just print "Skipping".
+  # If the command had failed, this will restart it from where it left off.
+  # global experiment_id
+  # experiment_id = 30
 
   n = 20  # Machines per model
   study_id = '2021-09-13-experiment-1-004'
