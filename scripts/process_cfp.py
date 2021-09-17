@@ -1,5 +1,6 @@
 import glob
 import itertools
+import os
 import random
 
 import fire
@@ -50,6 +51,7 @@ def process_control_flow_programs(
   """Makes RuntimeErrorProblem objects per program using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
+  basename = os.path.basename(tfrecord_path)
   tfrecord_paths = [tfrecord_path]
   dataset = cfp_data_io.load_dataset(tfrecord_paths, include_strings=True)
 
@@ -68,7 +70,7 @@ def process_control_flow_programs(
 
     problem = process.make_runtimeerrorproblem(
         source, target, tokenizer=tokenizer,
-        problem_id=tfrecord_pattern, submission_id=str(index))
+        problem_id=basename, submission_id=str(index))
     assert problem.step_limit == original_step_limit
     yield problem
 
