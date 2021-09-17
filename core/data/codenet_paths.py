@@ -12,7 +12,10 @@ DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
+# Raw control_flow_programs data pattern:
 DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
+# Processed control_flow_programs dataset path:
+DEFAULT_CFP_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/processed/decimal-large-state-L10/0.0.48/dataset.tfrecord'
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'

@@ -1,15 +1,44 @@
 import glob
+import itertools
 import random
 
 import fire
+import tensorflow as tf
 
+from core.data import data_io
 from core.data import cfp_data_io
 from core.data import codenet_paths
 from core.data import process
 from core.data import tokenization
 
+DEFAULT_CFP_DATASET_PATH = codenet_paths.DEFAULT_CFP_DATASET_PATH
 DEFAULT_CFP_DATA_PATTERN = codenet_paths.DEFAULT_CFP_DATA_PATTERN
 DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
+
+
+def generate_codenet_dataset(
+    tfrecord_pattern=DEFAULT_CFP_DATA_PATTERN,
+    tokenizer_path=DEFAULT_TOKENIZER_PATH,
+    dataset_path=DEFAULT_CFP_DATASET_PATH,
+    fraction=1.0,
+    max_files=None):
+  """Generates a TFRecord dataset from the control flow programs data.
+
+  Args:
+    tokenizer_path: The tokenizer data to use when generating the dataset.
+    dataset_path: The path to write the dataset to.
+    max_files: (optional) The maximum number of submissions to use for
+      generating the tokenizer.
+  """
+  problems_gen = process_control_flow_programs(
+      tfrecord_pattern=tfrecord_pattern,
+      tokenizer_path=tokenizer_path,
+      fraction=fraction)
+
+  with tf.io.TFRecordWriter(dataset_path) as file_writer:
+    for problem in itertools.islice(problems_gen, max_files):
+      record_bytes = data_io.to_tf_example(problem).SerializeToString()
+      file_writer.write(record_bytes)
 
 
 def process_control_flow_programs(
