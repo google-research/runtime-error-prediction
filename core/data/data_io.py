@@ -164,6 +164,25 @@ def load_tfrecord_dataset(tfrecord_path, include_strings=False):
   ).map(functools.partial(decode_fn, include_strings=include_strings))
 
 
+def load_tfrecords_dataset(tfrecord_paths, include_strings=False):
+  return tf.data.TFRecordDataset(
+      tfrecord_paths,
+      compression_type=None, buffer_size=None, num_parallel_reads=None
+  ).map(functools.partial(decode_fn, include_strings=include_strings))
+
+
 def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train', include_strings=False):
-  tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
-  return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)
+  if 'control_flow_programs' in dataset_path:
+    split_ranges = {
+        'train': range(212),
+        'valid': range(212, 234),
+        'test': range(234, 256),
+    }
+    tfrecord_paths = [
+        os.path.join(dataset_path, f'control_flow_programs-train.tfrecord-{i:05d}-of-00256')
+        for i in split_ranges[split]
+    ]
+    return load_tfrecords_dataset(tfrecord_paths, include_strings=include_strings)
+  else:
+    tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
+    return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)
