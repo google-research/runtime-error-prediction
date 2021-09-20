@@ -218,6 +218,7 @@ class Trainer:
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
+    print('Done evaluating.')
     predictions = jnp.array(jnp.concatenate(predictions))
     targets = jnp.array(jnp.concatenate(targets)).flatten()
     num_examples = targets.shape[0]
