@@ -6,10 +6,10 @@ from core.models import transformer
 from core.modules import transformer_config_lib
 
 
-def make_model(config, deterministic):
+def make_model(config, info, deterministic):
   model_class = config.model_class
 
-  vocab_size = config.vocab_size  # TODO(dbieber): Load from tokenizer / info.
+  vocab_size = info.vocab_size
   transformer_config = transformer_config_lib.make_transformer_config(
       config,
       vocab_size,
@@ -17,15 +17,17 @@ def make_model(config, deterministic):
   )
 
   if model_class == 'MlpModel':
-    return mlp.MlpModel()
+    return mlp.MlpModel(info=info)
   elif model_class == 'Transformer':
     return transformer.Transformer(
         config=config,
+        info=info,
         transformer_config=transformer_config,
     )
   elif model_class == 'IPAGNN':
     return ipagnn.IPAGNN(
         config=config,
+        info=info,
         transformer_config=transformer_config,
     )
   else:

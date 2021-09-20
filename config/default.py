@@ -44,7 +44,6 @@ def default_config():
   config.epochs: Optional[int] = 0
   config.batch_size: int = 128
   config.allowlist: Optional[List[int]] = None
-  config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / move to Info.
   config.max_tokens: int = 512
   config.max_num_nodes: int = 128
   config.max_num_edges: int = 128

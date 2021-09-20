@@ -18,7 +18,7 @@ def get_additional_logit(target_p, logits_p, logits):
     of target_p.
   """
   # target_p.shape: scalar.
-  # logits.shape: NUM_CLASSES
+  # logits.shape: num_classes
 
   # Find target_logit such that:
   #   softmax(concat([target_logit, logits]) == target_p

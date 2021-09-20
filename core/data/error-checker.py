@@ -15,8 +15,6 @@
 """Runs a Python program using exec to check for output and errors."""
 
 import fire
-import pickle
-import textwrap
 
 
 def run_for_errors(python_filepath, out_path):

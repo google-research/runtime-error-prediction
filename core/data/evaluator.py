@@ -18,7 +18,6 @@ import fire
 
 import getpass
 import os
-import pickle
 import shutil
 import subprocess
 

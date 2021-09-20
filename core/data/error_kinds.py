@@ -48,9 +48,6 @@ NO_ERROR_WITH_STDERR = 'No error (but using stderr anyway)'
 NO_ERROR = 'No error'
 
 ALL_ERROR_KINDS = [NO_DATA, NO_ERROR, SILENT_ERROR, OTHER_ERROR] + ERROR_KINDS
-
-
-ALL_ERROR_KINDS = list(range(1000))  # Temporary.
 NUM_CLASSES = len(ALL_ERROR_KINDS)
 
 

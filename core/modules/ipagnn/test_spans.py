@@ -6,8 +6,8 @@ import jax
 import jax.numpy as jnp
 
 import ml_collections
+from core.data import info as info_lib
 from core.modules import transformer_config_lib
-from core.modules.ipagnn import ipagnn
 from core.modules.ipagnn import spans
 
 
@@ -43,7 +43,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     node_span_starts = jnp.array([[3, 7, 10], [4, 7, 11]])
     node_span_ends = jnp.array([[5, 9, 15], [6, 10, 16]])
 
-    info = ipagnn.Info(vocab_size=500)
+    info = info_lib.get_test_info()
     config = make_sample_config()
     transformer_config = transformer_config_lib.make_transformer_config(
         config, 300, True

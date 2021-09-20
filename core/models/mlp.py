@@ -1,14 +1,14 @@
 """Toy MLP model."""
 
+from typing import Any
+
 from flax import linen as nn
 import jax.numpy as jnp
-from core.data import error_kinds
-
-
-NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
 class MlpModel(nn.Module):
+
+  info: Any
 
   @nn.compact
   def __call__(self, x):
@@ -25,6 +25,6 @@ class MlpModel(nn.Module):
     x = nn.Dense(features=30)(x)
     # x.shape: batch_size, 30
     x = nn.relu(x)
-    x = nn.Dense(features=NUM_CLASSES)(x)
-    # x.shape: batch_size, NUM_CLASSES
+    x = nn.Dense(features=self.info.num_classes)(x)
+    # x.shape: batch_size, num_classes
     return x

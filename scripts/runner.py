@@ -1,14 +1,12 @@
 """Runner script."""
 
-import os
-
 from absl import app
 from absl import flags
-from absl import logging
 import jax.numpy as jnp
 from ml_collections.config_flags import config_flags
 
 from core.data import codenet_paths
+from core.data import info as info_lib
 from core.lib import trainer
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
@@ -28,7 +26,8 @@ def main(argv):
   dataset_path = FLAGS.dataset_path
   config = FLAGS.config
   jnp.set_printoptions(threshold=config.printoptions_threshold)
-  trainer.Trainer(config=config).run_train(dataset_path=dataset_path)
+  info = info_lib.get_dataset_info(dataset_path)
+  trainer.Trainer(config=config, info=info).run_train(dataset_path=dataset_path)
 
 
 if __name__ == '__main__':

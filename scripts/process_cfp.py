@@ -1,5 +1,4 @@
 import glob
-import itertools
 import os
 import random
 

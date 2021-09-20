@@ -1,6 +1,5 @@
 """Issue commands to multiple GCE VMs in parallel."""
 
-import functools
 import pipes
 import subprocess
 
