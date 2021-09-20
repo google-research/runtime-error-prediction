@@ -4,6 +4,8 @@ import dataclasses
 import functools
 import itertools
 import os
+import sys
+
 from typing import Any
 
 from absl import logging
@@ -286,6 +288,7 @@ class Trainer:
     train_writer.flush()
     if train_writer_fd:
       os.fsync(train_writer_fd)
+    sys.stdout.flush()
 
     train_predictions = []
     train_targets = []
@@ -379,6 +382,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
           logging.info('Early stopping triggered.')
           break
 
+        sys.stdout.flush()
         train_writer.flush()
         valid_writer.flush()
         if train_writer_fd:
