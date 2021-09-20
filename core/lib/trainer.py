@@ -319,7 +319,7 @@ class Trainer:
             config.eval_metric_names)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
-                              if train_accuracy else None)
+                              if train_accuracy is not None else None)
         batch_metrics = evaluation.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
