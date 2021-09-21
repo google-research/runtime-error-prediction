@@ -12,24 +12,22 @@ from core.modules.ipagnn import logit_math
 from core.modules.ipagnn import spans
 from third_party.flax_examples import transformer_modules
 
-NUM_CLASSES = error_kinds.NUM_CLASSES
-
 
 class IPAGNN(nn.Module):
 
   config: Any
+  info: Any
   transformer_config: transformer_modules.TransformerConfig
 
   def setup(self):
     config = self.config
-    vocab_size = config.vocab_size  # TODO(dbieber): Load from tokenizer / info.
+    vocab_size = self.info.vocab_size
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
     max_steps = config.max_steps
-    info = ipagnn.Info(vocab_size=vocab_size)
     self.node_span_encoder = spans.NodeSpanEncoder(
-        info=info,
+        info=self.info,
         config=config,
         transformer_config=self.transformer_config,
         max_tokens=max_tokens,
@@ -39,7 +37,7 @@ class IPAGNN(nn.Module):
     )
 
     self.ipagnn = ipagnn.IPAGNNModule(
-        info=info,
+        info=self.info,
         config=config,
         max_steps=max_steps,
     )
@@ -77,10 +75,10 @@ class IPAGNN(nn.Module):
     raise_node_instruction_pointer = ipagnn_output['raise_node_instruction_pointer']
     # raise_node_instruction_pointer.shape: batch_size
 
+    num_classes = self.info.num_classes
     if config.raise_in_ipagnn:
-      logits = nn.Dense(features=NUM_CLASSES)(raise_node_embeddings)  # P(e | yes exception)
-      # logits.shape: batch_size, NUM_CLASSES
-      logits = logits.at[:, error_kinds.NO_DATA_ID].set(-jnp.inf)
+      logits = nn.Dense(features=num_classes)(raise_node_embeddings)  # P(e | yes exception)
+      # logits.shape: batch_size, num_classes
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
 
       no_error_logits = jax.vmap(logit_math.get_additional_logit)(
@@ -90,7 +88,6 @@ class IPAGNN(nn.Module):
       # no_error_logits.shape: batch_size
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
     else:
-      logits = nn.Dense(features=NUM_CLASSES)(exit_node_embeddings)
-      logits = logits.at[:, error_kinds.NO_DATA_ID].set(-jnp.inf)
-    # logits.shape: batch_size, NUM_CLASSES
+      logits = nn.Dense(features=num_classes)(exit_node_embeddings)
+    # logits.shape: batch_size, num_classes
     return logits

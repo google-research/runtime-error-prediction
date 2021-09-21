@@ -2,11 +2,9 @@
 
 import dataclasses
 import itertools
-from typing import Any, List, Optional, Text
+from typing import List, Optional
 
 import fire
-import jax
-import jax.numpy as jnp
 import tensorflow_datasets as tfds
 
 from core.data import codenet_paths

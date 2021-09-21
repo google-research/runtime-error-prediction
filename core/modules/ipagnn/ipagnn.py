@@ -1,17 +1,10 @@
-import dataclasses
 from typing import Any
 
 from flax import linen as nn
 import jax
 import jax.numpy as jnp
-from jax import lax
 
 from core.modules.ipagnn import rnn
-
-
-@dataclasses.dataclass
-class Info:
-  vocab_size: int
 
 
 def _rnn_state_to_embedding(hidden_state):

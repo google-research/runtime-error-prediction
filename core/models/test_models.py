@@ -1,18 +1,18 @@
 import jax
-import jax.numpy as jnp
 import unittest
 
 from config import default as config_lib
 from core.data import codenet_paths
 from core.data import data_io
+from core.data import info as info_lib
 from core.lib import models
 
 import tensorflow_datasets as tfds
 
 
-def validate_forward_pass(config):
+def validate_forward_pass(config, info):
   """Creates, initializes, and runs a single forward pass of the indicated model."""
-  model = models.make_model(config, deterministic=True)
+  model = models.make_model(config, info, deterministic=True)
 
   fake_input = data_io.get_fake_input(
       config.batch_size, config.max_tokens, config.max_num_nodes, config.max_num_edges)
@@ -46,18 +46,21 @@ def validate_forward_pass(config):
 class ModelsTest(unittest.TestCase):
 
   def test_ipagnn(self):
+    info = info_lib.get_test_info()
     config = config_lib.get_test_config()
     config.model_class = 'IPAGNN'
     config.raise_in_ipagnn = False
-    validate_forward_pass(config)
+    validate_forward_pass(config, info)
 
   def test_exception_ipagnn(self):
+    info = info_lib.get_test_info()
     config = config_lib.get_test_config()
     config.model_class = 'IPAGNN'
     config.raise_in_ipagnn = True
-    validate_forward_pass(config)
+    validate_forward_pass(config, info)
 
   def test_transformer(self):
+    info = info_lib.get_test_info()
     config = config_lib.get_test_config()
     config.model_class = 'Transformer'
-    validate_forward_pass(config)
+    validate_forward_pass(config, info)

@@ -1,7 +1,5 @@
-import itertools
 import io
 
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,12 +8,9 @@ from sklearn import metrics
 import tensorflow as tf
 
 from config.default import EvaluationMetric
-from core.data import error_kinds
-
-NUM_CLASSES = error_kinds.NUM_CLASSES
 
 
-def evaluate(targets, predictions, eval_metric_names):
+def evaluate(targets, predictions, num_classes, eval_metric_names):
   # Diagnose unknown metrics.
   unknown_metric_names = set(eval_metric_names).difference(
       EvaluationMetric.all_metric_names())
@@ -35,15 +30,15 @@ def evaluate(targets, predictions, eval_metric_names):
     results[EvaluationMetric.CONFUSION_MATRIX.value] = metrics.confusion_matrix(
         targets,
         predictions,
-        labels=range(error_kinds.NUM_CLASSES),
+        labels=range(num_classes),
         normalize='true')
   return results
 
 
-def compute_metric(logits, targets, eval_metric_names):
+def compute_metric(logits, targets, num_classes, eval_metric_names):
   predictions = np.array(jnp.argmax(logits, -1))
   targets = np.array(targets)
-  metrics = evaluate(targets, predictions, eval_metric_names)
+  metrics = evaluate(targets, predictions, num_classes, eval_metric_names)
   return metrics
 
 

@@ -1,5 +1,5 @@
 import enum
-from typing import List, Optional, Text
+from typing import List, Optional, Text, Tuple
 
 import ml_collections
 
@@ -13,8 +13,8 @@ class EvaluationMetric(enum.Enum):
   CONFUSION_MATRIX = 'confusion-matrix'
 
   @staticmethod
-  def all_metric_names() -> List[str]:
-    return [x.value for x in EvaluationMetric]
+  def all_metric_names() -> Tuple[str]:
+    return tuple(x.value for x in EvaluationMetric)
 
 
 def default_config():
@@ -44,7 +44,6 @@ def default_config():
   config.epochs: Optional[int] = 0
   config.batch_size: int = 128
   config.allowlist: Optional[List[int]] = None
-  config.vocab_size = 30000  # TODO(dbieber): Load from tokenizer / move to Info.
   config.max_tokens: int = 512
   config.max_num_nodes: int = 128
   config.max_num_edges: int = 128
@@ -62,7 +61,7 @@ def default_config():
   # Runner configs
   config.eval_freq = 10000
   config.save_freq = 5000
-  config.eval_metric_names: List[str] = EvaluationMetric.all_metric_names()
+  config.eval_metric_names: Tuple[str] = EvaluationMetric.all_metric_names()
   config.eval_subsample = 1.0
   config.eval_max_batches = 30
 

@@ -1,25 +1,18 @@
 import functools
+import os
 
 import tensorflow as tf
 
 import jax.numpy as jnp
 from core.data import codenet_paths
+from core.data import tf_io
 
-
-def _int64_feature(value):
-  """Constructs a tf.train.Feature for the given int64 value list."""
-  return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
-
-
-def _float_feature(value):
-  """Constructs a tf.train.Feature for the given float value list."""
-  return tf.train.Feature(float_list=tf.train.FloatList(value=value))
-
-
-def _bytes_feature(values):
-  """Constructs a tf.train.Feature for the given str value list."""
-  values = [v.encode('utf-8') for v in values]
-  return tf.train.Feature(bytes_list=tf.train.BytesList(value=values))
+_int64_feature = tf_io.int64_feature
+_float_feature = tf_io.float_feature
+_bytes_feature = tf_io.bytes_feature
+_int64_scalar_feature = tf_io.int64_scalar_feature
+_int64_sequence_feature = tf_io.int64_sequence_feature
+_string_scalar_feature = tf_io.string_scalar_feature
 
 
 def to_tf_example(problem):
@@ -47,11 +40,6 @@ def to_tf_example(problem):
   }))
 
 
-def _int64_sequence_feature():
-  return tf.io.FixedLenSequenceFeature(
-      [], dtype=tf.int64, allow_missing=True, default_value=0)
-
-
 def decode_fn(record_bytes, include_strings=False):
   features = {
       'tokens': _int64_sequence_feature(),
@@ -63,18 +51,18 @@ def decode_fn(record_bytes, include_strings=False):
       'token_node_indexes': _int64_sequence_feature(),
       'true_branch_nodes': _int64_sequence_feature(),
       'false_branch_nodes': _int64_sequence_feature(),
-      'exit_index': tf.io.FixedLenFeature([1], dtype=tf.int64),
-      'step_limit': tf.io.FixedLenFeature([1], dtype=tf.int64),
-      'target': tf.io.FixedLenFeature([1], dtype=tf.int64),
+      'exit_index': _int64_scalar_feature(),
+      'step_limit': _int64_scalar_feature(),
+      'target': _int64_scalar_feature(),
 
-      'num_tokens': tf.io.FixedLenFeature([1], dtype=tf.int64),
-      'num_nodes': tf.io.FixedLenFeature([1], dtype=tf.int64),
-      'num_edges': tf.io.FixedLenFeature([1], dtype=tf.int64),
+      'num_tokens': _int64_scalar_feature(),
+      'num_nodes': _int64_scalar_feature(),
+      'num_edges': _int64_scalar_feature(),
   }
   if include_strings:
     features.update({
-        'problem_id': tf.io.FixedLenFeature([1], dtype=tf.string),
-        'submission_id': tf.io.FixedLenFeature([1], dtype=tf.string),
+        'problem_id': _string_scalar_feature(),
+        'submission_id': _string_scalar_feature(),
     })
   return tf.io.parse_single_example(record_bytes, features)
 
@@ -177,6 +165,25 @@ def load_tfrecord_dataset(tfrecord_path, include_strings=False):
   ).map(functools.partial(decode_fn, include_strings=include_strings))
 
 
+def load_tfrecords_dataset(tfrecord_paths, include_strings=False):
+  return tf.data.TFRecordDataset(
+      tfrecord_paths,
+      compression_type=None, buffer_size=None, num_parallel_reads=None
+  ).map(functools.partial(decode_fn, include_strings=include_strings))
+
+
 def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train', include_strings=False):
-  tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
-  return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)
+  if 'control_flow_programs' in dataset_path:
+    split_ranges = {
+        'train': range(212),
+        'valid': range(212, 234),
+        'test': range(234, 256),
+    }
+    tfrecord_paths = [
+        os.path.join(dataset_path, f'control_flow_programs-train.tfrecord-{i:05d}-of-00256')
+        for i in split_ranges[split]
+    ]
+    return load_tfrecords_dataset(tfrecord_paths, include_strings=include_strings)
+  else:
+    tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
+    return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)

@@ -4,7 +4,9 @@ import dataclasses
 import functools
 import itertools
 import os
-from typing import Any, List, Optional, Text
+import sys
+
+from typing import Any
 
 from absl import logging
 from flax.metrics import tensorboard
@@ -30,7 +32,6 @@ from core.lib import optimizer_lib
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
-NUM_CLASSES = error_kinds.NUM_CLASSES
 
 Config = ml_collections.ConfigDict
 
@@ -43,6 +44,7 @@ class TrainState(train_state.TrainState):
 class Trainer:
 
   config: Config
+  info: Any
 
   def load_dataset(
     self, dataset_path=DEFAULT_DATASET_PATH, split='train', epochs=None
@@ -83,7 +85,7 @@ class Trainer:
     )
 
   def make_model(self, deterministic):
-    return models.make_model(self.config, deterministic)
+    return models.make_model(self.config, self.info, deterministic)
 
   def create_train_state(self, rng, model):
     """Creates initial TrainState."""
@@ -104,6 +106,7 @@ class Trainer:
 
   def make_loss_fn(self, deterministic):
     model = self.make_model(deterministic)
+    num_classes = self.info.num_classes
 
     def loss_fn(params, batch, dropout_rng):
       logits = model.apply(
@@ -112,10 +115,10 @@ class Trainer:
           rngs={'dropout': dropout_rng}
       )
       assert len(logits.shape) == 2
-      # logits.shape: batch_size, NUM_CLASSES
-      labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), NUM_CLASSES)
+      # logits.shape: batch_size, num_classes
+      labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), num_classes)
       assert len(labels.shape) == 2
-      # labels.shape: batch_size, NUM_CLASSES
+      # labels.shape: batch_size, num_classes
       losses = optax.softmax_cross_entropy(
           logits=logits,
           labels=labels)
@@ -164,6 +167,7 @@ class Trainer:
 
   def make_evaluate_batch(self):
     config = self.config
+    num_classes = self.info.num_classes
     loss_fn = self.make_loss_fn(deterministic=True)
     if config.multidevice:
       loss_fn = jax.pmap(
@@ -186,17 +190,18 @@ class Trainer:
         loss = jnp.mean(loss)
         logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
         targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
-      # logits.shape: batch_size, NUM_CLASSES
+      # logits.shape: batch_size, num_classes
       # targets.shape: batch_size
 
       metric = evaluation.compute_metric(
-          logits, targets, config.eval_metric_names
+          logits, targets, num_classes, config.eval_metric_names
       )
       return logits, loss, metric
     return evaluate_batch
 
   def run_eval(self, dataset, state, evaluate_batch):
     config = self.config
+    num_classes = self.info.num_classes
     predictions = []
     targets = []
     losses = []
@@ -213,6 +218,7 @@ class Trainer:
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
+    print('Done evaluating.')
     predictions = jnp.array(jnp.concatenate(predictions))
     targets = jnp.array(jnp.concatenate(targets)).flatten()
     num_examples = targets.shape[0]
@@ -221,14 +227,16 @@ class Trainer:
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
-    eval_metrics = evaluation.evaluate(targets, predictions,
-                                       config.eval_metric_names)
+    eval_metrics = evaluation.evaluate(
+        targets, predictions, num_classes, config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
     print(f'Training on data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
+    num_classes = self.info.num_classes
+    all_error_kinds = self.info.all_error_kinds
     valid_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
     evaluate_batch = self.make_evaluate_batch()
 
@@ -281,6 +289,7 @@ class Trainer:
     train_writer.flush()
     if train_writer_fd:
       os.fsync(train_writer_fd)
+    sys.stdout.flush()
 
     train_predictions = []
     train_targets = []
@@ -310,12 +319,15 @@ class Trainer:
         train_metrics = evaluation.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
+            num_classes,
             config.eval_metric_names)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
-                              if train_accuracy else None)
+                              if train_accuracy is not None else None)
         batch_metrics = evaluation.evaluate(
-            jnp.reshape(targets, -1), jnp.reshape(predictions, -1),
+            jnp.reshape(targets, -1),
+            jnp.reshape(predictions, -1),
+            num_classes,
             [EvaluationMetric.ACCURACY.value])
         batch_accuracy = batch_metrics[EvaluationMetric.ACCURACY.value]
         print(f"""--- Step {step}
@@ -349,7 +361,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             step,
             transform_fn=functools.partial(
                 evaluation.confusion_matrix_to_image,
-                class_names=error_kinds.ALL_ERROR_KINDS))
+                class_names=all_error_kinds))
 
         # Write validation metrics.
         valid_writer.scalar('loss', valid_loss, step)
@@ -364,13 +376,14 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             step,
             transform_fn=functools.partial(
                 evaluation.confusion_matrix_to_image,
-                class_names=error_kinds.ALL_ERROR_KINDS))
+                class_names=all_error_kinds))
 
         did_improve, es = es.update(-1 * valid_loss)
         if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')
           break
 
+        sys.stdout.flush()
         train_writer.flush()
         valid_writer.flush()
         if train_writer_fd:

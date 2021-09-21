@@ -1,6 +1,5 @@
 """Optimizer utility functions."""
 
-from flax import optim
 import jax
 import jax.numpy as jnp
 
