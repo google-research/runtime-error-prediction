@@ -1,3 +1,5 @@
+"""Allows loading control_flow_programs raw data."""
+
 import functools
 
 import tensorflow as tf
