@@ -64,6 +64,45 @@ def get_span_encoding_sum(x, start, end):
   return jnp.sum(values, axis=0)
 
 
+def make_span_attention_mask_single(tokens, node_span_starts, node_span_ends):
+  # tokens.shape: max_tokens
+  max_tokens = tokens.shape[0]
+  # node_span_starts.shape: num_nodes
+  # node_span_ends.shape: num_nodes
+
+  # The plan:
+  # result[q, k] indicates that q can attend to k.
+  # result[q, k] = 1 if tokens[q] > 0, tokens[k] > 0, and there's a span containing both q and k.
+  # Each span gives a square contribution to the mask.
+  # We can union those contributions,
+  # and then intersect with tokens > 0
+  # to get the final mask.
+
+  def make_span_attention_mask_contribution(start, end):
+    # start.shape: scalar.
+    # end.shape: scalar.
+    arange = jnp.arange(max_tokens)
+    # arange.shape: max_tokens
+    span_mask = jnp.logical_and(start <= arange, arange <= end)
+    # span_mask.shape: max_tokens
+    span_attention_mask = nn.make_attention_mask(span_mask, span_mask)
+    # span_attention_mask.shape: max_tokens, max_tokens
+    return span_attention_mask
+
+  # Make contributions for all nodes:
+  make_span_attention_mask_contributions = jax.vmap(make_span_attention_mask_contribution)
+  contributions = make_span_attention_mask_contributions(node_span_starts, node_span_ends)
+  # contributions.shape: num_nodes, max_tokens, max_tokens
+  spans_attention_mask = jnp.logical_or(contributions, axis=0)
+  # spans_attention_mask.shape: max_tokens, max_tokens
+
+  tokens_attention_mask = nn.make_attention_mask(tokens > 0, tokens > 0)
+  # tokens_attention_mask.shape: max_tokens, max_tokens
+
+  attention_mask = jnp.logical_and(tokens_attention_mask, spans_attention_mask)
+  # attention_mask.shape: max_tokens, max_tokens
+  return attention_mask
+
 
 class SpanIndexEncoder(nn.Module):
   """A "position encoder" for span indexes.
@@ -114,6 +153,8 @@ class SpanIndexEncoder(nn.Module):
 
 class NodeAwareTokenEmbedder(nn.Module):
   """Sums learned token-content embeddings and node span index embeddings.
+
+  The token embedder embeds individual tokens.
 
   This includes adding position embeddings too.
   """
@@ -167,7 +208,10 @@ class NodeAwareTokenEmbedder(nn.Module):
 
 
 class NodeSpanEncoder(nn.Module):
-  """Given tokens, nodes, and node spans in token space, encode each node."""
+  """Given tokens, nodes, and node spans in token space, encode each node.
+
+  The node span encoder encodes full spans.
+  """
 
   info: Any
   config: Any
@@ -202,9 +246,11 @@ class NodeSpanEncoder(nn.Module):
     # tokens.shape: batch_size, max_tokens
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
     # token_embeddings.shape: batch_size, max_tokens, hidden_size
-    tokens_mask = tokens > 0
+    # tokens_mask = tokens > 0
     # tokens_mask.shape: batch_size, max_tokens
-    encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
+    # encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
+
+    encoder_mask = jax.vmap(make_span_attention_mask_single)(tokens, node_span_starts, node_span_ends)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoding = self.encoder(token_embeddings, encoder_mask=encoder_mask)
     # encoding.shape: batch_size, max_tokens, hidden_size
