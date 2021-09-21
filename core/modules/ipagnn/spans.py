@@ -246,12 +246,14 @@ class NodeSpanEncoder(nn.Module):
     # tokens.shape: batch_size, max_tokens
     token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
     # token_embeddings.shape: batch_size, max_tokens, hidden_size
-    # tokens_mask = tokens > 0
-    # tokens_mask.shape: batch_size, max_tokens
-    # encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
-
-    encoder_mask = jax.vmap(make_span_attention_mask_single)(tokens, node_span_starts, node_span_ends)
-    # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
+    if config.permissive_node_embeddings:
+      tokens_mask = tokens > 0
+      # tokens_mask.shape: batch_size, max_tokens
+      encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
+      # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
+    else:
+      encoder_mask = jax.vmap(make_span_attention_mask_single)(tokens, node_span_starts, node_span_ends)
+      # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoding = self.encoder(token_embeddings, encoder_mask=encoder_mask)
     # encoding.shape: batch_size, max_tokens, hidden_size
 

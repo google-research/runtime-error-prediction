@@ -39,6 +39,7 @@ def default_config():
   config.rnn_layers = 2
   config.hidden_size: int = 16
   config.span_encoding_method = 'first'  # first, mean, max, sum
+  config.permissive_node_embeddings = True
 
   # Dataset filtering and configs
   config.epochs: Optional[int] = 0
