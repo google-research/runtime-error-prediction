@@ -93,7 +93,7 @@ def make_span_attention_mask_single(tokens, node_span_starts, node_span_ends):
   make_span_attention_mask_contributions = jax.vmap(make_span_attention_mask_contribution)
   contributions = make_span_attention_mask_contributions(node_span_starts, node_span_ends)
   # contributions.shape: num_nodes, max_tokens, max_tokens
-  spans_attention_mask = jnp.argmax(contributions, axis=0)
+  spans_attention_mask = jnp.reduce_max(contributions, axis=0)
   # spans_attention_mask.shape: max_tokens, max_tokens
 
   tokens_attention_mask = nn.make_attention_mask(tokens > 0, tokens > 0)
