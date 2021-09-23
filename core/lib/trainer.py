@@ -98,7 +98,7 @@ class Trainer:
         fake_input)
     params = variables['params']
     learning_rate = config.learning_rate
-    tx = optax.sgd(learning_rate)
+    tx = optax.adam(learning_rate)
     # TODO(dbieber): I don't think model.apply is used from here.
     # Instead, it's used from make_loss_fn.
     return TrainState.create(

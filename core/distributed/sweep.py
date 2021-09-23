@@ -8,9 +8,13 @@ from core.distributed import gcp
 
 
 hparams = {
+    'config.batch_size': [32],
     'config.learning_rate': [
-        1e-5, 3e-5, 1e-4, 3e-4, 0.001, 0.003,
-        # 0.01, 0.03, 0.1, 0.3,
+        # 1e-5, 3e-5,
+        # 1e-4, 3e-4,
+        0.001, 0.003,
+        0.01, 0.03,
+        0.1, 0.3,
     ],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
@@ -18,6 +22,7 @@ hparams = {
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
     'config.transformer_dropout_rate': [0, 0.1, 0.3],
     'config.transformer_attention_dropout_rate': [0, 0.1, 0.3],
+    'config.permissive_node_embeddings': [True, False],
     'transformer_size': ['tiny', 'small', 'default']
 }
 
@@ -55,12 +60,14 @@ def dict_product(d):
 
 def make_run_id(name, index, params):
   param_name_mapping = {
+      'batch_size': 'bs',
       'learning_rate': 'lr',
       'rnn_layers': 'L',
       'grad_clip_value': 'gc',
       'hidden_size': 'hs',
       'span_encoding_method': 'span',
       'transformer_size': 'T',
+      'permissive_node_embeddings': 'pe',
   }
   parts = []
   for key, value in params.items():
@@ -75,7 +82,7 @@ def make_run_id(name, index, params):
   return f'{name}{index:03d},{",".join(parts)}'
 
 
-def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn):
+def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
     run_id = make_run_id(name, index, params)
@@ -91,12 +98,11 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
         'python3 -m scripts.runner '
         f'--config.model_class={model_class} '
         f'--config.raise_in_ipagnn={raise_in_ipagnn} '
-        '--config.batch_size=8 '
-        '--dataset_path=/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids '
-        '--config.eval_freq=50000 '
+        f'--dataset_path={dataset_path} '
+        '--config.eval_freq=5000 '
         '--config.eval_subsample=1 '
         '--config.eval_max_batches=2500 '
-        '--config.save_freq=25000 '
+        '--config.save_freq=5000 '
         f'--config.study_id={study_id} '
         f'--config.experiment_id={experiment_id} '
         f'--config.run_id={run_id} '
@@ -110,8 +116,8 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
   return commands
 
 
-def run_sweep(n, offset, experiment_id, study_id, name, model_class, raise_in_ipagnn):
-  commands = choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn)
+def run_sweep(n, offset, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path):
+  commands = choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path)
 
   def make_run_command(index):
     return commands[index - offset]
@@ -141,7 +147,7 @@ def get_and_increment_global_experiment_id():
   return experiment_id
 
 
-def main(experiment_id=None, study_id=None):
+def main(experiment_id=None, study_id=None, pretrain=False):
   """Runs a sweep.
 
   To restart any failed jobs in an existing sweep, call this with the experiment_id
@@ -159,22 +165,26 @@ def main(experiment_id=None, study_id=None):
   """
   random.seed(0)
 
+  if pretrain:
+    dataset_path = codenet_paths.DEFAULT_CFP_DATASET_PATH
+  else:
+    dataset_path = codenet_paths.FULL_DATASET_PATH
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
   n = 20  # Machines per model
 
   # Exception IPAGNN
-  offset = 0
-  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True)  # Exception IPAGNN
+  # offset = 0
+  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path)  # Exception IPAGNN
 
   # IPAGNN
-  offset = 20
-  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False)
+  offset = 0
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path)
 
   # Transformer
-  offset = 40  # The machine index to start with.
-  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False)
+  # offset = 40  # The machine index to start with.
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path)
 
 
 # # To kill the runner processes:
