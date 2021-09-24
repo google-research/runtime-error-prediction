@@ -5,6 +5,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 
+from config.default import EvaluationMetric
 from core.modules.ipagnn import rnn
 
 
@@ -259,7 +260,7 @@ class IPAGNNLayer(nn.Module):
     # current_step.shape: batch_size
 
     aux = {
-        'instruction_pointer': instruction_pointer,
+        EvaluationMetric.INSTRUCTION_POINTER.value: instruction_pointer,
         'raise_decisions': raise_decisions,
         'branch_decisions': branch_decisions,
         'current_step': current_step,

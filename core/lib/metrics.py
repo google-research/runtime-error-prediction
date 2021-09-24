@@ -45,6 +45,19 @@ def compute_metric(logits, targets, num_classes, eval_metric_names):
   return metrics
 
 
+def write_metric(metric_name,
+                 metrics_dict,
+                 summary_fn,
+                 step,
+                 transform_fn=None):
+  """Writes an evaluation metric using a TensorBoard SummaryWriter function."""
+  if metric_name in metrics_dict:
+    metric = metrics_dict[metric_name]
+    if transform_fn is not None:
+      metric = transform_fn(metric)
+    summary_fn(metric_name, metric, step)
+
+
 def figure_to_image(figure, dpi=None, close=True):
   """Converts the matplotlib plot specified by `figure` to a NumPy image.
 
@@ -111,3 +124,34 @@ def confusion_matrix_to_image(cm, class_names):
   figure = cm_display.figure_
   image = figure_to_image(figure)
   return np.expand_dims(image, 0)
+
+
+def instruction_pointers_to_images(instruction_pointer, multidevice: bool):
+  """Converts the given batched instruction pointer to images."""
+  if multidevice:
+    # instruction_pointer: device, batch_size / device, timesteps, num_nodes
+    instruction_pointer = instruction_pointer[0]
+
+  # instruction_pointer: batch_size / device, timesteps, num_nodes
+  instruction_pointer = jnp.transpose(instruction_pointer[:, :16, :],
+                                      (1, 2, 0))
+  # instruction_pointer: logging_slice_size, num_nodes, timesteps
+  instruction_pointer_image_list = [
+      instruction_pointer_to_image(ip)
+      for ip in instruction_pointer
+  ]
+  instruction_pointer_image_leading_dim_max = max(
+      image.shape[0] for image in instruction_pointer_image_list)
+  instruction_pointer_image_list = [
+      pad(image, instruction_pointer_image_leading_dim_max)
+      for image in instruction_pointer_image_list
+  ]
+  return jnp.array(instruction_pointer_image_list)
+
+
+def pad(array, leading_dim_size: int):
+  """Pad the leading dimension of the given array."""
+  leading_dim_difference = max(0, leading_dim_size - array.shape[0])
+  leading_pad_width = [(0, leading_dim_difference)]
+  trailing_pad_widths = [(0, 0)] * (array.ndim - 1)
+  return jnp.pad(array, leading_pad_width + trailing_pad_widths)

@@ -11,6 +11,7 @@ class EvaluationMetric(enum.Enum):
   ACCURACY = 'accuracy'
   F1_SCORE = 'f1_score'
   CONFUSION_MATRIX = 'confusion_matrix'
+  INSTRUCTION_POINTER = 'instruction_pointer'
 
   @staticmethod
   def all_metric_names() -> Tuple[str]:
