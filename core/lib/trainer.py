@@ -114,6 +114,7 @@ class Trainer:
           batch,
           rngs={'dropout': dropout_rng}
       )
+      aux = aux or {}
       assert len(logits.shape) == 2
       # logits.shape: batch_size, num_classes
       labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), num_classes)
@@ -142,7 +143,7 @@ class Trainer:
       state = dataclasses.replace(state, rng=new_rng)
 
       grad_fn = jax.value_and_grad(loss_fn, argnums=0, has_aux=True)
-      (loss, aux), grads = grad_fn(state.params, batch, dropout_rng)
+      (loss, loss_aux), grads = grad_fn(state.params, batch, dropout_rng)
       if self.config.multidevice:
         grads = jax.lax.pmean(grads, 'batch')
       global_norm = optimizer_lib.compute_global_norm(grads)
@@ -150,12 +151,14 @@ class Trainer:
         grads = optimizer_lib.clip_grads(grads, clip_by='global_norm', clip_value=grad_clip_value)
       state = state.apply_gradients(grads=grads)
       # TODO(dbieber): Optionally compute on-device metrics here.
-      return state, {
-          'logits': aux['logits'],
+      aux = {
+          'logits': loss_aux['logits'],
           'loss': loss,
           'global_norm': global_norm,
-          'instruction_pointer': aux['instruction_pointer'],
       }
+      if 'instruction_pointer' in loss_aux:
+        aux['instruction_pointer'] = loss_aux['instruction_pointer']
+      return state, aux
     if self.config.multidevice:
       train_step = jax.pmap(
           train_step,
