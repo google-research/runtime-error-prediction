@@ -9,16 +9,16 @@ from core.distributed import gcp
 
 
 hparams = {
-    'config.optimizer': ['sgd', 'adam'],
+    'config.optimizer': ['sgd'],
     'config.batch_size': [32],
-    'config.learning_rate': list(np.exp(np.arange(-7, -.2, 0.05))),
+    'config.learning_rate': [0.1, 0.3, 0.5],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
-    'config.hidden_size': [16, 32, 64, 128, 256, 512],
+    'config.hidden_size': [64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
-    'config.transformer_dropout_rate': [0, 0.1, 0.3],
-    'config.transformer_attention_dropout_rate': [0, 0.1, 0.3],
-    'config.permissive_node_embeddings': [True, False],
+    'config.transformer_dropout_rate': [0, 0.1],
+    'config.transformer_attention_dropout_rate': [0, 0.1],
+    'config.permissive_node_embeddings': [False],
     'transformer_size': ['tiny', 'small', 'default']
 }
 
@@ -171,15 +171,19 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 20  # Machines per model
+  n = 10  # Machines per model
+
+  # IPAGNN
+  offset = 0
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Exception IPAGNN
   # offset = 0
   # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
-  # IPAGNN
-  offset = 40
-  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
+  # # IPAGNN
+  # offset = 40
+  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
   # offset = 40  # The machine index to start with.
