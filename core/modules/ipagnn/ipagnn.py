@@ -1,6 +1,7 @@
 from typing import Any
 
 from flax import linen as nn
+import numpy as np
 import jax
 import jax.numpy as jnp
 
@@ -104,13 +105,28 @@ class IPAGNNLayer(nn.Module):
           jnp.zeros((num_nodes,)).at[raise_index].set(raise_contribution)
       )
       # raise_contributions.shape: num_nodes
+      max_contribution = jnp.max(raise_contributions)
       true_contributions = jax.ops.segment_sum(
           p_true * instruction_pointer, true_indexes,
           num_segments=num_nodes)
       false_contributions = jax.ops.segment_sum(
           p_false * instruction_pointer, false_indexes,
           num_segments=num_nodes)
-      return raise_contributions + true_contributions + false_contributions
+      aux = {
+          'p_raise': p_raise,
+          'p_noraise': p_noraise,
+          'p_true': p_true,
+          'p_false': p_false,
+          'raise_index': raise_index,
+          'max_contribution': max_contribution,
+          'raise_contribution': raise_contribution,
+          'raise_contributions': raise_contributions,
+          'true_contributions': true_contributions,
+          'false_contributions': false_contributions,
+      }
+      instruction_pointer_new = (
+          raise_contributions + true_contributions + false_contributions)
+      return instruction_pointer_new, aux
     update_instruction_pointer = jax.vmap(update_instruction_pointer_single_example)
 
     def aggregate_single_example(
@@ -127,7 +143,7 @@ class IPAGNNLayer(nn.Module):
       p_noraise = raise_decisions[:, 1]
       p_true = p_noraise * branch_decisions[:, 0]
       p_false = p_noraise * branch_decisions[:, 1]
-      denominators = update_instruction_pointer_single_example(
+      denominators, aux_ip = update_instruction_pointer_single_example(
           instruction_pointer, raise_decisions, branch_decisions,
           raise_index, true_indexes, false_indexes)
       denominators += 1e-7
@@ -218,7 +234,7 @@ class IPAGNNLayer(nn.Module):
     # instruction_pointer.shape: batch_size, num_nodes
     # true_indexes.shape: batch_size, num_nodes
     # false_indexes.shape: batch_size, num_nodes
-    instruction_pointer_new = update_instruction_pointer(
+    instruction_pointer_new, aux_ip = update_instruction_pointer(
         instruction_pointer, raise_decisions, branch_decisions,
         raise_indexes, true_indexes, false_indexes)
     # instruction_pointer_new.shape: batch_size, num_nodes
@@ -241,7 +257,17 @@ class IPAGNNLayer(nn.Module):
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
     # instruction_pointer.shape: batch_size, num_nodes
     # current_step.shape: batch_size
-    return (hidden_states, instruction_pointer, current_step), None
+
+    aux = {
+        'instruction_pointer': instruction_pointer,
+        'raise_decisions': raise_decisions,
+        'branch_decisions': branch_decisions,
+        'current_step': current_step,
+        'hidden_states': hidden_states,
+        'hidden_state_contributions': hidden_state_contributions,
+    }
+    aux.update(aux_ip)
+    return (hidden_states, instruction_pointer, current_step), aux
 
 
 class IPAGNNModule(nn.Module):
@@ -345,7 +371,7 @@ class IPAGNNModule(nn.Module):
     # instruction_pointer.shape: batch_size, num_nodes
 
     # Run self.max_steps steps of IPAGNNLayer.
-    (hidden_states, instruction_pointer, current_step), _ = self.ipagnn_layer_scan(
+    (hidden_states, instruction_pointer, current_step), aux = self.ipagnn_layer_scan(
         # State:
         (hidden_states, instruction_pointer, current_step),
         # Inputs:
@@ -381,9 +407,10 @@ class IPAGNNModule(nn.Module):
     raise_node_instruction_pointer = get_instruction_pointer_value(instruction_pointer, raise_indexes)
     # raise_node_instruction_pointer.shape: batch_size
 
-    return {
+    aux.update({
         'exit_node_instruction_pointer': exit_node_instruction_pointer,
         'exit_node_embeddings': exit_node_embeddings,
         'raise_node_instruction_pointer': raise_node_instruction_pointer,
         'raise_node_embeddings': raise_node_embeddings,
-    }
+    })
+    return aux

@@ -25,8 +25,8 @@ from config.default import EvaluationMetric
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
-from core.lib import evaluation  # TODO(dbieber): Rename evaluation into metrics.
 from core.lib import metadata
+from core.lib import metrics
 from core.lib import models
 from core.lib import optimizer_lib
 
@@ -109,7 +109,7 @@ class Trainer:
     num_classes = self.info.num_classes
 
     def loss_fn(params, batch, dropout_rng):
-      logits = model.apply(
+      logits, aux = model.apply(
           {'params': params},
           batch,
           rngs={'dropout': dropout_rng}
@@ -126,9 +126,8 @@ class Trainer:
       # losses.shape: batch_size
       loss = jnp.mean(losses)
       assert len(loss.shape) == 0
-      return loss, {
-          'logits': logits,
-      }
+      aux.update({'logits': logits})
+      return loss, aux
 
     return loss_fn
 
@@ -155,6 +154,7 @@ class Trainer:
           'logits': aux['logits'],
           'loss': loss,
           'global_norm': global_norm,
+          'instruction_pointer': aux['instruction_pointer'],
       }
     if self.config.multidevice:
       train_step = jax.pmap(
@@ -193,7 +193,7 @@ class Trainer:
       # logits.shape: batch_size, num_classes
       # targets.shape: batch_size
 
-      metric = evaluation.compute_metric(
+      metric = metrics.compute_metric(
           logits, targets, num_classes, config.eval_metric_names
       )
       return logits, loss, metric
@@ -227,7 +227,7 @@ class Trainer:
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
-    eval_metrics = evaluation.evaluate(
+    eval_metrics = metrics.evaluate(
         targets, predictions, num_classes, config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
@@ -316,7 +316,7 @@ class Trainer:
       if step % config.eval_freq == 0:
         # Evaluate on aggregated training data.
         train_loss = jnp.mean(jnp.array(train_losses))
-        train_metrics = evaluation.evaluate(
+        train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
             num_classes,
@@ -324,7 +324,7 @@ class Trainer:
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
-        batch_metrics = evaluation.evaluate(
+        batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
             num_classes,
@@ -360,8 +360,33 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             train_writer.image,
             step,
             transform_fn=functools.partial(
-                evaluation.confusion_matrix_to_image,
+                metrics.confusion_matrix_to_image,
                 class_names=all_error_kinds))
+
+        if 'instruction_pointer' in aux:
+          if config.multidevice:
+            # instruction_pointer: device, batch_size / device, timesteps, num_nodes
+            instruction_pointer = aux['instruction_pointer'][0]
+          else:
+            # instruction_pointer: batch_size / device, timesteps, num_nodes
+            instruction_pointer = aux['instruction_pointer']
+          # instruction_pointer: batch_size / device, timesteps, num_nodes
+          instruction_pointer = jnp.transpose(instruction_pointer[:, :16, :],
+                                              (1, 2, 0))
+          # instruction_pointer: logging_slice_size, num_nodes, timesteps
+          instruction_pointer_image_list = [
+              metrics.instruction_pointer_to_image(ip)
+              for ip in instruction_pointer
+          ]
+          instruction_pointer_image_leading_dim_max = max(
+              image.shape[0] for image in instruction_pointer_image_list)
+          instruction_pointer_image_list = [
+              pad(image, instruction_pointer_image_leading_dim_max)
+              for image in instruction_pointer_image_list
+          ]
+          instruction_pointer_images = jnp.array(instruction_pointer_image_list)
+          train_writer.image('instruction_pointer', instruction_pointer_images,
+                             step)
 
         # Write validation metrics.
         valid_writer.scalar('loss', valid_loss, step)
@@ -375,7 +400,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             valid_writer.image,
             step,
             transform_fn=functools.partial(
-                evaluation.confusion_matrix_to_image,
+                metrics.confusion_matrix_to_image,
                 class_names=all_error_kinds))
 
         did_improve, es = es.update(-1 * valid_loss)
@@ -407,3 +432,11 @@ def write_metric(metric_name, metrics_dict, summary_fn, step, transform_fn=None)
     if transform_fn is not None:
       metric = transform_fn(metric)
     summary_fn(metric_name, metric, step)
+
+
+def pad(array, leading_dim_size: int):
+  """Pad the leading dimension of the given array."""
+  leading_dim_difference = max(0, leading_dim_size - array.shape[0])
+  leading_pad_width = [(0, leading_dim_difference)]
+  trailing_pad_widths = [(0, 0)] * (array.ndim - 1)
+  return jnp.pad(array, leading_pad_width + trailing_pad_widths)

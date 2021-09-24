@@ -90,4 +90,4 @@ class IPAGNN(nn.Module):
     else:
       logits = nn.Dense(features=num_classes)(exit_node_embeddings)
     # logits.shape: batch_size, num_classes
-    return logits
+    return logits, ipagnn_output

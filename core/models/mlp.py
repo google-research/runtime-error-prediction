@@ -27,4 +27,4 @@ class MlpModel(nn.Module):
     x = nn.relu(x)
     x = nn.Dense(features=self.info.num_classes)(x)
     # x.shape: batch_size, num_classes
-    return x
+    return x, None
