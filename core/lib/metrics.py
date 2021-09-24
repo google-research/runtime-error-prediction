@@ -20,6 +20,7 @@ class EvaluationMetric(enum.Enum):
   F1_SCORE = 'f1_score'
   CONFUSION_MATRIX = 'confusion_matrix'
   INSTRUCTION_POINTER = 'instruction_pointer'
+  INSTRUCTION_POINTER_ENTROPY = 'instruction_pointer_entropy'
 
 
 def all_metric_names() -> Tuple[str]:
@@ -159,6 +160,21 @@ def instruction_pointers_to_images(instruction_pointer, multidevice: bool):
       for image in instruction_pointer_image_list
   ]
   return jnp.array(instruction_pointer_image_list)
+
+
+def instruction_pointers_to_entropy(instruction_pointer, multidevice: bool):
+  """Converts the given batched instruction pointer to an entropy value.
+
+  The entropy value measures the sharpness of the instruction pointer, i.e. how
+  hard vs soft it is.
+  """
+  if multidevice:
+    # instruction_pointer: device, batch_size / device, timesteps, num_nodes
+    instruction_pointer = instruction_pointer[0]
+
+  # instruction_pointer: batch_size / device, timesteps, num_nodes
+  # TODO: Implement entropy calculation.
+  raise NotImplementedError()
 
 
 def pad(array, leading_dim_size: int):

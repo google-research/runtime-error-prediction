@@ -378,6 +378,14 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             transform_fn=functools.partial(
                 metrics.instruction_pointers_to_images,
                 multidevice=config.multidevice))
+        metrics.write_metric(
+            EvaluationMetric.INSTRUCTION_POINTER_ENTROPY.value,
+            aux,
+            train_writer.scalar,
+            step,
+            transform_fn=functools.partial(
+                metrics.instruction_pointers_to_entropy,
+                multidevice=config.multidevice))
 
         # Write validation metrics.
         valid_writer.scalar('loss', valid_loss, step)
