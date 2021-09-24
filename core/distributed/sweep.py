@@ -116,15 +116,16 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
   return commands
 
 
-def run_sweep(n, offset, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path):
+def run_sweep(n, offset, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path, skip_create):
   commands = choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path)
 
   def make_run_command(index):
     return commands[index - offset]
 
   # Ensure TPUs are up and unused.
-  print(f'Starting {n} TPUs')
-  gcp.tpu_up_n(n, offset=offset)
+  if not skip_create:
+    print(f'Starting {n} TPUs')
+    gcp.tpu_up_n(n, offset=offset)
   gcp.fix_firewall().wait()
 
   access_token = codenet_paths.get_personal_access_token()
@@ -147,7 +148,7 @@ def get_and_increment_global_experiment_id():
   return experiment_id
 
 
-def main(experiment_id=None, study_id=None, pretrain=False):
+def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
   """Runs a sweep.
 
   To restart any failed jobs in an existing sweep, call this with the experiment_id
@@ -162,6 +163,8 @@ def main(experiment_id=None, study_id=None, pretrain=False):
       study are used, the commands may be the same as those used previously.
       This can be used to resume failed training jobs.
     study_id: The study_id to use for the experiment sweep.
+    pretrain: If True, use the pretraining dataset.
+    skip_create: If True, skip creating the TPU instances (assumes they already are up).
   """
   random.seed(0)
 
@@ -176,15 +179,15 @@ def main(experiment_id=None, study_id=None, pretrain=False):
 
   # Exception IPAGNN
   # offset = 0
-  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path)  # Exception IPAGNN
+  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
   # IPAGNN
   offset = 0
-  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path)
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
   # offset = 40  # The machine index to start with.
-  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path)
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
 
 # # To kill the runner processes:
