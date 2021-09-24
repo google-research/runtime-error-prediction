@@ -95,7 +95,11 @@ def make_log_dir(run_dir, split='train'):
 
 
 def make_metadata_path(run_dir):
-  return os.path.join(run_dir, 'metadata.json')
+  metadata_path = os.path.join(run_dir, 'metadata.json')
+  if os.path.exists(metadata_path):
+    # Don't overwrite existing metadata on restore attempts.
+    metadata_path = os.path.join(run_dir, f'metadata-{int(time.time())}.json')
+  return metadata_path
 
 
 def get_personal_access_token():
