@@ -177,7 +177,7 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
   # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
   # IPAGNN
-  offset = 0
+  offset = 40
   run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
