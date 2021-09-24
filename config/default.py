@@ -30,6 +30,7 @@ def default_config():
   config.notes: Optional[Text] = ''  # Any notes to record about the run.
 
   # Training configs
+  config.optimizer = 'adam'  # sgd, adam
   config.learning_rate = 0.03
   config.grad_clip_value: float = 0.0  # 0 means no clipping.
 
