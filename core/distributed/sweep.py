@@ -2,6 +2,7 @@ import itertools
 import random
 
 import fire
+import numpy as np
 
 from core.data import codenet_paths
 from core.distributed import gcp
