@@ -125,11 +125,11 @@ def run_sweep(n, offset, experiment_id, study_id, name, model_class, raise_in_ip
   gcp.fix_firewall().wait()
 
   access_token = codenet_paths.get_personal_access_token()
-  gcp.tpu_run_script(
-      'scripts/setup-tpu.sh', n, {
-          'PERSONAL_ACCESS_TOKEN': access_token
-      }, offset=offset
-  )
+  # gcp.tpu_run_script(
+  #     'scripts/setup-tpu.sh', n, {
+  #         'PERSONAL_ACCESS_TOKEN': access_token
+  #     }, offset=offset
+  # )
 
   gcp.fix_firewall().wait()
   gcp.tpu_run_commands(make_run_command, n, offset=offset)
@@ -174,8 +174,12 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
   n = 10  # Machines per model
 
   # IPAGNN
-  offset = 0
-  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
+  # offset = 0
+  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
+
+  # Transformer
+  offset = 10  # The machine index to start with.
+  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
   # Exception IPAGNN
   # offset = 0
