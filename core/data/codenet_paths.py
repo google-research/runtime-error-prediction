@@ -12,6 +12,7 @@ DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
+FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids'
 # Raw control_flow_programs data pattern:
 DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
 # Processed control_flow_programs dataset path:
@@ -94,7 +95,11 @@ def make_log_dir(run_dir, split='train'):
 
 
 def make_metadata_path(run_dir):
-  return os.path.join(run_dir, 'metadata.json')
+  metadata_path = os.path.join(run_dir, 'metadata.json')
+  if os.path.exists(metadata_path):
+    # Don't overwrite existing metadata on restore attempts.
+    metadata_path = os.path.join(run_dir, f'metadata-{int(time.time())}.json')
+  return metadata_path
 
 
 def get_personal_access_token():

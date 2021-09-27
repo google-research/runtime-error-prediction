@@ -30,6 +30,7 @@ def default_config():
   config.notes: Optional[Text] = ''  # Any notes to record about the run.
 
   # Training configs
+  config.optimizer = 'adam'  # sgd, adam
   config.learning_rate = 0.03
   config.grad_clip_value: float = 0.0  # 0 means no clipping.
 
@@ -39,6 +40,7 @@ def default_config():
   config.rnn_layers = 2
   config.hidden_size: int = 16
   config.span_encoding_method = 'first'  # first, mean, max, sum
+  config.permissive_node_embeddings = True
 
   # Dataset filtering and configs
   config.epochs: Optional[int] = 0
