@@ -286,6 +286,9 @@ def tpu_run_script(filepath, n, environment, offset=0):
         'bash', '-s'
     ]
     calls.append(call(command, stdin=open(filepath)))
+    if len(calls) % 5 == 0:
+      print('Sleeping 0.5')
+      time.sleep(0.5)
   wait(calls)
 
 
