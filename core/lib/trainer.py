@@ -288,15 +288,16 @@ class Trainer:
             ('ipagnn', 'ipagnn_layer_scan', f'lstm_{n}',)
             for n in range(config.rnn_layers)
         ]
+        params_copy = params.unfreeze()
         for key_path in key_paths:
-          params_component = params
+          params_component = params_copy
           old_params_component = old_params
           for key_path_component in key_path[:-1]:
             params_component = params_component[key_path_component]
             old_params_component = old_params_component[key_path_component]
 
           params_component[key_path[-1]] = old_params_component[key_path[-1]]
-        state = state.replace(params=params)
+        state = state.replace(params=params_copy)
       else:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
