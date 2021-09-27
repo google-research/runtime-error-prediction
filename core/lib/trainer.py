@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 from absl import logging
+from flax.core import frozen_dict
 from flax.metrics import tensorboard
 from flax.training import checkpoints
 from flax.training import common_utils
@@ -275,8 +276,8 @@ class Trainer:
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
         old_state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, None)
-        state = state.replace(step=old_state['step'])
-        state = state.replace(opt_state=old_state['opt_state'])
+        state = state.replace(step=int(old_state['step']))
+        # state = state.replace(opt_state=old_state['opt_state'])
         state = state.replace(rng=old_state['rng'])
         params = state.params
         old_params = old_state['params']
@@ -297,7 +298,7 @@ class Trainer:
             old_params_component = old_params_component[key_path_component]
 
           params_component[key_path[-1]] = old_params_component[key_path[-1]]
-        state = state.replace(params=params_copy)
+        state = state.replace(params=frozen_dict.FrozenDict(params_copy))
       else:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
