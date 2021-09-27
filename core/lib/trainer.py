@@ -331,6 +331,7 @@ class Trainer:
     train_predictions = []
     train_targets = []
     train_losses = []
+    print('Starting training')
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       step = state.step
       if config.multidevice:
