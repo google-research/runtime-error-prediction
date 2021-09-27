@@ -286,7 +286,7 @@ class Trainer:
             ('ipagnn', 'ipagnn_layer_scan', 'branch_decide_dense',),
         ] + [
             ('ipagnn', 'ipagnn_layer_scan', f'lstm_{n}',)
-            for n in range(config.num_layers)
+            for n in range(config.rnn_layers)
         ]
         for key_path in key_paths:
           params_component = params
