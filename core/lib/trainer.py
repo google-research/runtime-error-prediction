@@ -102,6 +102,8 @@ class Trainer:
       tx = optax.sgd(learning_rate)
     elif config.optimizer == 'adam':
       tx = optax.adam(learning_rate)
+    else:
+      raise ValueError('Unexpected optimizer', config.optimizer)
     # TODO(dbieber): I don't think model.apply is used from here.
     # Instead, it's used from make_loss_fn.
     return TrainState.create(
