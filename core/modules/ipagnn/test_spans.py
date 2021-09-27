@@ -151,7 +151,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     )
     self.assertTrue(jnp.all(jnp.equal(encodings, modified_encodings)))
 
-    # 2. different token inside a span -> same embeddings.
+    # 2. different token inside a span -> different embeddings.
     tokens = tokens.at[:, 3].set(105)  # Change a token inside a span.
     modified_encodings = encoder.apply(
         {'params': params},
