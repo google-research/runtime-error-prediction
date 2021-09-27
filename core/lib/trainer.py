@@ -275,9 +275,9 @@ class Trainer:
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
         old_state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, None)
-        state = state.replace('step', old_state['step'])
-        state = state.replace('opt_state', old_state['opt_state'])
-        state = state.replace('rng', old_state['rng'])
+        state = state.replace(step=old_state['step'])
+        state = state.replace(opt_state=old_state['opt_state'])
+        state = state.replace(rng=old_state['rng'])
         params = state.params
         old_params = old_state['params']
         key_paths = [
@@ -296,7 +296,7 @@ class Trainer:
             old_params_component = old_params_component[key_path_component]
 
           params_component[key_path[-1]] = old_params_component[key_path[-1]]
-        state = state.replace('params', params)
+        state = state.replace(params=params)
       else:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
