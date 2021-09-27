@@ -99,6 +99,8 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
         '--config.eval_subsample=1 '
         '--config.eval_max_batches=500 '
         '--config.save_freq=5000 '
+        '--config.restore_checkpoint_dir=/mnt/runtime-error-problems-experiments/experiments/2021-09-24-pretrain-004-copy/6/I1466,o=sgd,bs=32,lr=0.3,gc=2,hs=256,span=max,tdr=0,tadr=0,pe=False,T=default/checkpoints/ '
+        '--config.finetune=IPAGNN '
         f'--config.study_id={study_id} '
         f'--config.experiment_id={experiment_id} '
         f'--config.run_id={run_id} '
@@ -171,23 +173,23 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 10  # Machines per model
+  n = 20  # Machines per model
 
   # IPAGNN
   # offset = 0
   # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
-  offset = 10  # The machine index to start with.
-  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
+  # offset = 10  # The machine index to start with.
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
   # Exception IPAGNN
-  # offset = 0
-  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
+  offset = 20
+  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)
 
-  # # IPAGNN
-  # offset = 40
-  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
+  # IPAGNN
+  offset = 40
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
   # offset = 40  # The machine index to start with.
