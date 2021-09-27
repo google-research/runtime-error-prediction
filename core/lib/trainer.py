@@ -275,27 +275,28 @@ class Trainer:
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
         old_state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, None)
-        state['step'] = old_state['step']
-        state['opt_state'] = old_state['opt_state']
-        state['rng'] = old_state['rng']
+        state = state.replace('step', old_state['step'])
+        state = state.replace('opt_state', old_state['opt_state'])
+        state = state.replace('rng', old_state['rng'])
+        params = state.params
+        old_params = old_state['params']
         key_paths = [
-            ('step',),
-            ('opt_state',),
-            ('rng',),
             # Note we omit loading the output layer weights.
-            ('params', 'node_span_encoder',),
-            ('params', 'ipagnn', 'ipagnn_layer_scan', 'branch_decide_dense',),
+            ('node_span_encoder',),
+            ('ipagnn', 'ipagnn_layer_scan', 'branch_decide_dense',),
         ] + [
-            ('params', 'ipagnn', 'ipagnn_layer_scan', f'lstm_{n}',)
+            ('ipagnn', 'ipagnn_layer_scan', f'lstm_{n}',)
             for n in range(config.num_layers)
         ]
         for key_path in key_paths:
-          state_component = state
-          old_state_component = old_state
+          params_component = params
+          old_params_component = old_params
           for key_path_component in key_path[:-1]:
-            state_component = state_component[key_path_component]
-            old_state_component = old_state_component[key_path_component]
-          state_component[key_path[-1]] = old_state_component[key_path[-1]]
+            params_component = params_component[key_path_component]
+            old_params_component = old_params_component[key_path_component]
+
+          params_component[key_path[-1]] = old_params_component[key_path[-1]]
+        state = state.replace('params', params)
       else:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
