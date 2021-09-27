@@ -25,8 +25,8 @@ from config.default import EvaluationMetric
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.lib import evaluation  # TODO(dbieber): Rename evaluation into metrics.
 from core.lib import metadata
-from core.lib import metrics
 from core.lib import models
 from core.lib import optimizer_lib
 
@@ -114,12 +114,11 @@ class Trainer:
     num_classes = self.info.num_classes
 
     def loss_fn(params, batch, dropout_rng):
-      logits, aux = model.apply(
+      logits = model.apply(
           {'params': params},
           batch,
           rngs={'dropout': dropout_rng}
       )
-      aux = aux or {}
       assert len(logits.shape) == 2
       # logits.shape: batch_size, num_classes
       labels = jax.nn.one_hot(jnp.squeeze(batch['target'], axis=-1), num_classes)
@@ -132,8 +131,9 @@ class Trainer:
       # losses.shape: batch_size
       loss = jnp.mean(losses)
       assert len(loss.shape) == 0
-      aux.update({'logits': logits})
-      return loss, aux
+      return loss, {
+          'logits': logits,
+      }
 
     return loss_fn
 
@@ -148,7 +148,7 @@ class Trainer:
       state = dataclasses.replace(state, rng=new_rng)
 
       grad_fn = jax.value_and_grad(loss_fn, argnums=0, has_aux=True)
-      (loss, loss_aux), grads = grad_fn(state.params, batch, dropout_rng)
+      (loss, aux), grads = grad_fn(state.params, batch, dropout_rng)
       if self.config.multidevice:
         grads = jax.lax.pmean(grads, 'batch')
       global_norm = optimizer_lib.compute_global_norm(grads)
@@ -156,14 +156,11 @@ class Trainer:
         grads = optimizer_lib.clip_grads(grads, clip_by='global_norm', clip_value=grad_clip_value)
       state = state.apply_gradients(grads=grads)
       # TODO(dbieber): Optionally compute on-device metrics here.
-      aux = {
-          'logits': loss_aux['logits'],
+      return state, {
+          'logits': aux['logits'],
           'loss': loss,
           'global_norm': global_norm,
       }
-      if 'instruction_pointer' in loss_aux:
-        aux['instruction_pointer'] = loss_aux['instruction_pointer']
-      return state, aux
     if self.config.multidevice:
       train_step = jax.pmap(
           train_step,
@@ -201,7 +198,7 @@ class Trainer:
       # logits.shape: batch_size, num_classes
       # targets.shape: batch_size
 
-      metric = metrics.compute_metric(
+      metric = evaluation.compute_metric(
           logits, targets, num_classes, config.eval_metric_names
       )
       return logits, loss, metric
@@ -235,7 +232,7 @@ class Trainer:
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
-    eval_metrics = metrics.evaluate(
+    eval_metrics = evaluation.evaluate(
         targets, predictions, num_classes, config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
@@ -272,7 +269,33 @@ class Trainer:
       state = checkpoints.restore_checkpoint(checkpoint_dir, state)
     elif config.restore_checkpoint_dir:
       # Next, if the config says to start from some checkpoint, do so.
-      state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
+      if config.finetune == 'IPAGNN':
+        # The checkpoint we're loading from will have different parameters.
+        old_state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, None)
+        state['step'] = old_state['step']
+        state['opt_state'] = old_state['opt_state']
+        state['rng'] = old_state['rng']
+        key_paths = [
+            ('step',),
+            ('opt_state',),
+            ('rng',),
+            # Note we omit loading the output layer weights.
+            ('params', 'node_span_encoder',),
+            ('params', 'ipagnn', 'ipagnn_layer_scan', 'branch_decide_dense',),
+        ] + [
+            ('params', 'ipagnn', 'ipagnn_layer_scan', f'lstm_{n}',)
+            for n in range(config.num_layers)
+        ]
+        for key_path in key_paths:
+          state_component = state
+          old_state_component = old_state
+          for key_path_component in key_path[:-1]:
+            state_component = state_component[key_path_component]
+            old_state_component = old_state_component[key_path_component]
+          state_component[key_path[-1]] = old_state_component[key_path[-1]]
+      else:
+        assert config.finetune == 'ALL'
+        state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
     # TODO(rishab): Store the state of the early stopping.
@@ -324,7 +347,7 @@ class Trainer:
       if step % config.eval_freq == 0:
         # Evaluate on aggregated training data.
         train_loss = jnp.mean(jnp.array(train_losses))
-        train_metrics = metrics.evaluate(
+        train_metrics = evaluation.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
             num_classes,
@@ -332,7 +355,7 @@ class Trainer:
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
-        batch_metrics = metrics.evaluate(
+        batch_metrics = evaluation.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
             num_classes,
@@ -368,33 +391,8 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             train_writer.image,
             step,
             transform_fn=functools.partial(
-                metrics.confusion_matrix_to_image,
+                evaluation.confusion_matrix_to_image,
                 class_names=all_error_kinds))
-
-        if 'instruction_pointer' in aux:
-          if config.multidevice:
-            # instruction_pointer: device, batch_size / device, timesteps, num_nodes
-            instruction_pointer = aux['instruction_pointer'][0]
-          else:
-            # instruction_pointer: batch_size / device, timesteps, num_nodes
-            instruction_pointer = aux['instruction_pointer']
-          # instruction_pointer: batch_size / device, timesteps, num_nodes
-          instruction_pointer = jnp.transpose(instruction_pointer[:, :16, :],
-                                              (1, 2, 0))
-          # instruction_pointer: logging_slice_size, num_nodes, timesteps
-          instruction_pointer_image_list = [
-              metrics.instruction_pointer_to_image(ip)
-              for ip in instruction_pointer
-          ]
-          instruction_pointer_image_leading_dim_max = max(
-              image.shape[0] for image in instruction_pointer_image_list)
-          instruction_pointer_image_list = [
-              pad(image, instruction_pointer_image_leading_dim_max)
-              for image in instruction_pointer_image_list
-          ]
-          instruction_pointer_images = jnp.array(instruction_pointer_image_list)
-          train_writer.image('instruction_pointer', instruction_pointer_images,
-                             step)
 
         # Write validation metrics.
         valid_writer.scalar('loss', valid_loss, step)
@@ -408,7 +406,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             valid_writer.image,
             step,
             transform_fn=functools.partial(
-                metrics.confusion_matrix_to_image,
+                evaluation.confusion_matrix_to_image,
                 class_names=all_error_kinds))
 
         did_improve, es = es.update(-1 * valid_loss)
@@ -440,11 +438,3 @@ def write_metric(metric_name, metrics_dict, summary_fn, step, transform_fn=None)
     if transform_fn is not None:
       metric = transform_fn(metric)
     summary_fn(metric_name, metric, step)
-
-
-def pad(array, leading_dim_size: int):
-  """Pad the leading dimension of the given array."""
-  leading_dim_difference = max(0, leading_dim_size - array.shape[0])
-  leading_pad_width = [(0, leading_dim_difference)]
-  trailing_pad_widths = [(0, 0)] * (array.ndim - 1)
-  return jnp.pad(array, leading_pad_width + trailing_pad_widths)

@@ -24,6 +24,7 @@ def default_config():
   # Trainer configs
   config.multidevice: bool = True
   config.restore_checkpoint_dir: Optional[Text] = ''
+  config.finetune: Text = 'ALL'  # If set, indicates which set of parameters to load from the restore_checkpoint.
   config.study_id: Optional[Text] = ''  # A study is a way of organizing experiments.
   config.experiment_id: Optional[Text] = ''  # An experiment is launched by a single command, may have multiple runs.
   config.run_id: Optional[Text] = ''  # A run is a single trainer run with a single set of hparams. run_id should identify hparams.

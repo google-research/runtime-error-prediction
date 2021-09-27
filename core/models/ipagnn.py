@@ -77,7 +77,9 @@ class IPAGNN(nn.Module):
 
     num_classes = self.info.num_classes
     if config.raise_in_ipagnn:
-      logits = nn.Dense(features=num_classes)(raise_node_embeddings)  # P(e | yes exception)
+      logits = nn.Dense(
+          features=num_classes, name='output'
+      )(raise_node_embeddings)  # P(e | yes exception)
       # logits.shape: batch_size, num_classes
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
 
@@ -88,6 +90,8 @@ class IPAGNN(nn.Module):
       # no_error_logits.shape: batch_size
       logits = logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
     else:
-      logits = nn.Dense(features=num_classes)(exit_node_embeddings)
+      logits = nn.Dense(
+          features=num_classes, name='output'
+      )(exit_node_embeddings)
     # logits.shape: batch_size, num_classes
     return logits, ipagnn_output
