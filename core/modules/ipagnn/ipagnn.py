@@ -5,7 +5,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 
-from config.default import EvaluationMetric
+from core.lib.metrics import EvaluationMetric
 from core.modules.ipagnn import rnn
 
 

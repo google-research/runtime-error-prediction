@@ -1,9 +1,11 @@
 """Metrics utility functions."""
 
-import imageio
+import enum
 import io
 import itertools
+from typing import Tuple
 
+import imageio
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +13,17 @@ import numpy as np
 from sklearn import metrics
 import tensorflow as tf
 
-from config.default import EvaluationMetric
+
+class EvaluationMetric(enum.Enum):
+  """Evaluation metric kinds."""
+  ACCURACY = 'accuracy'
+  F1_SCORE = 'f1_score'
+  CONFUSION_MATRIX = 'confusion_matrix'
+  INSTRUCTION_POINTER = 'instruction_pointer'
+
+  @staticmethod
+  def all_metric_names() -> Tuple[str]:
+    return tuple(x.value for x in EvaluationMetric)
 
 
 def evaluate(targets, predictions, num_classes, eval_metric_names):

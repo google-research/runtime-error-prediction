@@ -1,21 +1,9 @@
-import enum
 from typing import List, Optional, Text, Tuple
 
 import ml_collections
+from core.lib.metrics import EvaluationMetric
 
 Config = ml_collections.ConfigDict
-
-
-class EvaluationMetric(enum.Enum):
-  """Evaluation metric kinds."""
-  ACCURACY = 'accuracy'
-  F1_SCORE = 'f1_score'
-  CONFUSION_MATRIX = 'confusion_matrix'
-  INSTRUCTION_POINTER = 'instruction_pointer'
-
-  @staticmethod
-  def all_metric_names() -> Tuple[str]:
-    return tuple(x.value for x in EvaluationMetric)
 
 
 def default_config():
