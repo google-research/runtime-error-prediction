@@ -20,6 +20,7 @@ DEPENDENCIES = [
 ]
 
 packages = [
+    'config',
     'core',
     'core.data',
     'core.distributed',
