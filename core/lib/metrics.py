@@ -2,7 +2,6 @@
 
 import enum
 import io
-import itertools
 from typing import Tuple
 
 import imageio
@@ -11,7 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn import metrics
-import tensorflow as tf
 
 
 class EvaluationMetric(enum.Enum):

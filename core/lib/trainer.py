@@ -24,6 +24,7 @@ import tensorflow_datasets as tfds
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.lib import finetune
 from core.lib import metadata
 from core.lib import metrics
 from core.lib import models
@@ -273,7 +274,12 @@ class Trainer:
       state = checkpoints.restore_checkpoint(checkpoint_dir, state)
     elif config.restore_checkpoint_dir:
       # Next, if the config says to start from some checkpoint, do so.
-      state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
+      if config.finetune == 'IPAGNN':
+        # The checkpoint we're loading from will have different parameters.
+        state = finetune.finetune_from_ipagnn(state, config.restore_checkpoint_dir, config)
+      else:
+        assert config.finetune == 'ALL'
+        state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
     # TODO(rishab): Store the state of the early stopping.
@@ -303,6 +309,7 @@ class Trainer:
     train_predictions = []
     train_targets = []
     train_losses = []
+    print('Starting training')
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       step = state.step
       if config.multidevice:
