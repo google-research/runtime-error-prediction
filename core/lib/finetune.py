@@ -41,3 +41,4 @@ def finetune_from_ipagnn(state, restore_checkpoint_dir, config):
 
     params_component[key_path[-1]] = old_params_component[key_path[-1]]
   state = state.replace(params=frozen_dict.FrozenDict(params_copy))
+  return state
