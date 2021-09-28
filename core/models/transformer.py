@@ -39,7 +39,8 @@ class Transformer(nn.Module):
     encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     encoded_inputs = self.token_embedder(
-        tokens, x['node_token_span_starts'], x['node_token_span_ends'])
+        tokens, x['node_token_span_starts'], x['node_token_span_ends'],
+        x['num_nodes'])
     # encoded_inputs.shape: batch_size, max_tokens, hidden_size
     encoding = self.encoder(encoded_inputs, encoder_mask=encoder_mask)
     # encoding.shape: batch_size, max_tokens, hidden_size

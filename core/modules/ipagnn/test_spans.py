@@ -43,6 +43,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     # tokens.shape: batch_size=2, length
     node_span_starts = jnp.array([[3, 7, 10], [4, 7, 11]])
     node_span_ends = jnp.array([[5, 9, 15], [6, 10, 16]])
+    num_nodes = jnp.array([3, 3])
 
     info = info_lib.get_test_info()
     config = make_sample_config()
@@ -57,13 +58,14 @@ class NodeSpanEncoderTest(unittest.TestCase):
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = encoder.init(
         {'params': params_rng, 'dropout': dropout_rng},
-        tokens, node_span_starts, node_span_ends)
+        tokens, node_span_starts, node_span_ends, num_nodes,
+    )
     params = variables['params']
 
     rng, dropout_rng = jax.random.split(rng, 2)
     encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
     # encodings.shape: batch_size, num_nodes, hidden_size
@@ -80,6 +82,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     # tokens.shape: batch_size=2, length
     node_span_starts = jnp.array([[3, 7, 10], [4, 7, 11]])
     node_span_ends = jnp.array([[5, 9, 15], [6, 10, 16]])
+    num_nodes = jnp.array([3, 3])
 
     info = info_lib.get_test_info()
     config = make_sample_config()
@@ -95,21 +98,22 @@ class NodeSpanEncoderTest(unittest.TestCase):
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = encoder.init(
         {'params': params_rng, 'dropout': dropout_rng},
-        tokens, node_span_starts, node_span_ends)
+        tokens, node_span_starts, node_span_ends, num_nodes,
+    )
     params = variables['params']
 
     # Part A. With permissive_node_embeddings == True:
     rng, dropout_rng = jax.random.split(rng, 2)
     encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
 
     # 1. same tokens -> same embeddings.
     modified_encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
     self.assertTrue(jnp.all(jnp.equal(encodings, modified_encodings)))
@@ -118,7 +122,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     tokens = tokens.at[:, 20].set(101)  # Change a token outside the spans.
     modified_encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
     self.assertFalse(jnp.all(jnp.equal(encodings, modified_encodings)))
@@ -131,13 +135,13 @@ class NodeSpanEncoderTest(unittest.TestCase):
 
     encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
     # 1. same tokens -> same embeddings.
     modified_encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
     self.assertTrue(jnp.all(jnp.equal(encodings, modified_encodings)))
@@ -146,7 +150,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     tokens = tokens.at[:, 20].set(105)  # Change a token outside the spans.
     modified_encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
     self.assertTrue(jnp.all(jnp.equal(encodings, modified_encodings)))
@@ -155,7 +159,7 @@ class NodeSpanEncoderTest(unittest.TestCase):
     tokens = tokens.at[:, 3].set(105)  # Change a token inside a span.
     modified_encodings = encoder.apply(
         {'params': params},
-        tokens, node_span_starts, node_span_ends,
+        tokens, node_span_starts, node_span_ends, num_nodes,
         rngs={'dropout': dropout_rng},
     )
     self.assertFalse(jnp.all(jnp.equal(encodings, modified_encodings)))
@@ -166,6 +170,7 @@ class SpanIndexEncoderTest(unittest.TestCase):
   def test_call(self):
     node_span_starts = jnp.array([0, 2])
     node_span_ends = jnp.array([2, 4])
+    num_nodes = 2
 
     encoder = spans.SpanIndexEncoder(
         max_tokens=5,
@@ -176,14 +181,13 @@ class SpanIndexEncoderTest(unittest.TestCase):
     rng, params_rng = jax.random.split(rng, 2)
     variables = encoder.init(
         {'params': params_rng},
-        node_span_starts,
-        node_span_ends
+        node_span_starts, node_span_ends, num_nodes
     )
     params = variables['params']
 
     encodings = encoder.apply(
         {'params': params},
-        node_span_starts, node_span_ends,
+        node_span_starts, node_span_ends, num_nodes,
     )
     # encodings.shape: num_tokens, features
     encodings_shape = encodings.shape

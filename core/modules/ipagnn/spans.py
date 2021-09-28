@@ -126,26 +126,30 @@ class SpanIndexEncoder(nn.Module):
         embedding_init=nn.initializers.normal(stddev=1.0),
     )
 
-  def __call__(self, node_span_starts, node_span_ends):
+  def __call__(self, node_span_starts, node_span_ends, num_nodes):
     """Assume no batch dimension."""
-    # node_span_starts.shape: num_nodes
-    # node_span_ends.shape: num_nodes
+    # node_span_starts.shape: max_num_nodes
+    # node_span_ends.shape: max_num_nodes
+    # num_nodes: scalar.
     zeros = jnp.zeros((self.max_tokens, self.features))
     # zeros.shape: tokens, features
     indexes = jnp.arange(self.max_num_nodes)
-    # indexes.shape: num_nodes
+    # indexes.shape: max_num_nodes
     embeddings = self.embed(indexes)
-    # embeddings.shape: num_nodes, features
+    # embeddings.shape: max_num_nodes, features
 
-    def get_node_contribution(embedding, span_start, span_end):
+    def get_node_contribution(embedding, span_start, span_end, index):
       # embedding.shape: features
       # span_start: scalar
       # span_end: scalar
-      return add_at_span(zeros, embedding, span_start, span_end)
+      contribution = add_at_span(zeros, embedding, span_start, span_end)
+      # Mask out the contributions of nodes beyond num_nodes.
+      return jnp.where(index < num_nodes, contribution, zeros)
+
     # vmap across the node dimension.
     per_node_contributions = jax.vmap(get_node_contribution)(
-        embeddings, node_span_starts, node_span_ends)
-    # per_node_contributions.shape: num_nodes, max_tokens, features
+        embeddings, node_span_starts, node_span_ends, indexes)
+    # per_node_contributions.shape: max_num_nodes, max_tokens, features
 
     # Sum across the node dimension.
     return jnp.sum(per_node_contributions, axis=0)
@@ -188,14 +192,15 @@ class NodeAwareTokenEmbedder(nn.Module):
     self.add_position_embeds = transformer_modules.AddPositionEmbs(
         config=self.transformer_config, decode=False, name='posembed_input')
 
-  def __call__(self, tokens, node_span_starts, node_span_ends):
+  def __call__(self, tokens, node_span_starts, node_span_ends, num_nodes):
+    # num_nodes.shape: batch_size.
     x = tokens.astype('int32')
     # x.shape: batch_size, max_tokens
     x = self.embed(x)
     # x.shape: batch_size, max_tokens, features
     if self.use_span_index_encoder:
       token_span_encodings = jax.vmap(self.span_index_encoder)(
-          node_span_starts, node_span_ends)
+          node_span_starts, node_span_ends, num_nodes)
       # token_span_encodings.shape: batch_size, max_tokens, features
       x = x + token_span_encodings
     if self.use_span_start_indicators:
@@ -238,13 +243,15 @@ class NodeSpanEncoder(nn.Module):
     self.encoder = encoder.TransformerEncoder(
         config=self.transformer_config)
 
-  def __call__(self, tokens, node_span_starts, node_span_ends):
+  def __call__(self, tokens, node_span_starts, node_span_ends, num_nodes):
     config = self.config
 
     # node_span_starts.shape: batch_size, num_nodes
     # node_span_ends.shape: batch_size, num_nodes
     # tokens.shape: batch_size, max_tokens
-    token_embeddings = self.embed(tokens, node_span_starts, node_span_ends)
+    # num_nodes.shape: batch_size.
+    token_embeddings = self.embed(
+        tokens, node_span_starts, node_span_ends, num_nodes)
     # token_embeddings.shape: batch_size, max_tokens, hidden_size
     if config.permissive_node_embeddings:
       tokens_mask = tokens > 0

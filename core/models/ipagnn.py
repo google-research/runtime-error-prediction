@@ -49,7 +49,8 @@ class IPAGNN(nn.Module):
     # tokens.shape: batch_size, max_tokens
     batch_size = tokens.shape[0]
     encoded_inputs = self.node_span_encoder(
-        tokens, x['node_token_span_starts'], x['node_token_span_ends'])
+        tokens, x['node_token_span_starts'], x['node_token_span_ends'],
+        x['num_nodes'])
     # encoded_inputs.shape: batch_size, max_num_nodes, hidden_size
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
