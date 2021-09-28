@@ -21,7 +21,6 @@ import optax
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from config.default import EvaluationMetric
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
@@ -29,6 +28,7 @@ from core.lib import metadata
 from core.lib import metrics
 from core.lib import models
 from core.lib import optimizer_lib
+from core.lib.metrics import EvaluationMetric
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
@@ -161,8 +161,9 @@ class Trainer:
           'loss': loss,
           'global_norm': global_norm,
       }
-      if 'instruction_pointer' in loss_aux:
-        aux['instruction_pointer'] = loss_aux['instruction_pointer']
+      if EvaluationMetric.INSTRUCTION_POINTER.value in loss_aux:
+        aux[EvaluationMetric.INSTRUCTION_POINTER.value] = (
+            loss_aux[EvaluationMetric.INSTRUCTION_POINTER.value])
       return state, aux
     if self.config.multidevice:
       train_step = jax.pmap(
@@ -358,58 +359,39 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         # Write training metrics.
         train_writer.scalar('global_norm', jnp.mean(aux['global_norm']), step)
         train_writer.scalar('loss', train_loss, step)
-        write_metric(EvaluationMetric.ACCURACY.value, train_metrics,
-                     train_writer.scalar, step)
-        write_metric(EvaluationMetric.F1_SCORE.value, train_metrics,
-                     train_writer.scalar, step)
-        write_metric(
+        metrics.write_metric(EvaluationMetric.ACCURACY.value, train_metrics,
+                             train_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.F1_SCORE.value, train_metrics,
+                             train_writer.scalar, step)
+        metrics.write_metric(
             EvaluationMetric.CONFUSION_MATRIX.value,
             train_metrics,
             train_writer.image,
             step,
             transform_fn=functools.partial(
-                metrics.confusion_matrix_to_image,
-                class_names=all_error_kinds))
-
-        if 'instruction_pointer' in aux:
-          if config.multidevice:
-            # instruction_pointer: device, batch_size / device, timesteps, num_nodes
-            instruction_pointer = aux['instruction_pointer'][0]
-          else:
-            # instruction_pointer: batch_size / device, timesteps, num_nodes
-            instruction_pointer = aux['instruction_pointer']
-          # instruction_pointer: batch_size / device, timesteps, num_nodes
-          instruction_pointer = jnp.transpose(instruction_pointer[:, :16, :],
-                                              (1, 2, 0))
-          # instruction_pointer: logging_slice_size, num_nodes, timesteps
-          instruction_pointer_image_list = [
-              metrics.instruction_pointer_to_image(ip)
-              for ip in instruction_pointer
-          ]
-          instruction_pointer_image_leading_dim_max = max(
-              image.shape[0] for image in instruction_pointer_image_list)
-          instruction_pointer_image_list = [
-              pad(image, instruction_pointer_image_leading_dim_max)
-              for image in instruction_pointer_image_list
-          ]
-          instruction_pointer_images = jnp.array(instruction_pointer_image_list)
-          train_writer.image('instruction_pointer', instruction_pointer_images,
-                             step)
+                metrics.confusion_matrix_to_image, class_names=all_error_kinds))
+        metrics.write_metric(
+            EvaluationMetric.INSTRUCTION_POINTER.value,
+            aux,
+            train_writer.image,
+            step,
+            transform_fn=functools.partial(
+                metrics.instruction_pointers_to_images,
+                multidevice=config.multidevice))
 
         # Write validation metrics.
         valid_writer.scalar('loss', valid_loss, step)
-        write_metric(EvaluationMetric.ACCURACY.value, valid_metrics,
-                     valid_writer.scalar, step)
-        write_metric(EvaluationMetric.F1_SCORE.value, valid_metrics,
-                     valid_writer.scalar, step)
-        write_metric(
+        metrics.write_metric(EvaluationMetric.ACCURACY.value, valid_metrics,
+                             valid_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.F1_SCORE.value, valid_metrics,
+                             valid_writer.scalar, step)
+        metrics.write_metric(
             EvaluationMetric.CONFUSION_MATRIX.value,
             valid_metrics,
             valid_writer.image,
             step,
             transform_fn=functools.partial(
-                metrics.confusion_matrix_to_image,
-                class_names=all_error_kinds))
+                metrics.confusion_matrix_to_image, class_names=all_error_kinds))
 
         did_improve, es = es.update(-1 * valid_loss)
         if es.should_stop and config.early_stopping_on:
@@ -431,20 +413,3 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
-
-
-def write_metric(metric_name, metrics_dict, summary_fn, step, transform_fn=None):
-  """Writes an evaluation metric using a TensorBoard SummaryWriter function."""
-  if metric_name in metrics_dict:
-    metric = metrics_dict[metric_name]
-    if transform_fn is not None:
-      metric = transform_fn(metric)
-    summary_fn(metric_name, metric, step)
-
-
-def pad(array, leading_dim_size: int):
-  """Pad the leading dimension of the given array."""
-  leading_dim_difference = max(0, leading_dim_size - array.shape[0])
-  leading_pad_width = [(0, leading_dim_difference)]
-  trailing_pad_widths = [(0, 0)] * (array.ndim - 1)
-  return jnp.pad(array, leading_pad_width + trailing_pad_widths)
