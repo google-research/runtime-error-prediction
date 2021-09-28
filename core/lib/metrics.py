@@ -21,15 +21,15 @@ class EvaluationMetric(enum.Enum):
   CONFUSION_MATRIX = 'confusion_matrix'
   INSTRUCTION_POINTER = 'instruction_pointer'
 
-  @staticmethod
-  def all_metric_names() -> Tuple[str]:
-    return tuple(x.value for x in EvaluationMetric)
+
+def all_metric_names() -> Tuple[str]:
+  """"Returns a tuple of all evaluation metric names."""
+  return tuple(m.value for m in EvaluationMetric)
 
 
 def evaluate(targets, predictions, num_classes, eval_metric_names):
   # Diagnose unknown metrics.
-  unknown_metric_names = set(eval_metric_names).difference(
-      EvaluationMetric.all_metric_names())
+  unknown_metric_names = set(eval_metric_names).difference(all_metric_names())
   if unknown_metric_names:
     raise ValueError(f'Unknown metric names: {unknown_metric_names}')
 
