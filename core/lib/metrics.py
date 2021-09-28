@@ -27,9 +27,8 @@ def evaluate(targets, predictions, num_classes, eval_metric_names):
     results[EvaluationMetric.ACCURACY.value] = (
         jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets)))
   if EvaluationMetric.F1_SCORE.value in eval_metric_names:
-    # TODO(dbieber): Support macro f1.
     results[EvaluationMetric.F1_SCORE.value] = metrics.f1_score(
-        targets, predictions, average='micro')
+        targets, predictions, average='macro')
   if EvaluationMetric.CONFUSION_MATRIX.value in eval_metric_names:
     results[EvaluationMetric.CONFUSION_MATRIX.value] = metrics.confusion_matrix(
         targets,
