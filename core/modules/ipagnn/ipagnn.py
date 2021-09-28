@@ -1,7 +1,6 @@
 from typing import Any
 
 from flax import linen as nn
-import numpy as np
 import jax
 import jax.numpy as jnp
 

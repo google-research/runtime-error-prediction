@@ -2,14 +2,12 @@
 
 import imageio
 import io
-import itertools
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn import metrics
-import tensorflow as tf
 
 from config.default import EvaluationMetric
 

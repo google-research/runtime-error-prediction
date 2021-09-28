@@ -2,7 +2,6 @@
 
 import pipes
 import subprocess
-import time
 
 from absl import logging
 import fire
@@ -287,9 +286,6 @@ def tpu_run_script(filepath, n, environment, offset=0):
         'bash', '-s'
     ]
     calls.append(call(command, stdin=open(filepath)))
-    if len(calls) % 5 == 0:
-      print('Sleeping 5')
-      time.sleep(5)
   wait(calls)
 
 

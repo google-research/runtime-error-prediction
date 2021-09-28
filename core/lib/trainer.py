@@ -9,7 +9,6 @@ import sys
 from typing import Any
 
 from absl import logging
-from flax.core import frozen_dict
 from flax.metrics import tensorboard
 from flax.training import checkpoints
 from flax.training import common_utils
@@ -26,6 +25,7 @@ from config.default import EvaluationMetric
 from core.data import codenet_paths
 from core.data import data_io
 from core.data import error_kinds
+from core.lib import finetune
 from core.lib import metadata
 from core.lib import metrics
 from core.lib import models
@@ -275,30 +275,7 @@ class Trainer:
       # Next, if the config says to start from some checkpoint, do so.
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
-        old_state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, None)
-        state = state.replace(step=int(old_state['step']))
-        # state = state.replace(opt_state=old_state['opt_state'])
-        state = state.replace(rng=old_state['rng'])
-        params = state.params
-        old_params = old_state['params']
-        key_paths = [
-            # Note we omit loading the output layer weights.
-            ('node_span_encoder',),
-            ('ipagnn', 'ipagnn_layer_scan', 'branch_decide_dense',),
-        ] + [
-            ('ipagnn', 'ipagnn_layer_scan', f'lstm_{n}',)
-            for n in range(config.rnn_layers)
-        ]
-        params_copy = params.unfreeze()
-        for key_path in key_paths:
-          params_component = params_copy
-          old_params_component = old_params
-          for key_path_component in key_path[:-1]:
-            params_component = params_component[key_path_component]
-            old_params_component = old_params_component[key_path_component]
-
-          params_component[key_path[-1]] = old_params_component[key_path[-1]]
-        state = state.replace(params=frozen_dict.FrozenDict(params_copy))
+        state = finetune.finetune_from_ipagnn(state, config.restore_checkpoint_dir, config)
       else:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
