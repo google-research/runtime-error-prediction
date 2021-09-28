@@ -148,7 +148,9 @@ class SpanIndexEncoder(nn.Module):
         embeddings, node_span_starts, node_span_ends)
     # per_node_contributions.shape: max_num_nodes, max_tokens, features
 
-    # TODO(dbieber): Mask out the contributions of nodes beyond num_nodes.
+    # Mask out the contributions of nodes beyond num_nodes.
+    per_node_contributions = jnp.where(
+        indexes < num_nodes, per_node_contributions, 0)
 
     # Sum across the node dimension.
     return jnp.sum(per_node_contributions, axis=0)
