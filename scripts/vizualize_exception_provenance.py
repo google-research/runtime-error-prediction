@@ -80,6 +80,8 @@ def main(argv):
     exit_index = batch['exit_index']
     raise_index = exit_index + 1
     raise_decisions = aux['raise_decisions']
+    print('instruction_pointer.shape')
+    print(instruction_pointer.shape)
     contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions)
     print(contributions)
 
