@@ -60,8 +60,6 @@ class Trainer:
 
     padded_shapes = data_io.get_padded_shapes(
         config.max_tokens, config.max_num_nodes, config.max_num_edges, include_strings=include_strings)
-    print('padded_shapes')
-    print(padded_shapes)
     if allowlist == 'TIER1_ERROR_IDS':
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(

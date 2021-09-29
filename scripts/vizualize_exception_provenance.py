@@ -2,12 +2,16 @@
 
 from absl import app
 from absl import flags
+
+from flax.training import common_utils
+import jax
 import jax.numpy as jnp
 from ml_collections.config_flags import config_flags
 
 from core.data import codenet_paths
 from core.data import info as info_lib
 from core.lib import trainer
+import tensorflow_datasets as tfds
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 DEFAULT_CONFIG_PATH = codenet_paths.DEFAULT_CONFIG_PATH
@@ -32,9 +36,27 @@ def main(argv):
   dataset = t.load_dataset(
       dataset_path=dataset_path, split='train', include_strings=True)
 
-  for example in dataset:
-    print(example)
+  rng = jax.random.PRNGKey(0)
+  rng, init_rng = jax.random.split(rng)
+  model = t.make_model(deterministic=False)
+
+  state = t.create_train_state(init_rng, model)
+
+  train_step = t.make_train_step()
+  for batch in tfds.as_numpy(dataset):
+    if config.multidevice:
+      batch = common_utils.shard(batch)
+    problem_id = batch.pop('problem_id')
+    submission_id = batch.pop('submission_id')
+    state, aux = train_step(state, batch)
+    print(aux)
+    print(aux.keys())
+
+    # TODO(dbieber): Figure out contributions of each node to the exception node.
+    # Then load source.
+    # And print everything.
     break
+
 
 
 if __name__ == '__main__':
