@@ -28,6 +28,9 @@ def get_raise_contribution_at_step(instruction_pointer, raise_decisions):
   # instruction_pointer.shape: num_nodes
   # raise_decisions.shape: num_nodes, 2
   p_raise = raise_decisions[:, 0]
+  print('p_raise.shape')
+  print(p_raise.shape)
+  print(instruction_pointer.shape)
   raise_contribution = p_raise * instruction_pointer
   # raise_contribution.shape: num_nodes
   return raise_contribution
@@ -77,8 +80,11 @@ def main(argv):
     exit_index = batch['exit_index']
     raise_index = exit_index + 1
     raise_decisions = aux['raise_decisions']
-    get_raise_contribution_batch(instruction_pointer, raise_decisions)
+    contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions)
+    print(contributions)
 
+    for pid, sid, contribution in zip(problem_id, submission_id, contributions):
+      print(pid, sid, contribution)
 
     # TODO(dbieber): Figure out contributions of each node to the exception node.
     # Then load source.
