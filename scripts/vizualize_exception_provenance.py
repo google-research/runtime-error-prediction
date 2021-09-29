@@ -92,18 +92,19 @@ def main(argv):
       problem_id = problem_id[0].decode('utf-8')
       submission_id = submission_id[0].decode('utf-8')
       python_path = codenet.get_python_path(problem_id, submission_id)
-      with open(python_path, 'r') as f:
-        source = f.read()
-      raw = process.make_rawruntimeerrorproblem(
-          source, 'N/A', problem_id=problem_id, submission_id=submission_id)
-      print(raw)
-      print(source)
-      print(contribution)
+      if os.path.exists(python_path):
+        with open(python_path, 'r') as f:
+          source = f.read()
+        raw = process.make_rawruntimeerrorproblem(
+            source, 'N/A', problem_id=problem_id, submission_id=submission_id)
+        print(raw)
+        print(source)
+        print(contribution)
+        break
 
-    # TODO(dbieber): Figure out contributions of each node to the exception node.
-    # Then load source.
-    # And print everything.
-    break
+      # TODO(dbieber): Figure out contributions of each node to the exception node.
+      # Then load source.
+      # And print everything.
 
 
 
