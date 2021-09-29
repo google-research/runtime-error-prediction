@@ -247,6 +247,7 @@ class IPAGNNLayer(nn.Module):
 
     # current_step.shape: batch_size
     # step_limits.shape: batch_size
+    instruction_pointer_orig = instruction_pointer
     hidden_states, instruction_pointer = keep_old_if_done(
         (hidden_states, instruction_pointer),
         (hidden_states_new, instruction_pointer_new),
@@ -259,6 +260,7 @@ class IPAGNNLayer(nn.Module):
     # current_step.shape: batch_size
 
     aux = {
+        'instruction_pointer_orig': instruction_pointer_orig,
         EvaluationMetric.INSTRUCTION_POINTER.value: instruction_pointer,
         'raise_decisions': raise_decisions,
         'branch_decisions': branch_decisions,

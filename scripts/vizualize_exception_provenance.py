@@ -91,11 +91,13 @@ def main(argv):
     contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions)
     print(contributions)
 
+    found = False
     for problem_id, submission_id, contribution in zip(problem_ids, submission_ids, contributions):
       problem_id = problem_id[0].decode('utf-8')
       submission_id = submission_id[0].decode('utf-8')
       python_path = codenet.get_python_path(problem_id, submission_id)
       if os.path.exists(python_path):
+        found = True
         with open(python_path, 'r') as f:
           source = f.read()
         raw = process.make_rawruntimeerrorproblem(
@@ -104,7 +106,8 @@ def main(argv):
         print(source)
         print(contribution)
         print('---')
-    break
+    if found:
+      break
 
       # TODO(dbieber): Figure out contributions of each node to the exception node.
       # Then load source.
