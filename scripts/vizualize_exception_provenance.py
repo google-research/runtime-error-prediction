@@ -27,9 +27,10 @@ def main(argv):
   config = FLAGS.config
   jnp.set_printoptions(threshold=config.printoptions_threshold)
   info = info_lib.get_dataset_info(dataset_path)
-  t = trainer.Trainer(config=config, info=info).run_train(dataset_path=dataset_path)
+  t = trainer.Trainer(config=config, info=info)
 
-  dataset = t.load_dataset(include_strings=True)
+  dataset = t.load_dataset(
+      dataset_path=dataset_path, split='train', include_strings=True)
 
   for example in dataset:
     print(example)
