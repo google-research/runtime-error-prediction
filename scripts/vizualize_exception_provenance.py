@@ -13,6 +13,7 @@ from ml_collections.config_flags import config_flags
 from core.data import codenet
 from core.data import codenet_paths
 from core.data import info as info_lib
+from core.data import process
 from core.lib import trainer
 import tensorflow_datasets as tfds
 
@@ -102,7 +103,8 @@ def main(argv):
         print(raw)
         print(source)
         print(contribution)
-        break
+        print('---')
+    break
 
       # TODO(dbieber): Figure out contributions of each node to the exception node.
       # Then load source.
