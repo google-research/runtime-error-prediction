@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 from ml_collections.config_flags import config_flags
 
+from core.data import codenet
 from core.data import codenet_paths
 from core.data import info as info_lib
 from core.lib import trainer
@@ -69,10 +70,12 @@ def main(argv):
 
   train_step = t.make_train_step()
   for batch in tfds.as_numpy(dataset):
+    assert not config.multidevice
+
     if config.multidevice:
       batch = common_utils.shard(batch)
-    problem_id = batch.pop('problem_id')
-    submission_id = batch.pop('submission_id')
+    problem_ids = batch.pop('problem_id')
+    submission_ids = batch.pop('submission_id')
     state, aux = train_step(state, batch)
     print(aux)
     print(aux.keys())
@@ -85,8 +88,17 @@ def main(argv):
     contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions)
     print(contributions)
 
-    for pid, sid, contribution in zip(problem_id, submission_id, contributions):
-      print(pid, sid, contribution)
+    for problem_id, submission_id, contribution in zip(problem_ids, submission_ids, contributions):
+      problem_id = problem_id[0].decode('utf-8')
+      submission_id = submission_id[0].decode('utf-8')
+      python_path = codenet.get_python_path(problem_id, submission_id)
+      with open(python_path, 'r') as f:
+        source = f.read()
+      raw = process.make_rawruntimeerrorproblem(
+          source, 'N/A', problem_id=problem_id, submission_id=submission_id)
+      print(raw)
+      print(source)
+      print(contribution)
 
     # TODO(dbieber): Figure out contributions of each node to the exception node.
     # Then load source.
