@@ -24,12 +24,27 @@ config_flags.DEFINE_config_file(
 FLAGS = flags.FLAGS
 
 
-def exception_provenance(instruction_pointer, raise_index, raise_decisions):
+def get_raise_contribution_at_step(instruction_pointer, raise_decisions):
+  # instruction_pointer.shape: num_nodes
+  # raise_decisions.shape: num_nodes, 2
+  p_raise = raise_decisions[:, 0]
+  raise_contribution = p_raise * instruction_pointer
+  # raise_contribution.shape: num_nodes
+  return raise_contribution
+get_raise_contribution_at_steps = jax.vmap(get_raise_contribution_at_step)
+
+
+def get_raise_contribution(instruction_pointer, raise_decisions):
   # instruction_pointer.shape: steps, num_nodes
-  # raise_index.shape: scalar.
   # raise_decisions.shape: steps, num_nodes, 2
-  return None
-exception_provenance_batch = jax.vmap(exception_provenance)
+  raise_contributions = get_raise_contribution_at_steps(
+      instruction_pointer, raise_decisions)
+  # raise_contributions.shape: steps, num_nodes
+  raise_contribution = jnp.sum(raise_contributions, axis=0)
+  # raise_contribution.shape: num_nodes
+  return raise_contribution
+get_raise_contribution_batch = jax.vmap(get_raise_contribution)
+
 
 def main(argv):
   del argv  # Unused.
@@ -59,9 +74,10 @@ def main(argv):
     print(aux)
     print(aux.keys())
     instruction_pointer = aux['instruction_pointer']
-    raise_index = batch['raise_index']
+    exit_index = batch['exit_index']
+    raise_index = exit_index + 1
     raise_decisions = aux['raise_decisions']
-    exception_provenance_batch(instruction_pointer, raise_index, raise_decisions)
+    get_raise_contribution_batch(instruction_pointer, raise_decisions)
 
 
     # TODO(dbieber): Figure out contributions of each node to the exception node.
