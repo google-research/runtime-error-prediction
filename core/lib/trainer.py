@@ -29,12 +29,12 @@ from core.lib import metadata
 from core.lib import metrics
 from core.lib import models
 from core.lib import optimizer_lib
-from core.lib.metrics import EvaluationMetric
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 
 Config = ml_collections.ConfigDict
+EvaluationMetric = metrics.EvaluationMetric
 
 
 class TrainState(train_state.TrainState):
@@ -48,7 +48,8 @@ class Trainer:
   info: Any
 
   def load_dataset(
-    self, dataset_path=DEFAULT_DATASET_PATH, split='train', epochs=None
+      self, dataset_path=DEFAULT_DATASET_PATH, split='train', epochs=None,
+      include_strings=False,
   ):
     config = self.config
     batch_size = config.batch_size
@@ -69,7 +70,7 @@ class Trainer:
       # Prepare a dataset with a single repeating batch.
       split = split[:-len('-batch')]
       return (
-          data_io.load_dataset(dataset_path, split=split)
+          data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
           .filter(filter_fn)
           .take(batch_size)
           .repeat(epochs)
@@ -78,7 +79,7 @@ class Trainer:
 
     # Return the requested dataset.
     return (
-        data_io.load_dataset(dataset_path, split=split)
+        data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
         .filter(filter_fn)
         .repeat(epochs)
         .shuffle(1000)
