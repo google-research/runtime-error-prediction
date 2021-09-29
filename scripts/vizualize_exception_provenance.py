@@ -28,6 +28,7 @@ def exception_provenance(instruction_pointer, raise_index, raise_decisions):
   # instruction_pointer.shape: steps, num_nodes
   # raise_index.shape: scalar.
   # raise_decisions.shape: steps, num_nodes, 2
+  return None
 exception_provenance_batch = jax.vmap(exception_provenance)
 
 def main(argv):
