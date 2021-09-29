@@ -24,6 +24,12 @@ config_flags.DEFINE_config_file(
 FLAGS = flags.FLAGS
 
 
+def exception_provenance(instruction_pointer, raise_index, raise_decisions):
+  # instruction_pointer.shape: steps, num_nodes
+  # raise_index.shape: scalar.
+  # raise_decisions.shape: steps, num_nodes, 2
+exception_provenance_batch = jax.vmap(exception_provenance)
+
 def main(argv):
   del argv  # Unused.
 
@@ -51,6 +57,11 @@ def main(argv):
     state, aux = train_step(state, batch)
     print(aux)
     print(aux.keys())
+    instruction_pointer = aux['instruction_pointer']
+    raise_index = batch['raise_index']
+    raise_decisions = aux['raise_decisions']
+    exception_provenance_batch(instruction_pointer, raise_index, raise_decisions)
+
 
     # TODO(dbieber): Figure out contributions of each node to the exception node.
     # Then load source.
