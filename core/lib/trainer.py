@@ -163,9 +163,12 @@ class Trainer:
           'loss': loss,
           'global_norm': global_norm,
       }
-      if EvaluationMetric.INSTRUCTION_POINTER.value in loss_aux:
-        aux[EvaluationMetric.INSTRUCTION_POINTER.value] = (
-            loss_aux[EvaluationMetric.INSTRUCTION_POINTER.value])
+      for key in [
+          'raise_decisions',
+          EvaluationMetric.INSTRUCTION_POINTER.value,
+      ]:
+        if key in loss_aux:
+          aux[key] = loss_aux[key]
       return state, aux
     if self.config.multidevice:
       train_step = jax.pmap(
