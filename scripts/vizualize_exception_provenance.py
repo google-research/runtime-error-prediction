@@ -96,6 +96,20 @@ def set_config(config):
   return config
 
 
+def load_example(problem_id, submission_id, split):
+  python_path = codenet.get_python_path(problem_id, submission_id)
+  with open(python_path, 'r') as f:
+    source = f.read()
+  problem = process.make_runtimeerrorproblem(
+      source, error_kinds.NO_DATA,
+      # tokenizer...
+      problem_id=problem_id,
+      submission_id=submission_id
+  )
+  tf_example = data_io.to_tf_example(problem)
+  return tf_example
+
+
 def main(argv):
   del argv  # Unused.
 
@@ -107,8 +121,9 @@ def main(argv):
   info = info_lib.get_dataset_info(dataset_path)
   t = trainer.Trainer(config=config, info=info)
 
+  split = 'valid'
   dataset = t.load_dataset(
-      dataset_path=dataset_path, split='valid', include_strings=True)
+      dataset_path=dataset_path, split=split, include_strings=True)
 
   # Initialize / Load the model state.
   rng = jax.random.PRNGKey(0)
@@ -127,6 +142,7 @@ def main(argv):
     problem_ids = batch.pop('problem_id')
     submission_ids = batch.pop('submission_id')
     state, aux = train_step(state, batch)
+
     instruction_pointer = aux['instruction_pointer_orig']
     # instruction_pointer.shape: steps, batch_size, num_nodes
     instruction_pointer = jnp.transpose(instruction_pointer, [1, 0, 2])
@@ -136,6 +152,7 @@ def main(argv):
     raise_decisions = aux['raise_decisions']
     # raise_decisions.shape: steps, batch_size, num_nodes, 2
     raise_decisions = jnp.transpose(raise_decisions, [1, 0, 2, 3])
+    # raise_decisions.shape: batch_size, steps, num_nodes, 2
     contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions, raise_index)
     # contributions.shape: batch_size, num_nodes
 
@@ -150,6 +167,12 @@ def main(argv):
       prediction = int(jnp.argmax(aux['logits'][index]))
       prediction_error = error_kinds.to_error(prediction)
 
+      # Temporary for debugging high contribution scores.
+      if jnp.max(contribution) < 1:
+        continue
+      print(raise_decisions[index])
+      print(instruction_pointer[index])
+
       # Not all submissions are in the copy of the dataset in gs://project-codenet-data.
       # So we only visualize those that are in the copy.
       if os.path.exists(python_path):
@@ -161,7 +184,7 @@ def main(argv):
 
         # Visualize the data.
         print('---')
-        print(f'Problem: {problem_id} {submission_id}')
+        print(f'Problem: {problem_id} {submission_id} ({split})')
         print(f'Batch index: {index}')
         print(f'Target: {target} ({target_error})')
         print(f'Prediction: {prediction} ({prediction_error})')
