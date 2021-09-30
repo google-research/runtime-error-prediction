@@ -29,12 +29,12 @@ from core.lib import metadata
 from core.lib import metrics
 from core.lib import models
 from core.lib import optimizer_lib
-from core.lib.metrics import EvaluationMetric
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 
 Config = ml_collections.ConfigDict
+EvaluationMetric = metrics.EvaluationMetric
 
 
 class TrainState(train_state.TrainState):
@@ -48,7 +48,8 @@ class Trainer:
   info: Any
 
   def load_dataset(
-    self, dataset_path=DEFAULT_DATASET_PATH, split='train', epochs=None
+      self, dataset_path=DEFAULT_DATASET_PATH, split='train', epochs=None,
+      include_strings=False,
   ):
     config = self.config
     batch_size = config.batch_size
@@ -58,7 +59,7 @@ class Trainer:
     allowlist = config.allowlist
 
     padded_shapes = data_io.get_padded_shapes(
-        config.max_tokens, config.max_num_nodes, config.max_num_edges)
+        config.max_tokens, config.max_num_nodes, config.max_num_edges, include_strings=include_strings)
     if allowlist == 'TIER1_ERROR_IDS':
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
@@ -69,7 +70,7 @@ class Trainer:
       # Prepare a dataset with a single repeating batch.
       split = split[:-len('-batch')]
       return (
-          data_io.load_dataset(dataset_path, split=split)
+          data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
           .filter(filter_fn)
           .take(batch_size)
           .repeat(epochs)
@@ -78,7 +79,7 @@ class Trainer:
 
     # Return the requested dataset.
     return (
-        data_io.load_dataset(dataset_path, split=split)
+        data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
         .filter(filter_fn)
         .repeat(epochs)
         .shuffle(1000)
@@ -162,9 +163,13 @@ class Trainer:
           'loss': loss,
           'global_norm': global_norm,
       }
-      if EvaluationMetric.INSTRUCTION_POINTER.value in loss_aux:
-        aux[EvaluationMetric.INSTRUCTION_POINTER.value] = (
-            loss_aux[EvaluationMetric.INSTRUCTION_POINTER.value])
+      for key in [
+          'raise_decisions',
+          EvaluationMetric.INSTRUCTION_POINTER.value,
+          'instruction_pointer_orig',
+      ]:
+        if key in loss_aux:
+          aux[key] = loss_aux[key]
       return state, aux
     if self.config.multidevice:
       train_step = jax.pmap(

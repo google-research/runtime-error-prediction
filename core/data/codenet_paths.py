@@ -47,6 +47,7 @@ elif HOSTNAME == 'dev-000':
 elif HOSTNAME.startswith('t1v-'):  # TPU
   PYTHON3 = '/usr/bin/python3'
   FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids'
+  DATA_ROOT = '/mnt/project-codenet-data/Project_CodeNet/Project_CodeNet'
 
 # On TPUs, this we mount the GCS bucket "runtime-error-problems-experiments"
 # at /mnt/runtime-error-problems-experiments.

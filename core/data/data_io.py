@@ -92,8 +92,8 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
   }
 
 
-def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
-  return {
+def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=False):
+  shapes = {
       'tokens': [max_tokens],
       'edge_sources': [max_num_edges],
       'edge_dests': [max_num_edges],
@@ -111,6 +111,13 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges):
       'num_nodes': [1],
       'num_edges': [1],
   }
+  if include_strings:
+    shapes.update({
+        'problem_id': [1],
+        'submission_id': [1],
+    })
+    
+  return shapes
 
 
 def make_filter(

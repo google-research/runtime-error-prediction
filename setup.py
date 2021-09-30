@@ -20,11 +20,13 @@ DEPENDENCIES = [
 ]
 
 packages = [
+    'config',
     'core',
     'core.data',
     'core.distributed',
     'core.lib',
     'core.models',
+    'core.modules',
     'core.modules.ipagnn',
     'scripts',
     'third_party',

@@ -94,6 +94,7 @@ class IPAGNNLayer(nn.Module):
       # raise_index.shape: scalar.
       # true_indexes.shape: num_nodes
       # false_indexes.shape: num_nodes
+
       p_raise = raise_decisions[:, 0]
       p_noraise = raise_decisions[:, 1]
       # assert p_raise + p_noraise == 1
@@ -214,9 +215,19 @@ class IPAGNNLayer(nn.Module):
           lambda h1, h2: batch_mask_h(h1, h2, raise_indexes),
           hidden_state_contributions, hidden_states)
 
+      def set_values(a, value, index):
+        # a.shape: num_nodes, 2
+        # value.shape: 2.
+        # index.shape: scalar.
+        return a.at[index, :].set(value)
+      batch_set = jax.vmap(set_values, in_axes=(0, None, 0))
+
       raise_decision_logits = raise_decide(hidden_state_contributions)
       # raise_decision_logits.shape: batch_size, num_nodes, 2
       raise_decisions = nn.softmax(raise_decision_logits, axis=-1)
+      # raise_decision.shape: batch_size, num_nodes, 2
+      # Make sure you cannot raise from the exit node.
+      raise_decisions = batch_set(raise_decisions, jnp.array([0, 1]), exit_indexes)
       # raise_decision.shape: batch_size, num_nodes, 2
     else:
       raise_decisions = jnp.concatenate([
@@ -247,6 +258,7 @@ class IPAGNNLayer(nn.Module):
 
     # current_step.shape: batch_size
     # step_limits.shape: batch_size
+    instruction_pointer_orig = instruction_pointer
     hidden_states, instruction_pointer = keep_old_if_done(
         (hidden_states, instruction_pointer),
         (hidden_states_new, instruction_pointer_new),
@@ -259,6 +271,7 @@ class IPAGNNLayer(nn.Module):
     # current_step.shape: batch_size
 
     aux = {
+        'instruction_pointer_orig': instruction_pointer_orig,
         EvaluationMetric.INSTRUCTION_POINTER.value: instruction_pointer,
         'raise_decisions': raise_decisions,
         'branch_decisions': branch_decisions,
