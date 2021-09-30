@@ -170,8 +170,8 @@ def main(argv):
       # Temporary for debugging high contribution scores.
       if jnp.max(contribution) < 1:
         continue
-      print(raise_decisions[index])
-      print(instruction_pointer[index])
+      print(raise_decisions[index, :, :num_nodes, 0])
+      print(instruction_pointer[index, :, :num_nodes])
 
       # Not all submissions are in the copy of the dataset in gs://project-codenet-data.
       # So we only visualize those that are in the copy.
