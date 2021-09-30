@@ -139,7 +139,6 @@ def main(argv):
     contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions, raise_index)
     # contributions.shape: batch_size, num_nodes
 
-    found = False
     for index, (problem_id, submission_id, contribution) \
         in enumerate(zip(problem_ids, submission_ids, contributions)):
       problem_id = problem_id[0].decode('utf-8')
@@ -170,9 +169,9 @@ def main(argv):
         print(source.strip() + '\n')
         print_spans(raw)
         print(contribution[:num_nodes])
-    if found:
-      # We only visualize a single batch right now.
-      break
+        
+        # Wait for the user to press enter, then continue visualizing.
+        input()
 
 
 if __name__ == '__main__':
