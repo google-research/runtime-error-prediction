@@ -2,6 +2,7 @@
 
 Run the following to mount the project codenet raw data to disk.
 gcsfuse --implicit-dirs project-codenet-data /mnt/project-codenet-data/
+gcsfuse --implicit-dirs project-codenet-storage /mnt/project-codenet-storage/
 """
 
 import itertools
@@ -189,6 +190,11 @@ def main(argv):
         print(contribution[:num_nodes])
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
+
+        error_location = codenet.get_error_location(problem_id, submission_id)
+        if error_location is not None:
+          print(f'Error location: {error_location}')
+          print(source.split('\n')[error_location])
 
         # Wait for the user to press enter, then continue visualizing.
         input()
