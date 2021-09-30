@@ -176,6 +176,8 @@ def main(argv):
       # Temporary for debugging high contribution scores.
       total_contribution = jnp.sum(contribution)
       actual_value = instruction_pointer[index, -1, r_index]
+      max_contributor = int(jnp.argmax(contribution))
+      max_contribution = contribution[max_contributor]
 
       # Not all submissions are in the copy of the dataset in gs://project-codenet-data.
       # So we only visualize those that are in the copy.
@@ -196,6 +198,7 @@ def main(argv):
         print(source.strip() + '\n')
         print_spans(raw)
         print(contribution[:num_nodes])
+        print('Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
 
         # Wait for the user to press enter, then continue visualizing.
