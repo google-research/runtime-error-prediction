@@ -193,8 +193,8 @@ def main(argv):
 
         error_location = codenet.get_error_location(problem_id, submission_id)
         if error_location is not None:
-          print(f'Error location: {error_location}')
-          print(source.split('\n')[error_location])
+          print(f'Error location: Line {error_location}')
+          print(source.split('\n')[error_location - 1])  # -1 for line index.
 
         # Wait for the user to press enter, then continue visualizing.
         input()
