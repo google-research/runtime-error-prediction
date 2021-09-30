@@ -166,6 +166,7 @@ class Trainer:
       for key in [
           'raise_decisions',
           EvaluationMetric.INSTRUCTION_POINTER.value,
+          'instruction_pointer_orig',
       ]:
         if key in loss_aux:
           aux[key] = loss_aux[key]
