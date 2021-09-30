@@ -53,7 +53,7 @@ def get_raise_contribution(instruction_pointer, raise_decisions, raise_index, st
   # raise_contributions.shape: steps, num_nodes
   mask = jnp.arange(instruction_pointer.shape[0]) < step_limit
   # mask.shape: steps
-  raise_contributions = jnp.where(mask, raise_contribution, 0)
+  raise_contributions = jnp.where(mask[:, None], raise_contributions, 0)
   raise_contribution = jnp.sum(raise_contributions, axis=0)
   # raise_contribution.shape: num_nodes
   return raise_contribution
