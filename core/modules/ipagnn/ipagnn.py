@@ -219,7 +219,7 @@ class IPAGNNLayer(nn.Module):
         # a.shape: num_nodes, 2
         # value.shape: 2.
         # index.shape: scalar.
-        return a[index, :].set(value)
+        return a.at[index, :].set(value)
       batch_set = jax.vmap(set_values, in_axes=(0, None, 0))
 
       raise_decision_logits = raise_decide(hidden_state_contributions)
