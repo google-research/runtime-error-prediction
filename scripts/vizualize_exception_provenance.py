@@ -177,7 +177,6 @@ def main(argv):
       prediction_error = error_kinds.to_error(prediction)
       step_limit = batch['step_limit'][index]
 
-      # Temporary for debugging high contribution scores.
       total_contribution = jnp.sum(contribution)
       actual_value = instruction_pointer[index, -1, r_index]
       max_contributor = int(jnp.argmax(contribution))
