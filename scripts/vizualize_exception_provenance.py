@@ -156,7 +156,7 @@ def main(argv):
     # raise_decisions.shape: steps, batch_size, num_nodes, 2
     raise_decisions = jnp.transpose(raise_decisions, [1, 0, 2, 3])
     # raise_decisions.shape: batch_size, steps, num_nodes, 2
-    contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions, raise_index)
+    contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions, raise_index, batch['step_limit'])
     # contributions.shape: batch_size, num_nodes
 
     for index, (problem_id, submission_id, contribution) \
@@ -164,6 +164,7 @@ def main(argv):
       problem_id = problem_id[0].decode('utf-8')
       submission_id = submission_id[0].decode('utf-8')
       python_path = codenet.get_python_path(problem_id, submission_id)
+      r_index = int(raise_index[index])
       num_nodes = int(raise_index[index]) + 1
       target = int(batch['target'][index])
       target_error = error_kinds.to_error(target)
@@ -172,10 +173,8 @@ def main(argv):
       step_limit = batch['step_limit'][index]
 
       # Temporary for debugging high contribution scores.
-      if jnp.max(contribution) < 1:
-        continue
-      print(raise_decisions[index, :, :num_nodes, 0])
-      print(instruction_pointer[index, :, :num_nodes])
+      total_contribution = jnp.sum(contribution)
+      actual_value = instruction_pointer[index, -1, r_index]
 
       # Not all submissions are in the copy of the dataset in gs://project-codenet-data.
       # So we only visualize those that are in the copy.
@@ -196,7 +195,8 @@ def main(argv):
         print(source.strip() + '\n')
         print_spans(raw)
         print(contribution[:num_nodes])
-        
+        print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
+
         # Wait for the user to press enter, then continue visualizing.
         input()
 
