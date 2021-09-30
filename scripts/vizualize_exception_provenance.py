@@ -104,20 +104,6 @@ def set_config(config):
   return config
 
 
-def load_example(problem_id, submission_id, split):
-  python_path = codenet.get_python_path(problem_id, submission_id)
-  with open(python_path, 'r') as f:
-    source = f.read()
-  problem = process.make_runtimeerrorproblem(
-      source, error_kinds.NO_DATA,
-      # tokenizer...
-      problem_id=problem_id,
-      submission_id=submission_id
-  )
-  tf_example = data_io.to_tf_example(problem)
-  return tf_example
-
-
 def main(argv):
   del argv  # Unused.
 
