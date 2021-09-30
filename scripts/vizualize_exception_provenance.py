@@ -43,13 +43,16 @@ def get_raise_contribution_at_step(instruction_pointer, raise_decisions, raise_i
 get_raise_contribution_at_steps = jax.vmap(get_raise_contribution_at_step, in_axes=(0, 0, None))
 
 
-def get_raise_contribution(instruction_pointer, raise_decisions, raise_index):
+def get_raise_contribution(instruction_pointer, raise_decisions, raise_index, step_limit):
   # instruction_pointer.shape: steps, num_nodes
   # raise_decisions.shape: steps, num_nodes, 2
   # raise_index.shape: scalar.
+  # step_limit.shape: scalar.
   raise_contributions = get_raise_contribution_at_steps(
       instruction_pointer, raise_decisions, raise_index)
   # raise_contributions.shape: steps, num_nodes
+  mask = jnp.arange(instruction_pointer.shape[0]) < step_limit
+  raise_contributions = raise_contributions.at[mask, :].set(0)
   raise_contribution = jnp.sum(raise_contributions, axis=0)
   # raise_contribution.shape: num_nodes
   return raise_contribution
@@ -166,6 +169,7 @@ def main(argv):
       target_error = error_kinds.to_error(target)
       prediction = int(jnp.argmax(aux['logits'][index]))
       prediction_error = error_kinds.to_error(prediction)
+      step_limit = batch['step_limit'][index]
 
       # Temporary for debugging high contribution scores.
       if jnp.max(contribution) < 1:
