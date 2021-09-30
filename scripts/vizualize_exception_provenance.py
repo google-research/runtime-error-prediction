@@ -105,6 +105,28 @@ def set_config(config):
   return config
 
 
+def get_nodes_at_line(raw, line_number):
+  line_index = line_number - 1
+  lines = raw.source.split('\n')
+  line_starts = [0]
+  current_line_start = 0
+  for line in lines:
+    current_line_start += len(line) + 1
+    line_starts.append(current_line_start)
+
+  line_start = line_starts[line_index]
+  line_end = line_starts[line_index + 1]
+
+  overlapping_nodes = []
+  for node, (start, end) in enumerate(zip(raw.node_span_starts, raw.node_span_ends)):
+    if (line_start <= start <= line_end
+        or line_start <= end <= line_end
+        or start <= line_start <= end
+        or start <= line_end <= end):
+      overlapping_nodes.append(node)
+  return overlapping_nodes
+
+
 def main(argv):
   del argv  # Unused.
 
@@ -193,7 +215,8 @@ def main(argv):
 
         error_location = codenet.get_error_location(problem_id, submission_id)
         if error_location is not None:
-          print(f'Error location: Line {error_location}')
+          nodes_at_error = get_nodes_at_line(raw, error_location)
+          print(f'Error line: {error_location} (nodes {nodes_at_error})')
           print(source.split('\n')[error_location - 1])  # -1 for line index.
 
         # Wait for the user to press enter, then continue visualizing.
