@@ -1,4 +1,8 @@
-"""Exception provenance visualization script."""
+"""Exception provenance visualization script.
+
+Run the following to mount the project codenet raw data to disk.
+gcsfuse --implicit-dirs project-codenet-data /mnt/project-codenet-data/
+"""
 
 import itertools
 import os
@@ -198,7 +202,7 @@ def main(argv):
         print(source.strip() + '\n')
         print_spans(raw)
         print(contribution[:num_nodes])
-        print('Main contributor: Node {max_contributor} ({max_contribution})')
+        print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
 
         # Wait for the user to press enter, then continue visualizing.
