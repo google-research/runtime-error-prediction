@@ -72,7 +72,7 @@ def print_spans(raw):
 
 
 def set_config(config):
-  """This function is hardcoded to load a particular checkpoint.
+  """This function is hard-coded to load a particular checkpoint.
 
   It also sets the model part of the config to match the config of that checkpoint.
   Everything related to parameter construction must match.
