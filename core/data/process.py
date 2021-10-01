@@ -31,6 +31,7 @@ class RawRuntimeErrorProblem:
   exit_index: int
   step_limit: int
   target: int
+  target_lineno: Optional[int]
 
 
 @dataclasses.dataclass
@@ -189,6 +190,8 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
   branch_list = get_branch_list(nodes, exit_index)
   step_limit = get_step_limit(lines)
 
+  target_lineno = codenet.get_error_lineno(problem_id, submission_id)
+
   return RawRuntimeErrorProblem(
       source=source,
       problem_id=problem_id,
@@ -202,6 +205,7 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
       exit_index=exit_index,
       step_limit=step_limit,
       target=target,
+      target_lineno=target_lineno,
   )
 
 
