@@ -30,6 +30,7 @@ def to_tf_example(problem):
       'exit_index': _int64_feature([problem.exit_index]),
       'step_limit': _int64_feature([problem.step_limit]),
       'target': _int64_feature([problem.target]),
+      'target_lineno': _int64_feature([problem.target_lineno]),
       'target_node_indexes': _int64_feature(problem.target_node_indexes),
       'num_target_nodes': _int64_feature([len(problem.target_node_indexes)]),
 
@@ -56,6 +57,7 @@ def decode_fn(record_bytes, include_strings=False):
       'exit_index': _int64_scalar_feature(),
       'step_limit': _int64_scalar_feature(),
       'target': _int64_scalar_feature(),
+      'target_lineno': _int64_scalar_feature(),
       'target_node_indexes': _int64_sequence_feature(),
       'num_target_nodes': _int64_scalar_feature(),
 
@@ -84,6 +86,7 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       'exit_index': jnp.full((batch_size, 1), max_num_nodes - 1, dtype=jnp.int32),
       'step_limit': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
       'target': jnp.zeros((batch_size, 1), dtype=jnp.int32),
+      'target_lineno': jnp.ones((batch_size, 1), dtype=jnp.int32),
       'target_node_indexes': jnp.zeros((batch_size, 1), dtype=jnp.int32),
       'num_target_nodes': jnp.ones((batch_size, 1), dtype=jnp.int32),
 
@@ -115,6 +118,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
       'exit_index': [1],
       'step_limit': [1],
       'target': [1],
+      'target_lineno': [1],
       'target_node_indexes': [max_target_nodes],
       'num_target_nodes': [1],
 
