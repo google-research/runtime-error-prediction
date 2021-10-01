@@ -143,20 +143,25 @@ def process_codenet(
     if count < start_at:
       continue
 
+    python_major_version = codenet.get_python_major_version(
+        problem_id, submission_id)
+    if python_major_version != 3:
+      continue
+
     python_path = codenet.get_python_path(problem_id, submission_id)
     with open(python_path, 'r') as f:
       source = f.read()
-      error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
-      if error_kind == error_kinds.NO_DATA:
-        raise RuntimeError('No data available for python_path', python_path)
-      target = error_kinds.to_index(error_kind)
+    error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
+    if error_kind == error_kinds.NO_DATA:
+      raise RuntimeError('No data available for python_path', python_path)
+    target = error_kinds.to_index(error_kind)
+    target_lineno = codenet.get_error_lineno(problem_id, submission_id)
 
     try:
       problem = process.make_runtimeerrorproblem(
-          source, target, tokenizer=tokenizer,
+          source, target, target_lineno=target_lineno, tokenizer=tokenizer,
           problem_id=problem_id, submission_id=submission_id)
-      if problem.python_major_version == 3:
-        yield problem
+      yield problem
     except ValueError as e:
       print(f'ValueError: {python_path} - {e}')
     except SyntaxError:

@@ -174,8 +174,10 @@ def main(argv):
         found = True
         with open(python_path, 'r') as f:
           source = f.read()
+        error_lineno = codenet.get_error_lineno(problem_id, submission_id)
         raw = process.make_rawruntimeerrorproblem(
-            source, target, problem_id=problem_id, submission_id=submission_id)
+            source, target,
+            target_lineno=error_lineno, problem_id=problem_id, submission_id=submission_id)
 
         # Visualize the data.
         print('---')
@@ -190,7 +192,6 @@ def main(argv):
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
 
-        error_lineno = codenet.get_error_lineno(problem_id, submission_id)
         if error_lineno is not None:
           nodes_at_error = process.get_nodes_at_lineno(raw, error_lineno)
           print(f'Error lineno: {error_lineno} (nodes {nodes_at_error})')

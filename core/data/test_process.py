@@ -16,7 +16,9 @@ class ProcessTest(unittest.TestCase):
     source = """n = input()
 print(any(set('47') >= set(str(i)) and n % i == 0 for i in range(1, n+1)) and 'YES' or 'NO')
 """
-    problem = process.make_runtimeerrorproblem(source, '1', tokenizer=tokenizer)
+    target_lineno = 2
+    problem = process.make_runtimeerrorproblem(
+        source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
     target_tokens = [
         66, 31, 99, 84, 125, 10, 377, 10, 214, 223, 315, 222, 237, 214, 10,
         166, 10, 61, 95, 148, 66, 8, 61, 79, 18, 89, 61, 80, 104, 10, 19, 14,

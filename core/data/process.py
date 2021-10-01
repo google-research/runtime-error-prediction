@@ -22,7 +22,6 @@ class RawRuntimeErrorProblem:
   source: Text
   problem_id: Optional[Text]
   submission_id: Optional[Text]
-  python_major_version: int
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -41,7 +40,6 @@ class RuntimeErrorProblem:
   tokens: List[int]
   problem_id: Text
   submission_id: Text
-  python_major_version: int
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -145,7 +143,8 @@ def examine_udfs(graph, problem_id, submission_id):
     return 'UDFs called at most once'
 
 
-def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=None):
+def make_rawruntimeerrorproblem(
+      source, target, target_lineno=None, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
 
   Fields:
@@ -194,15 +193,10 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
   branch_list = get_branch_list(nodes, exit_index)
   step_limit = get_step_limit(lines)
 
-  target_lineno = codenet.get_error_lineno(problem_id, submission_id)
-  python_major_version = codenet.get_python_major_version(
-      problem_id, submission_id)
-
   return RawRuntimeErrorProblem(
       source=source,
       problem_id=problem_id,
       submission_id=submission_id,
-      python_major_version=python_major_version,
       edge_sources=edge_sources,
       edge_dests=edge_dests,
       edge_types=edge_types,
@@ -300,19 +294,19 @@ def get_nodes_at_lineno(raw, lineno):
   return overlapping_nodes
 
 
-def make_runtimeerrorproblem(source, target, tokenizer=None,
+def make_runtimeerrorproblem(source, target, target_lineno=None, tokenizer=None,
                              problem_id=None, submission_id=None):
   raw = make_rawruntimeerrorproblem(
-        source, target, problem_id=problem_id, submission_id=submission_id)
+        source, target, target_lineno=target_lineno,
+        problem_id=problem_id, submission_id=submission_id)
   tokenizer = tokenizer or tokenization.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
   branch_list = np.array(raw.branch_list)
-  target_node_indexes = get_nodes_at_lineno(raw, raw.target_lineno)
+  target_node_indexes = get_nodes_at_lineno(raw, target_lineno)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],
       problem_id=raw.problem_id,
       submission_id=raw.submission_id,
-      python_major_version=raw.python_major_version,
       edge_sources=raw.edge_sources,
       edge_dests=raw.edge_dests,
       edge_types=raw.edge_types,
