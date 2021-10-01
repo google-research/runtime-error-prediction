@@ -269,7 +269,7 @@ def get_branch_list(nodes, exit_index):
 
 def get_nodes_at_lineno(raw, lineno):
   if lineno is None:
-    return None
+    return []
 
   # Compute the line boundaries.
   line_index = lineno - 1
