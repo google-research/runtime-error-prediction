@@ -192,7 +192,7 @@ def main(argv):
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
 
-        if error_lineno is not None:
+        if error_lineno:
           nodes_at_error = process.get_nodes_at_lineno(raw, error_lineno)
           print(f'Error lineno: {error_lineno} (nodes {nodes_at_error})')
           print(source.split('\n')[error_lineno - 1])  # -1 for line index.

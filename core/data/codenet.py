@@ -106,6 +106,7 @@ def get_error_lineno(problem_id, submission_id):
     # We subtract 1 from the reported line number because we injected 1 line
     # in error-checker.py
     return int(match.group(1)) - 1
+  return 0  # Zero indicates no error.
 
 
 @functools.lru_cache(maxsize=32)
