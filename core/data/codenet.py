@@ -1,6 +1,7 @@
 import fire
 
 import os
+import re
 import shutil
 import subprocess
 
@@ -95,6 +96,15 @@ def get_evals_paths(problem_id, submission_id):
   stdout_path = os.path.join(evals_dir, 'stdout.txt')
   stderr_path = os.path.join(evals_dir, 'stderr.txt')
   return error_path, timeout_path, stdout_path, stderr_path
+
+
+def get_error_lineno(problem_id, submission_id):
+  error_data, timeout_data, stdout_data, stderr_data = get_submission_eval_raw(problem_id, submission_id)
+  match = re.search(r'line (\d+), in main__errorchecker__', stderr_data)
+  if match:
+    # We subtract 1 from the reported line number because we injected 1 line
+    # in error-checker.py
+    return int(match.group(1)) - 1
 
 
 def get_problem_metadata(problem_id):

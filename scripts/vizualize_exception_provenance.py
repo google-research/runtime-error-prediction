@@ -1,7 +1,7 @@
 """Exception provenance visualization script.
 
-Run the following to mount the project codenet raw data to disk.
-gcsfuse --implicit-dirs project-codenet-data /mnt/project-codenet-data/
+Run the following to mount the Project CodeNet raw data and derived outputs to disk.
+gcsfuse --implicit-dirs project-codenet-storage /mnt/project-codenet-storage/
 """
 
 import itertools
@@ -104,6 +104,28 @@ def set_config(config):
   return config
 
 
+def get_nodes_at_lineno(raw, lineno):
+  line_index = lineno - 1
+  lines = raw.source.split('\n')
+  line_starts = [0]
+  current_line_start = 0
+  for line in lines:
+    current_line_start += len(line) + 1
+    line_starts.append(current_line_start)
+
+  line_start = line_starts[line_index]
+  line_end = line_starts[line_index + 1]
+
+  overlapping_nodes = []
+  for node, (start, end) in enumerate(zip(raw.node_span_starts, raw.node_span_ends)):
+    if (line_start <= start <= line_end
+        or line_start <= end <= line_end
+        or start <= line_start <= end
+        or start <= line_end <= end):
+      overlapping_nodes.append(node)
+  return overlapping_nodes
+
+
 def main(argv):
   del argv  # Unused.
 
@@ -175,7 +197,7 @@ def main(argv):
         with open(python_path, 'r') as f:
           source = f.read()
         raw = process.make_rawruntimeerrorproblem(
-            source, 'N/A', problem_id=problem_id, submission_id=submission_id)
+            source, target, problem_id=problem_id, submission_id=submission_id)
 
         # Visualize the data.
         print('---')
@@ -189,6 +211,12 @@ def main(argv):
         print(contribution[:num_nodes])
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
+
+        error_lineno = codenet.get_error_lineno(problem_id, submission_id)
+        if error_lineno is not None:
+          nodes_at_error = get_nodes_at_lineno(raw, error_lineno)
+          print(f'Error lineno: {error_lineno} (nodes {nodes_at_error})')
+          print(source.split('\n')[error_lineno - 1])  # -1 for line index.
 
         # Wait for the user to press enter, then continue visualizing.
         input()
