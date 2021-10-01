@@ -155,7 +155,8 @@ def process_codenet(
       problem = process.make_runtimeerrorproblem(
           source, target, tokenizer=tokenizer,
           problem_id=problem_id, submission_id=submission_id)
-      yield problem
+      if problem.python_major_version == 3:
+        yield problem
     except ValueError as e:
       print(f'ValueError: {python_path} - {e}')
     except SyntaxError:

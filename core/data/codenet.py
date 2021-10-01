@@ -1,5 +1,6 @@
 import fire
 
+import functools
 import os
 import re
 import shutil
@@ -107,6 +108,7 @@ def get_error_lineno(problem_id, submission_id):
     return int(match.group(1)) - 1
 
 
+@functools.lru_cache(maxsize=32)
 def get_problem_metadata(problem_id):
   metadata_path = get_metadata_path(problem_id)
   with open(metadata_path, 'r') as f:
@@ -130,6 +132,30 @@ def get_problem_metadata(problem_id):
 def get_submission_metadata(problem_id, submission_id):
   metadata = get_problem_metadata(problem_id)
   return metadata.get(submission_id)
+
+
+def get_python_major_version(problem_id, submission_id):
+  submission_metadata = get_submission_metadata(problem_id, submission_id)
+  original_language = submission_metadata['original_language']
+  if original_language in [
+      'Python',
+      'Python (2.7.3)',
+      'Python (2.7.6)',
+      'PyPy2 (5.6.0)',
+      'PyPy2 (7.3.0)',
+  ]:
+    return 2
+  elif original_language in [
+      'Python3',
+      'Python (3.4.2)',
+      'Python (3.4.3)',
+      'Python (3.8.2)'
+      'PyPy3 (2.4.0)',
+      'PyPy3 (7.3.0)',
+  ]:
+    return 3
+  else:
+    return None
 
 
 def read(path):

@@ -22,6 +22,7 @@ class RawRuntimeErrorProblem:
   source: Text
   problem_id: Optional[Text]
   submission_id: Optional[Text]
+  python_major_version: int
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -40,6 +41,7 @@ class RuntimeErrorProblem:
   tokens: List[int]
   problem_id: Text
   submission_id: Text
+  python_major_version: int
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
@@ -51,6 +53,8 @@ class RuntimeErrorProblem:
   exit_index: int
   step_limit: int
   target: int
+  target_lineno: Optional[int]
+  target_node_indexes: List[int]
 
 
 def get_character_index(source, lineno, col_offset):
@@ -191,11 +195,14 @@ def make_rawruntimeerrorproblem(source, target, problem_id=None, submission_id=N
   step_limit = get_step_limit(lines)
 
   target_lineno = codenet.get_error_lineno(problem_id, submission_id)
+  python_major_version = codenet.get_python_major_version(
+      problem_id, submission_id)
 
   return RawRuntimeErrorProblem(
       source=source,
       problem_id=problem_id,
       submission_id=submission_id,
+      python_major_version=python_major_version,
       edge_sources=edge_sources,
       edge_dests=edge_dests,
       edge_types=edge_types,
@@ -266,6 +273,33 @@ def get_branch_list(nodes, exit_index):
   return branches
 
 
+def get_nodes_at_lineno(raw, lineno):
+  if lineno is None:
+    return None
+
+  # Compute the line boundaries.
+  line_index = lineno - 1
+  lines = raw.source.split('\n')
+  line_starts = [0]
+  current_line_start = 0
+  for line in lines:
+    current_line_start += len(line) + 1
+    line_starts.append(current_line_start)
+
+  line_start = line_starts[line_index]
+  line_end = line_starts[line_index + 1]
+
+  # Determine which nodes intersect the line.
+  overlapping_nodes = []
+  for node, (start, end) in enumerate(zip(raw.node_span_starts, raw.node_span_ends)):
+    if (line_start <= start <= line_end
+        or line_start <= end <= line_end
+        or start <= line_start <= end
+        or start <= line_end <= end):
+      overlapping_nodes.append(node)
+  return overlapping_nodes
+
+
 def make_runtimeerrorproblem(source, target, tokenizer=None,
                              problem_id=None, submission_id=None):
   raw = make_rawruntimeerrorproblem(
@@ -273,10 +307,12 @@ def make_runtimeerrorproblem(source, target, tokenizer=None,
   tokenizer = tokenizer or tokenization.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
   branch_list = np.array(raw.branch_list)
+  target_node_indexes = get_nodes_at_lineno(raw, raw.target_lineno)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],
       problem_id=raw.problem_id,
       submission_id=raw.submission_id,
+      python_major_version=raw.python_major_version,
       edge_sources=raw.edge_sources,
       edge_dests=raw.edge_dests,
       edge_types=raw.edge_types,
@@ -288,6 +324,8 @@ def make_runtimeerrorproblem(source, target, tokenizer=None,
       exit_index=raw.exit_index,
       step_limit=raw.step_limit,
       target=raw.target,
+      target_lineno=raw.target_lineno,
+      target_node_indexes=target_node_indexes,
   )
 
 
