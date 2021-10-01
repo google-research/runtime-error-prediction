@@ -98,7 +98,7 @@ def get_evals_paths(problem_id, submission_id):
   return error_path, timeout_path, stdout_path, stderr_path
 
 
-def get_error_location(problem_id, submission_id):
+def get_error_lineno(problem_id, submission_id):
   error_data, timeout_data, stdout_data, stderr_data = get_submission_eval_raw(problem_id, submission_id)
   match = re.search(r'line (\d+), in main__errorchecker__', stderr_data)
   if match:
