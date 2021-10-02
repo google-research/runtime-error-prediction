@@ -144,7 +144,7 @@ def examine_udfs(graph, problem_id, submission_id):
 
 
 def make_rawruntimeerrorproblem(
-      source, target, target_lineno=None, problem_id=None, submission_id=None):
+    source, target, target_lineno=None, problem_id=None, submission_id=None):
   """Constructs a RawRuntimeErrorProblem from the provided source and target.
 
   Fields:
