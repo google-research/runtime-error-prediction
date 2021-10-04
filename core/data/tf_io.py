@@ -28,4 +28,3 @@ def int64_sequence_feature():
 
 def string_scalar_feature():
   return tf.io.FixedLenFeature([1], dtype=tf.string)
-

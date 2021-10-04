@@ -18,7 +18,7 @@ ERROR_KINDS = [
     'MemoryError',
     'ModuleNotFoundError',
     'NameError',  # index = 16
-    'OSError', # Bad file descriptor
+    'OSError',  # Bad file descriptor
     'OverflowError',
     're.error',  # nothing to repeat at position 0
     'RecursionError',
