@@ -12,7 +12,7 @@ DEPENDENCIES = [
     'jaxlib>=0.1.69',
     'matplotlib',
     'ml_collections',
-    'python-graphs>=1.0.0',
+    'python-graphs>=1.0.2',
     'sklearn',
     'tensorflow',
     'tensorflow_datasets',
