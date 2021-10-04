@@ -252,7 +252,7 @@ def get_branch_list(nodes, exit_index):
   indexes_by_id[id(None)] = exit_index
   branches = []
   for node in nodes:
-    node_branches = node.branches
+    node_branches = node.branches | node.except_branches | node.reraise_branches
     if node_branches:
       branches.append([indexes_by_id[id(node_branches[True])],
                        indexes_by_id[id(node_branches[False])]])
