@@ -27,23 +27,29 @@ def get_source_and_target_for_submission(problem_id, submission_id):
 def make_runtimeerrorproblem_for_submission(problem_id, submission_id, tokenizer=None):
   """Constructs a RuntimeErrorProblem from the provided problem_id and submission_id."""
   source, target = get_source_and_target_for_submission(problem_id, submission_id)
+  target_lineno = codenet.get_error_lineno(problem_id, submission_id)
   return process.make_runtimeerrorproblem(
-      source, target, tokenizer=tokenizer, problem_id=problem_id, submission_id=submission_id)
+      source, target, target_lineno=target_lineno,
+      tokenizer=tokenizer, problem_id=problem_id, submission_id=submission_id)
 
 
 def make_rawruntimeerrorproblem_for_submission(problem_id, submission_id):
   """Constructs a RawRuntimeErrorProblem from the provided problem_id and submission_id."""
   source, target = get_source_and_target_for_submission(problem_id, submission_id)
+  target_lineno = codenet.get_error_lineno(problem_id, submission_id)
   return process.make_rawruntimeerrorproblem(
-      source, target, problem_id=problem_id, submission_id=submission_id)
+      source, target, target_lineno=target_lineno,
+      problem_id=problem_id, submission_id=submission_id)
 
 
 def get_spans(problem_id, submission_id, tokenizer_path=DEFAULT_TOKENIZER_PATH):
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
   source, target = get_source_and_target_for_submission(problem_id, submission_id)
+  target_lineno = codenet.get_error_lineno(problem_id, submission_id)
 
   problem = process.make_runtimeerrorproblem(
-      source, target, tokenizer=tokenizer, problem_id=problem_id, submission_id=submission_id)
+      source, target, target_lineno=target_lineno,
+      tokenizer=tokenizer, problem_id=problem_id, submission_id=submission_id)
 
   print(source)
   tokens = tokenizer.convert_ids_to_tokens(problem.tokens)

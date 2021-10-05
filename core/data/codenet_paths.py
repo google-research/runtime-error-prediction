@@ -5,8 +5,8 @@ import socket
 import time
 
 DEFAULT_CONFIG_PATH = 'config/default.py'
-DEFAULT_DATASET_PATH = 'datasets/codenet/f=0.01-noudf'
-TEST_DATASET_PATH = 'datasets/codenet/f=0.01-noudf'
+DEFAULT_DATASET_PATH = 'datasets/codenet/2021-10-01-f=0.01'
+TEST_DATASET_PATH = 'datasets/codenet/2021-10-01-f=0.01'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
@@ -42,8 +42,8 @@ elif HOSTNAME == 'code-executor-001':
   EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 elif HOSTNAME == 'dev-000':
   PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
-  DATA_ROOT = '/home/veetee/Project_CodeNet/'
-  EVALS_ROOT = '/home/veetee/out/evals'
+  # DATA_ROOT = '/home/veetee/Project_CodeNet/'
+  # EVALS_ROOT = '/home/veetee/out/evals'
 elif HOSTNAME.startswith('t1v-'):  # TPU
   PYTHON3 = '/usr/bin/python3'
   FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids'
