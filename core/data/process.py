@@ -28,6 +28,7 @@ class RawRuntimeErrorProblem:
   node_span_starts: List[int]
   node_span_ends: List[int]
   branch_list: List[List[int]]
+  raises_list: List[int]
   exit_index: int
   step_limit: int
   target: int
@@ -48,6 +49,7 @@ class RuntimeErrorProblem:
   token_node_indexes: List[int]
   true_branch_nodes: List[int]
   false_branch_nodes: List[int]
+  raise_nodes: List[int]
   exit_index: int
   step_limit: int
   target: int
@@ -191,6 +193,7 @@ def make_rawruntimeerrorproblem(
       edge_types.append(0)
 
   branch_list = get_branch_list(nodes, exit_index)
+  raises_list = get_raises_list(nodes, exit_index)
   step_limit = get_step_limit(lines)
 
   return RawRuntimeErrorProblem(
@@ -203,6 +206,7 @@ def make_rawruntimeerrorproblem(
       node_span_starts=node_span_starts,
       node_span_ends=node_span_ends,
       branch_list=branch_list,
+      raises_list=raises_list,
       exit_index=exit_index,
       step_limit=step_limit,
       target=target,
@@ -248,7 +252,9 @@ def get_branch_list(nodes, exit_index):
   indexes_by_id[id(None)] = exit_index
   branches = []
   for node in nodes:
-    node_branches = node.branches
+    node_branches = node.get_branches(
+        include_except_branches=True,
+        include_reraise_branches=True)
     if node_branches:
       branches.append([indexes_by_id[id(node_branches[True])],
                        indexes_by_id[id(node_branches[False])]])
@@ -259,12 +265,46 @@ def get_branch_list(nodes, exit_index):
       except StopIteration:
         next_index = exit_index
       branches.append([next_index, next_index])
+  # TODO(dbieber): Write a test to make sure branches out of finally blocks are
+  # present and consistent.
 
   # Finally we add branches from the exit node to itself.
   # Omit this if running on BasicBlocks rather than ControlFlowNodes, because
   # ControlFlowGraphs have an exit BasicBlock, but no exit ControlFlowNodes.
   branches.append([exit_index, exit_index])
   return branches
+
+
+def get_raises_list(nodes, exit_index):
+  """Compute the "raises list" for the control flow graph.
+
+  Args:
+    nodes: A list of control_flow.ControlFlowNodes.
+    exit_index: The index of the exit node. The top-level "raise index" is assumed
+      to be exit_index + 1.
+  Returns:
+    A Python list indicating where each node would directly raise to if it were to
+    raise an exception.
+  """
+  raise_index = exit_index + 1
+  indexes_by_id = {
+      id(node): index for index, node in enumerate(nodes)
+  }
+  raises_list = []
+  for node in nodes:
+    exits_from_middle = node.block.exits_from_middle
+    assert len(exits_from_middle) <= 1
+    if exits_from_middle:
+      raise_block = next(iter(exits_from_middle))
+      if raise_block.label == '<raise>':
+        index = raise_index
+      else:
+        raise_node = raise_block.control_flow_nodes[0]
+        index = indexes_by_id[id(raise_node)]
+    else:
+      index = raise_index
+    raises_list.append(index)
+  return raises_list
 
 
 def get_nodes_at_lineno(raw, lineno):
@@ -315,6 +355,7 @@ def make_runtimeerrorproblem(source, target, target_lineno=None, tokenizer=None,
       token_node_indexes=token_data['token_node_indexes'],
       true_branch_nodes=branch_list[:, 0],
       false_branch_nodes=branch_list[:, 1],
+      raise_nodes=raw.raises_list,
       exit_index=raw.exit_index,
       step_limit=raw.step_limit,
       target=raw.target,
