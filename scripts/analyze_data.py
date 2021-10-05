@@ -90,7 +90,7 @@ Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_i
 Source: {source}""")
       tokens = tokenizer.convert_ids_to_tokens(example['tokens'])
       for i, (span_start, span_end, raise_node) in enumerate(zip(span_starts, span_ends, raise_nodes)):
-        print(f"""Span: {tokens[span_start:span_end + 1]}   ({raise_node})""")
+        print(f"""Span {i} (--> {raise_node}): {' '.join(tokens[span_start:span_end + 1])}""")
 
   def run_counter(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
