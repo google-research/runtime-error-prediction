@@ -250,19 +250,33 @@ def get_branch_list(nodes, exit_index):
       id(node): index for index, node in enumerate(nodes)
   }
   indexes_by_id[id(None)] = exit_index
+  raise_index = exit_index + 1
   branches = []
   for node in nodes:
     node_branches = node.get_branches(
         include_except_branches=True,
         include_reraise_branches=True)
     if node_branches:
-      branches.append([indexes_by_id[id(node_branches[True])],
-                       indexes_by_id[id(node_branches[False])]])
+      true_branch = node_branches[True]
+      false_branch = node_branches[False]
+      if true_branch.label == '<raise>':
+        true_index  = raise_index
+      else:
+        true_index = indexes_by_id[id(true_branch)]
+      if false_branch.label == '<raise>':
+        false_index  = raise_index
+      else:
+        false_index = indexes_by_id[id(false_branch)]
+      branches.append([true_index, false_index])
     else:
       try:
         next_node = next(iter(node.next))
-        next_index = indexes_by_id[id(next_node)]
+        if next_node.label == '<raise>':
+          next_index = raise_index
+        else:
+          next_index = indexes_by_id[id(next_node)]
       except StopIteration:
+        print('No next node found.')
         next_index = exit_index
       branches.append([next_index, next_index])
   # TODO(dbieber): Write a test to make sure branches out of finally blocks are
