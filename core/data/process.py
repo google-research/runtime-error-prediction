@@ -274,14 +274,21 @@ def get_branch_list(nodes, exit_index):
 
       branches.append([true_index, false_index])
     else:
-      try:
-        next_node = next(iter(node.next))
-        next_index = indexes_by_id[id(next_node)]
-      except StopIteration:
-        next_index = exit_index
+      next_nodes = node.next_from_end
+      assert len(next_nodes) <= 1
+      if next_nodes:
+        next_node = next(iter(next_nodes))
+        if next_node == '<raise>':
+          next_index = raise_index
+        elif next_node == '<exit>':
+          next_index = exit_index
+        else:
+          next_index = indexes_by_id[id(next_node)]
+      else:
+        # NOTE(dbieber): We are sending the true and false branches of a raise node
+        # to itself. We may wish to change this behavior.
+        next_index = indexes_by_id[id(node)]
       branches.append([next_index, next_index])
-  # TODO(dbieber): Write a test to make sure branches out of finally blocks are
-  # present and consistent.
 
   # Finally we add branches from the exit node to itself.
   # Omit this if running on BasicBlocks rather than ControlFlowNodes, because
@@ -319,6 +326,10 @@ def get_raises_list(nodes, exit_index):
     else:
       index = raise_index
     raises_list.append(index)
+
+  # Finally we add an unused raise edge from the exit node to the raise node.
+  # The raise edge from the raise node will be added later.
+  raises_list.append(raise_index)
   return raises_list
 
 

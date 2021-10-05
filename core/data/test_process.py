@@ -39,5 +39,119 @@ print(any(set('47') >= set(str(i)) and n % i == 0 for i in range(1, n+1)) and 'Y
     self.assertEqual(problem.token_node_indexes, target_token_node_indexes)
 
 
+  def test_make_runtimeerrorproblem_try_except(self):
+    tokenizer = tokenization.load_tokenizer()
+    source = """while True:
+    try:
+        a,b = map(int,input().split())
+        print(len(str(a+b)))
+    except EOFError:
+        break
+"""
+    target_lineno = 0
+    problem = process.make_runtimeerrorproblem(
+        source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
+    exit_index = problem.exit_index
+    raise_index = exit_index + 1
+    self.assertEqual(exit_index, 4)
+    self.assertEqual(raise_index, 5)
+    self.assertEqual(problem.raise_nodes, [5, 3, 3, 5, 5])
+
+    # 0: True
+    # 1: a,b = map(int,input().split())
+    # 2: print(len(str(a+b)))
+    # 3: EOFError
+    # 4: <exit>
+    # 5: <raise>
+
+    self.assertEqual(problem.true_branch_nodes.tolist(), [1, 2, 0, 4, 4])
+    self.assertEqual(problem.false_branch_nodes.tolist(), [4, 2, 0, 5, 4])
+
+  def test_make_runtimeerrorproblem_raise(self):
+    tokenizer = tokenization.load_tokenizer()
+    source = """while True:
+    try:
+        a,b = map(int,input().split())
+        raise ValueError()
+    except EOFError:
+        break
+"""
+    target_lineno = 0
+    problem = process.make_runtimeerrorproblem(
+        source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
+    exit_index = problem.exit_index
+    raise_index = exit_index + 1
+    self.assertEqual(exit_index, 4)
+    self.assertEqual(raise_index, 5)
+    self.assertEqual(problem.raise_nodes, [5, 3, 3, 5, 5])
+
+    # 0: True
+    # 1: a,b = map(int,input().split())
+    # 2: raise ValueError()
+    # 3: EOFError
+    # 4: <exit>
+    # 5: <raise>
+
+    # NOTE(dbieber): We are sending the true and false branches of a raise node
+    # to itself. We may wish to change this behavior.
+    self.assertEqual(problem.true_branch_nodes.tolist(), [1, 2, 2, 4, 4])
+    self.assertEqual(problem.false_branch_nodes.tolist(), [4, 2, 2, 5, 4])
+
+  def test_make_runtimeerrorproblem_straight_line_code(self):
+    tokenizer = tokenization.load_tokenizer()
+    source = """
+x = 1
+y = x + 2
+z = y * 3
+"""
+    target_lineno = 0
+    problem = process.make_runtimeerrorproblem(
+        source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
+    exit_index = problem.exit_index
+    raise_index = exit_index + 1
+
+    # 0: x = 1
+    # 1: y = x + 2
+    # 2: z = y * 3
+    # 3: <exit>
+    # 4: <raise>
+
+    self.assertEqual(exit_index, 3)
+    self.assertEqual(raise_index, 4)
+    self.assertEqual(problem.raise_nodes, [4, 4, 4, 4])
+    self.assertEqual(problem.true_branch_nodes.tolist(), [1, 2, 3, 3])
+    self.assertEqual(problem.false_branch_nodes.tolist(), [1, 2, 3, 3])
+
+  def test_make_runtimeerrorproblem_nested_while_loops(self):
+    tokenizer = tokenization.load_tokenizer()
+    source = """
+x = 1
+while x < 2:
+  y = 3
+  while y < 4:
+    y += 5
+  x += 6
+"""
+    target_lineno = 0
+    problem = process.make_runtimeerrorproblem(
+        source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
+    exit_index = problem.exit_index
+    raise_index = exit_index + 1
+
+    # 0: x = 1
+    # 1: x < 2  # while
+    # 2:   y = 3
+    # 3:   y < 4  # while
+    # 4:     y += 5
+    # 5:   x += 6
+    # 6: <exit>
+    # 7: <raise>
+
+    self.assertEqual(exit_index, 6)
+    self.assertEqual(raise_index, 7)
+    self.assertEqual(problem.raise_nodes, [7, 7, 7, 7, 7, 7, 7])
+    self.assertEqual(problem.true_branch_nodes.tolist(), [1, 2, 3, 4, 3, 1, 6])
+    self.assertEqual(problem.false_branch_nodes.tolist(), [1, 6, 3, 5, 3, 1, 6])
+
 if __name__ == '__main__':
   unittest.main()
