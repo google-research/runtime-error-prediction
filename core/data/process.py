@@ -249,7 +249,6 @@ def get_branch_list(nodes, exit_index):
   indexes_by_id = {
       id(node): index for index, node in enumerate(nodes)
   }
-  indexes_by_id[id(None)] = exit_index
   raise_index = exit_index + 1
   branches = []
   for node in nodes:
@@ -259,22 +258,25 @@ def get_branch_list(nodes, exit_index):
     if node_branches:
       true_branch = node_branches[True]
       false_branch = node_branches[False]
-      if true_branch.label == '<raise>':
-        true_index  = raise_index
+      if true_branch == '<raise>':
+        true_index = raise_index
+      elif true_branch == '<exit>':
+        true_index = exit_index
       else:
         true_index = indexes_by_id[id(true_branch)]
-      if false_branch.label == '<raise>':
-        false_index  = raise_index
+
+      if false_branch == '<raise>':
+        false_index = raise_index
+      elif false_branch == '<exit>':
+        false_index = exit_index
       else:
         false_index = indexes_by_id[id(false_branch)]
+
       branches.append([true_index, false_index])
     else:
       try:
         next_node = next(iter(node.next))
-        if next_node.label == '<raise>':
-          next_index = raise_index
-        else:
-          next_index = indexes_by_id[id(next_node)]
+        next_index = indexes_by_id[id(next_node)]
       except StopIteration:
         print('No next node found.')
         next_index = exit_index
