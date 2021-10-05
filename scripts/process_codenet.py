@@ -174,6 +174,7 @@ def process_codenet(
       print(f'RuntimeError: {python_path}')
     except AttributeError:
       print(f'AttributeError: {python_path}')
+      raise
     except AssertionError:
       print(f'AssertionError: {python_path}')
     except:
