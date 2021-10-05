@@ -4,7 +4,6 @@ Run the following to mount the Project CodeNet raw data and derived outputs to d
 gcsfuse --implicit-dirs project-codenet-storage /mnt/project-codenet-storage/
 """
 
-import itertools
 import os
 
 from absl import app
