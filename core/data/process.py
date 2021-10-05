@@ -278,7 +278,6 @@ def get_branch_list(nodes, exit_index):
         next_node = next(iter(node.next))
         next_index = indexes_by_id[id(next_node)]
       except StopIteration:
-        print('No next node found.')
         next_index = exit_index
       branches.append([next_index, next_index])
   # TODO(dbieber): Write a test to make sure branches out of finally blocks are
