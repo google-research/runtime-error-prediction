@@ -252,7 +252,9 @@ def get_branch_list(nodes, exit_index):
   indexes_by_id[id(None)] = exit_index
   branches = []
   for node in nodes:
-    node_branches = node.branches | node.except_branches | node.reraise_branches
+    node_branches = node.get_branches(
+        include_except_branches=True,
+        include_reraise_branches=True)
     if node_branches:
       branches.append([indexes_by_id[id(node_branches[True])],
                        indexes_by_id[id(node_branches[False])]])
@@ -294,8 +296,11 @@ def get_raises_list(nodes, exit_index):
     assert len(exits_from_middle) <= 1
     if exits_from_middle:
       raise_block = next(iter(exits_from_middle))
-      raise_node = raise_block.control_flow_nodes[0]
-      index = indexes_by_id[id(raise_node)]
+      if raise_block.label == '<raise>':
+        index = raise_index
+      else:
+        raise_node = raise_block.control_flow_nodes[0]
+        index = indexes_by_id[id(raise_node)]
     else:
       index = raise_index
     raises_list.append(index)
