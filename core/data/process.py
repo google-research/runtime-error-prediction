@@ -309,6 +309,8 @@ def get_branch_list(nodes, exit_index):
         elif next_node == '<exit>':
           next_index = exit_index
         else:
+          if id(next_node) not in indexes_by_id:
+            print(next_node)
           next_index = indexes_by_id[id(next_node)]
       else:
         # NOTE(dbieber): We are sending the true and false branches of a raise node
