@@ -163,9 +163,10 @@ def process_codenet(
           problem_id=problem_id, submission_id=submission_id)
       yield problem
     except ValueError as e:
-      if str(e) != 'UDF not currently supported.':
-        print(f'ValueError: {python_path}')
-        raise
+      if str(e) == 'UDF not currently supported.':
+        continue
+      print(f'ValueError: {python_path}')
+      raise
     except SyntaxError:
       # print(f'SyntaxError: {python_path}')
       pass
@@ -173,9 +174,12 @@ def process_codenet(
       print(f'IndexError: {python_path}')
       raise
     except RuntimeError as e:
-      if str(e) != 'return occurs outside of a function frame.':
-        print(f'RuntimeError: {python_path} - {e}')
-        raise
+      if str(e).startswith('maximum recursion depth exceeded while calling a Python object'):  # e.g. p03107/Python/s405509758.py
+        continue
+      if str(e) == 'return occurs outside of a function frame.':
+        continue
+      print(f'RuntimeError: {python_path} - {e}')
+      raise
     except AttributeError as e:
       print(f'AttributeError: {python_path} - {e}')
       raise
