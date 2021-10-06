@@ -173,8 +173,9 @@ def process_codenet(
       print(f'IndexError: {python_path}')
       raise
     except RuntimeError as e:
-      # Could be "return occurs outside of a function frame".
-      print(f'RuntimeError: {python_path} - {e}')
+      if str(e) != 'return occurs outside of a function frame.':
+        print(f'RuntimeError: {python_path} - {e}')
+        raise
     except AttributeError as e:
       print(f'AttributeError: {python_path} - {e}')
       raise
