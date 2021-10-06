@@ -179,6 +179,8 @@ after0
     raw = process.make_rawruntimeerrorproblem(
         source, '1', target_lineno=target_lineno)
     print_spans(raw)
+    raise
+    
     problem = process.make_runtimeerrorproblem(
         source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
     start_index = problem.start_index

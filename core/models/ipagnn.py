@@ -59,6 +59,7 @@ class IPAGNN(nn.Module):
         edge_types=x['edge_types'],
         true_indexes=x['true_branch_nodes'],
         false_indexes=x['false_branch_nodes'],
+        start_indexes=x['start_index'],
         exit_indexes=x['exit_index'],
         step_limits=x['step_limit'],
     )

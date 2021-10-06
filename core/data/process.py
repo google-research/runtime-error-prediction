@@ -6,6 +6,7 @@ from typing import List, Optional, Text
 import bisect
 import collections
 import dataclasses
+import re
 
 import fire
 import gast as ast
@@ -66,17 +67,28 @@ def get_character_index(source, lineno, col_offset):
   return line_start + col_offset
 
 
-def get_span(instruction):
+def get_span(instruction, source):
   ast_node = instruction.node
   if instruction.source == instruction_module.EXCEPTION:
     # Caution: Leaky abstraction.
+    # This is an exception write, e.g. the write to `value` in "except Exception as value:".
     # The accesses of an exception node are defined in control_flow's handle_ExceptHandler.
-    # TODO(dbieber): Add parent accessor to instruction module.
+    name_node = instruction.node  # A Name, Tuple, or List AST node.
     parent = instruction.accesses[0][-1]  # An AST ExceptHandler node.
     lineno = parent.lineno
     col_offset = parent.col_offset
-    end_lineno = parent.end_lineno
-    end_col_offset = parent.end_col_offset
+    end_lineno = parent.body[0].lineno
+    end_col_offset = parent.body[0].col_offset
+    extended_span_start = get_character_index(source, lineno, col_offset)
+    extended_span_end = get_character_index(source, end_lineno, end_col_offset)
+    match = re.search(r'\bas\b', source[extended_span_start:extended_span_end])
+    after_as = extended_span_start + match.span()[1]
+    untrimmed = source[after_as:extended_span_end]
+    leading_spaces = len(untrimmed) - len(untrimmed.lstrip())
+    trailing_spaces = len(untrimmed) - len(untrimmed.rstrip())
+    span_start = after_as + leading_spaces
+    span_end = extended_span_end - trailing_spaces
+    return span_start, span_end
   elif instruction.source == instruction_module.ARGS:
     arg0 = instruction.accesses[0][1]
     argN = instruction.accesses[-1][1]
@@ -89,7 +101,10 @@ def get_span(instruction):
     col_offset = ast_node.col_offset
     end_lineno = ast_node.end_lineno
     end_col_offset = ast_node.end_col_offset
-  return lineno, col_offset, end_lineno, end_col_offset
+
+  span_start = get_character_index(source, lineno, col_offset)
+  span_end = get_character_index(source, end_lineno, end_col_offset)
+  return span_start, span_end
 
 
 def examine_udfs(graph, problem_id, submission_id):
@@ -181,9 +196,7 @@ def make_rawruntimeerrorproblem(
   for node_index, node in enumerate(nodes):
     node_indexes[node.uuid] = node_index
 
-    lineno, col_offset, end_lineno, end_col_offset = get_span(node.instruction)
-    node_span_start = get_character_index(source, lineno, col_offset)
-    node_span_end = get_character_index(source, end_lineno, end_col_offset)
+    node_span_start, node_span_end = get_span(node.instruction, source)
     node_span_starts.append(node_span_start)
     node_span_ends.append(node_span_end)
 

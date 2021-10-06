@@ -313,6 +313,7 @@ class IPAGNNModule(nn.Module):
       edge_types,
       true_indexes,
       false_indexes,
+      start_indexes,
       exit_indexes,
       step_limits,
   ):
@@ -376,11 +377,9 @@ class IPAGNNModule(nn.Module):
         jax.random.PRNGKey(0),
         (batch_size, num_nodes,), hidden_size)
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
-    instruction_pointer = jax.ops.index_add(
-        jnp.zeros((batch_size, num_nodes,)),
-        jax.ops.index[:, 0],  # TODO(dbieber): Use "start_indexes" instead of 0.
-        1
-    )
+    def make_instruction_pointer(start_index):
+      return jnp.zeros((num_nodes,)).at[start_index].set(1)
+    instruction_pointer = jax.vmap(make_instruction_pointer)(start_indexes)
     # instruction_pointer.shape: batch_size, num_nodes
 
     # Run self.max_steps steps of IPAGNNLayer.
