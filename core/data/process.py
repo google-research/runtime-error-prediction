@@ -29,6 +29,7 @@ class RawRuntimeErrorProblem:
   node_span_ends: List[int]
   branch_list: List[List[int]]
   raises_list: List[int]
+  start_index: int
   exit_index: int
   step_limit: int
   target: int
@@ -50,6 +51,7 @@ class RuntimeErrorProblem:
   true_branch_nodes: List[int]
   false_branch_nodes: List[int]
   raise_nodes: List[int]
+  start_index: int
   exit_index: int
   step_limit: int
   target: int
@@ -161,6 +163,9 @@ def make_rawruntimeerrorproblem(
   lines = source.strip().split('\n')
   nodes = graph.nodes
 
+  start_node = graph.get_start_control_flow_node()
+  start_index = nodes.index(start_node)
+
   udf_usage = examine_udfs(graph, problem_id, submission_id)
   if udf_usage != 'No UDFs called':
     raise ValueError('UDF not currently supported.')
@@ -207,6 +212,7 @@ def make_rawruntimeerrorproblem(
       node_span_ends=node_span_ends,
       branch_list=branch_list,
       raises_list=raises_list,
+      start_index=start_index,
       exit_index=exit_index,
       step_limit=step_limit,
       target=target,
@@ -382,6 +388,7 @@ def make_runtimeerrorproblem(source, target, target_lineno=None, tokenizer=None,
       true_branch_nodes=branch_list[:, 0],
       false_branch_nodes=branch_list[:, 1],
       raise_nodes=raw.raises_list,
+      start_index=raw.start_index,
       exit_index=raw.exit_index,
       step_limit=raw.step_limit,
       target=raw.target,
