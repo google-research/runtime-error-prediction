@@ -178,6 +178,8 @@ def process_codenet(
         continue
       if str(e) == 'return occurs outside of a function frame.':
         continue
+      if str(e) == 'break occurs outside of a loop frame.':
+        continue
       print(f'RuntimeError: {python_path} - {e}')
       raise
     except AttributeError as e:
