@@ -163,22 +163,23 @@ def process_codenet(
           problem_id=problem_id, submission_id=submission_id)
       yield problem
     except ValueError as e:
-      print(f'ValueError: {python_path}')
       if str(e) != 'UDF not currently supported.':
+        print(f'ValueError: {python_path}')
         raise
     except SyntaxError:
-      print(f'SyntaxError: {python_path}')
+      # print(f'SyntaxError: {python_path}')
+      pass
     except IndexError:
       print(f'IndexError: {python_path}')
       raise
-    except RuntimeError:
+    except RuntimeError as e:
       # Could be "return occurs outside of a function frame".
-      print(f'RuntimeError: {python_path}')
-    except AttributeError:
-      print(f'AttributeError: {python_path}')
+      print(f'RuntimeError: {python_path} - {e}')
+    except AttributeError as e:
+      print(f'AttributeError: {python_path} - {e}')
       raise
-    except AssertionError:
-      print(f'AssertionError: {python_path}')
+    except AssertionError as e:
+      print(f'AssertionError: {python_path} - {e}')
     except:
       print(f'Unexpected error: {python_path}')
       # raise
