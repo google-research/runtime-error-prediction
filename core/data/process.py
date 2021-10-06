@@ -157,7 +157,6 @@ def examine_udfs(graph, problem_id, submission_id):
     for f in calls_by_function_name:
       if calls_by_function_name[f] == n:
         break
-    print(f'Calling function {f} {n} times')
     return 'Function called more than once'
   elif total_function_calls == 0:
     return 'No UDFs called'
@@ -181,9 +180,6 @@ def make_rawruntimeerrorproblem(
   lines = source.strip().split('\n')
   nodes = graph.nodes
 
-  start_node = graph.get_start_control_flow_node()
-  start_index = nodes.index(start_node)
-
   udf_usage = examine_udfs(graph, problem_id, submission_id)
   if udf_usage != 'No UDFs called':
     raise ValueError('UDF not currently supported.')
@@ -191,6 +187,14 @@ def make_rawruntimeerrorproblem(
   # cfg.nodes does not include an exit node, so we add 1.
   num_nodes = len(nodes) + 1
   exit_index = len(nodes)
+
+  start_node = graph.get_start_control_flow_node()
+  if start_node == '<exit>':
+    start_index = exit_index
+  elif start_node == '<raise>':
+    start_index = exit_index + 1
+  else:
+    start_index = nodes.index(start_node)
 
   # node_span_starts and node_span_ends
   node_span_starts = []

@@ -163,7 +163,9 @@ def process_codenet(
           problem_id=problem_id, submission_id=submission_id)
       yield problem
     except ValueError as e:
-      print(f'ValueError: {python_path} - {e}')
+      print(f'ValueError: {python_path}')
+      if str(e) != 'UDF not currently supported.':
+        raise
     except SyntaxError:
       print(f'SyntaxError: {python_path}')
     except IndexError:
