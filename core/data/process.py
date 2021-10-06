@@ -191,7 +191,7 @@ def make_rawruntimeerrorproblem(
   start_node = graph.get_start_control_flow_node()
   if start_node == '<exit>':
     start_index = exit_index
-  elif start_node == '<raise>':
+  elif start_node == '<raise>' or start_node == '<return>':
     start_index = exit_index + 1
   else:
     start_index = nodes.index(start_node)
@@ -258,6 +258,15 @@ def get_step_limit(lines):
   return step_limit
 
 
+def get_node_index(node_or_label, indexes_by_id, exit_index, raise_index):
+  if node_or_label == '<raise>':
+    return raise_index
+  elif node_or_label == '<exit>' or node_or_label == '<return>':
+    return exit_index
+  else:
+    return indexes_by_id[id(node_or_label)]
+
+
 def get_branch_list(nodes, exit_index):
   """Computes the branch list for the control flow graph.
 
@@ -284,34 +293,15 @@ def get_branch_list(nodes, exit_index):
     if node_branches:
       true_branch = node_branches[True]
       false_branch = node_branches[False]
-      if true_branch == '<raise>':
-        true_index = raise_index
-      elif true_branch == '<exit>':
-        true_index = exit_index
-      else:
-        true_index = indexes_by_id[id(true_branch)]
-
-      if false_branch == '<raise>':
-        false_index = raise_index
-      elif false_branch == '<exit>':
-        false_index = exit_index
-      else:
-        false_index = indexes_by_id[id(false_branch)]
-
+      true_index = get_node_index(true_branch, indexes_by_id, exit_index, raise_index)
+      false_index = get_node_index(false_branch, indexes_by_id, exit_index, raise_index)
       branches.append([true_index, false_index])
     else:
       next_nodes = node.next_from_end
       assert len(next_nodes) <= 1
       if next_nodes:
         next_node = next(iter(next_nodes))
-        if next_node == '<raise>':
-          next_index = raise_index
-        elif next_node == '<exit>':
-          next_index = exit_index
-        else:
-          if id(next_node) not in indexes_by_id:
-            print(next_node)
-          next_index = indexes_by_id[id(next_node)]
+        next_index = get_node_index(next_node, indexes_by_id, exit_index, raise_index)
       else:
         # NOTE(dbieber): We are sending the true and false branches of a raise node
         # to itself. We may wish to change this behavior.
@@ -348,7 +338,7 @@ def get_raises_list(nodes, exit_index):
       raise_block = next(iter(exits_from_middle))
       if raise_block.label == '<raise>':
         index = raise_index
-      elif raise_block.label == '<exit>':
+      elif raise_block.label == '<exit>' or raise_block.label == '<return>':
         index = exit_index
       else:
         raise_node = raise_block.control_flow_nodes[0]
