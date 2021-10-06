@@ -342,6 +342,8 @@ def get_raises_list(nodes, exit_index):
       raise_block = next(iter(exits_from_middle))
       if raise_block.label == '<raise>':
         index = raise_index
+      elif raise_block.label == '<exit>':
+        index = exit_index
       else:
         raise_node = raise_block.control_flow_nodes[0]
         index = indexes_by_id[id(raise_node)]
