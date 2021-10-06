@@ -73,6 +73,9 @@ def get_span(instruction, source):
     # Caution: Leaky abstraction.
     # This is an exception write, e.g. the write to `value` in "except Exception as value:".
     # The accesses of an exception node are defined in control_flow's handle_ExceptHandler.
+    # This is a hacky (but hopefully general) way to access the span of the exception write.
+    # We use regex to find 'as' to determine the span.
+    # In "except Exception as value:", the resulting span is "value:".
     name_node = instruction.node  # A Name, Tuple, or List AST node.
     parent = instruction.accesses[0][-1]  # An AST ExceptHandler node.
     lineno = parent.lineno
