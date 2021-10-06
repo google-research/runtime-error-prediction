@@ -5,6 +5,11 @@ import unittest
 from core.data import process
 from core.data import tokenization
 
+def print_spans(raw):
+  span_starts = raw.node_span_starts
+  span_ends = raw.node_span_ends
+  for i, (span_start, span_end) in enumerate(zip(span_starts, span_ends)):
+    print(f'Span {i}: {raw.source[span_start:span_end]}')
 
 class ProcessTest(unittest.TestCase):
 
@@ -152,6 +157,49 @@ while x < 2:
     self.assertEqual(problem.raise_nodes, [7, 7, 7, 7, 7, 7, 7])
     self.assertEqual(problem.true_branch_nodes.tolist(), [1, 2, 3, 4, 3, 1, 6])
     self.assertEqual(problem.false_branch_nodes.tolist(), [1, 6, 3, 5, 3, 1, 6])
+
+  def test_make_runtimeerrorproblem_try_finally(self):
+    tokenizer = tokenization.load_tokenizer()
+    source = """
+header0
+try:
+  try0
+  try1
+except Exception0 as value0:
+  exception0_stmt0
+finally:
+  finally_stmt0
+  finally_stmt1
+after0
+"""
+    target_lineno = 0
+    raw = process.make_rawruntimeerrorproblem(
+        source, '1', target_lineno=target_lineno)
+    print_spans(raw)
+    problem = process.make_runtimeerrorproblem(
+        source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
+    exit_index = problem.exit_index
+    raise_index = exit_index + 1
+
+    # 0: header0
+    #    try:
+    # 3:   try0
+    # 4:   try1
+    # 5:        Exception0  # (comparing the exception)
+    # 6: except Exception0 as value0: exception0_stmt0  # (assigning to value0)
+    # 7:   exception0_stmt0
+    #    finally:
+    # 1:   finally_stmt0
+    # 2:   finally_stmt1
+    # 8: after0
+    # 9: <exit>
+    # 10: <raise>
+
+    self.assertEqual(exit_index, 9)
+    self.assertEqual(raise_index, 10)
+    self.assertEqual(problem.raise_nodes, [10, 10, 10, 5, 5, 1, 1, 1, 10, 10])
+    self.assertEqual(problem.true_branch_nodes.tolist(), [3, 2, 10, 4, 1, 6, 7, 1, 9, 9])
+    self.assertEqual(problem.false_branch_nodes.tolist(), [3, 2, 8, 4, 1, 1, 7, 1, 9, 9])
 
 if __name__ == '__main__':
   unittest.main()
