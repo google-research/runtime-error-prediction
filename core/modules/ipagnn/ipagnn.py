@@ -377,6 +377,7 @@ class IPAGNNModule(nn.Module):
         jax.random.PRNGKey(0),
         (batch_size, num_nodes,), hidden_size)
     # leaves(hidden_states).shape: batch_size, num_nodes, hidden_size
+
     def make_instruction_pointer(start_index):
       return jnp.zeros((num_nodes,)).at[start_index].set(1)
     instruction_pointer = jax.vmap(make_instruction_pointer)(start_indexes)

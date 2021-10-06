@@ -5,11 +5,13 @@ import unittest
 from core.data import process
 from core.data import tokenization
 
+
 def print_spans(raw):
   span_starts = raw.node_span_starts
   span_ends = raw.node_span_ends
   for i, (span_start, span_end) in enumerate(zip(span_starts, span_ends)):
     print(f'Span {i}: {raw.source[span_start:span_end]}')
+
 
 class ProcessTest(unittest.TestCase):
 
@@ -42,7 +44,6 @@ print(any(set('47') >= set(str(i)) and n % i == 0 for i in range(1, n+1)) and 'Y
         problem.node_token_span_starts, target_node_token_span_starts)
     self.assertEqual(problem.node_token_span_ends, target_node_token_span_ends)
     self.assertEqual(problem.token_node_indexes, target_token_node_indexes)
-
 
   def test_make_runtimeerrorproblem_try_except(self):
     tokenizer = tokenization.load_tokenizer()
@@ -180,7 +181,7 @@ after0
         source, '1', target_lineno=target_lineno)
     print_spans(raw)
     raise
-    
+
     problem = process.make_runtimeerrorproblem(
         source, '1', target_lineno=target_lineno, tokenizer=tokenizer)
     start_index = problem.start_index
@@ -314,6 +315,7 @@ after0
     # An outermost "except A" statement's false branch goes to raise. And it can be reached via
     # a finally inside the try.
     # Can only get into "raising" territory via a finally block's true branch or via a raise edge.
+
 
 if __name__ == '__main__':
   unittest.main()

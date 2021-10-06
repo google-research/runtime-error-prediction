@@ -191,6 +191,7 @@ class Trainer:
           in_axes=(None, 0, None),
           out_axes=0,
       )
+
     def evaluate_batch(batch, state):
       new_rng, dropout_rng = jax.random.split(state.rng, 2)
       state = dataclasses.replace(state, rng=new_rng)

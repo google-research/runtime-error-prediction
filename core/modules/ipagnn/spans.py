@@ -8,7 +8,6 @@ from core.modules.ipagnn import encoder
 from third_party.flax_examples import transformer_modules
 
 
-
 def add_at_span(x, value, start, end):
   # start and end are inclusive.
   # x.shape: length, features
