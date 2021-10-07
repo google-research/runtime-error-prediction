@@ -5,8 +5,8 @@ import socket
 import time
 
 DEFAULT_CONFIG_PATH = 'config/default.py'
-DEFAULT_DATASET_PATH = 'datasets/codenet/2021-10-01-f=0.01'
-TEST_DATASET_PATH = 'datasets/codenet/2021-10-01-f=0.01'
+DEFAULT_DATASET_PATH = 'datasets/codenet/2021-10-05-f=0.01'
+TEST_DATASET_PATH = 'datasets/codenet/2021-10-05-f=0.01'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
