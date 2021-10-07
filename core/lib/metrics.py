@@ -48,13 +48,6 @@ def evaluate(targets, predictions, num_classes, eval_metric_names):
   return results
 
 
-def compute_metric(logits, targets, num_classes, eval_metric_names):
-  predictions = np.array(jnp.argmax(logits, -1))
-  targets = np.array(targets)
-  metrics = evaluate(targets, predictions, num_classes, eval_metric_names)
-  return metrics
-
-
 def write_metric(metric_name,
                  metrics_dict,
                  summary_fn,
