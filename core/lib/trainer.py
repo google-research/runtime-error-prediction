@@ -221,6 +221,7 @@ class Trainer:
     localization_predictions = []
     targets = []
     localization_targets = []
+    localization_num_targets = []
     losses = []
     dataset = (
         dataset
