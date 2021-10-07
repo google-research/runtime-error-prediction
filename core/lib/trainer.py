@@ -167,6 +167,7 @@ class Trainer:
           'raise_decisions',
           EvaluationMetric.INSTRUCTION_POINTER.value,
           'instruction_pointer_orig',
+          'localization_logits',
       ]:
         if key in loss_aux:
           aux[key] = loss_aux[key]
