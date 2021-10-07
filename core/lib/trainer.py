@@ -381,9 +381,13 @@ class Trainer:
         train_localization_targets_jnp = jnp.concatenate(train_localization_targets)
         train_localization_num_targets_jnp = jnp.concatenate(train_localization_num_targets)
         train_localization_predictions_jnp = jnp.concatenate(train_localization_predictions)
-        print(f'here: {train_localization_targets_jnp.shape}')
-        print(f'here: {train_localization_num_targets_jnp.shape}')
-        print(f'here: {train_localization_predictions_jnp.shape}')
+        if config.multidevice:
+          train_localization_targets_jnp = jnp.reshape(train_localization_targets_jnp, (-1,) + train_localization_targets_jnp.shape[2:])
+          train_localization_num_targets_jnp = jnp.reshape(train_localization_num_targets_jnp, (-1,) + train_localization_num_targets_jnp.shape[2:])
+          train_localization_predictions_jnp = jnp.reshape(train_localization_predictions_jnp, (-1,) + train_localization_predictions_jnp.shape[2:])
+        # train_localization_targets_jnp.shape: num_examples, max_target_nodes
+        # train_localization_num_targets_jnp.shape: num_examples
+        # train_localization_predictions_jnp.shape: num_examples
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
@@ -396,12 +400,13 @@ class Trainer:
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
         if localization_predictions is not None:
-          localization_targets = jnp.array(localization_targets)
-          localization_num_targets = jnp.array(localization_num_targets)
-          localization_predictions = jnp.array(localization_predictions)
-          # localization_targets.shape: device, batch_size, max_target_nodes
-          # localization_num_targets.shape: device, batch_size
-          # localization_predictions.shape: device, batch_size
+          # localization_targets.shape: [device,] batch_size, max_target_nodes
+          # localization_num_targets.shape: [device,] batch_size
+          # localization_predictions.shape: [device,] batch_size
+          if config.multidevice:
+            localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
+            localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
+            localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
