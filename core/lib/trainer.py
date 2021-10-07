@@ -378,13 +378,14 @@ class Trainer:
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
         if localization_predictions is not None:
-          print("localization_targets.shape here")
-          print(len(localization_targets))
-          print(localization_targets[0].shape)
-          # localization_targets.shape: d,b,...
-          localization_targets = jnp.reshape(localization_targets, -1)
-          localization_num_targets = jnp.reshape(localization_num_targets, -1)
-          localization_predictions = jnp.reshape(localization_predictions, -1)
+          # localization_targets.shape: batch_size, max_target_nodes
+          localization_targets = jnp.array(localization_targets)
+          localization_num_targets = jnp.array(localization_num_targets)
+          localization_predictions = jnp.array(localization_predictions)
+          print('385 shapes:')
+          print(localization_targets.shape)
+          print(localization_num_targets.shape)
+          print(localization_predictions.shape)
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
