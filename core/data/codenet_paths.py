@@ -12,7 +12,7 @@ DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
-FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids'
+FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-10-07-full'
 # Raw control_flow_programs data pattern:
 DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
 # Processed control_flow_programs dataset path:
@@ -46,7 +46,7 @@ elif HOSTNAME == 'dev-000':
   # EVALS_ROOT = '/home/veetee/out/evals'
 elif HOSTNAME.startswith('t1v-'):  # TPU
   PYTHON3 = '/usr/bin/python3'
-  FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids'
+  FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-10-07-full'
   DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
   EVALS_ROOT = '/mnt/project-codenet-storage/out/evals'
 
