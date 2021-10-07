@@ -90,6 +90,10 @@ Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_i
       source, target = explore.get_source_and_target_for_submission(problem_id, submission_id)
       print(f"""Submission ID: {submission_id} {problem_id}
 Source: {source}""")
+      print(example['target'])
+      print(example['target_lineno'])
+      print(example['target_node_indexes'])
+      print(example['num_target_nodes'])
       tokens = tokenizer.convert_ids_to_tokens(example['tokens'])
       for i, (span_start, span_end, true_node, false_node, raise_node) in enumerate(zip(span_starts, span_ends, true_branch_nodes, false_branch_nodes, raise_nodes)):
         print(f"""Span {i} (--> {true_node},{false_node},{raise_node}): {' '.join(tokens[span_start:span_end + 1])}""")
