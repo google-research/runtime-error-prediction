@@ -29,6 +29,7 @@ from core.lib import metadata
 from core.lib import metrics
 from core.lib import models
 from core.lib import optimizer_lib
+from core.modules.ipagnn import raise_contributions
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
@@ -199,6 +200,10 @@ class Trainer:
       # TODO(dbieber): Dropout shouldn't be used during the evaluation.
       # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
       loss, aux = loss_fn(state.params, batch, dropout_rng)
+
+      # TODO(dbieber): Check with and without multidevice.
+      if config.model_class == 'IPAGNN' and config.raise_in_ipagnn:
+        aux['raise_contributions'] = raise_contributions.get_raise_contribution_from_batch_and_aux(batch, aux)
 
       logits = aux['logits']
       targets = jnp.squeeze(batch['target'], axis=-1)
