@@ -203,7 +203,10 @@ class Trainer:
 
       # TODO(dbieber): Check with and without multidevice.
       if config.model_class == 'IPAGNN' and config.raise_in_ipagnn:
-        aux['raise_contributions'] = raise_contributions.get_raise_contribution_from_batch_and_aux(batch, aux)
+        get_raise_contribution_from_batch_and_aux = raise_contributions.get_raise_contribution_from_batch_and_aux
+        if config.multidevice:
+          get_raise_contribution_from_batch_and_aux = jax.pmap(get_raise_contribution_from_batch_and_aux, axis_name='batch')
+        aux['per_node_raise_contributions'] = get_raise_contribution_from_batch_and_aux(batch, aux)
 
       logits = aux['logits']
       targets = jnp.squeeze(batch['target'], axis=-1)
