@@ -208,11 +208,7 @@ class Trainer:
         targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
       # logits.shape: batch_size, num_classes
       # targets.shape: batch_size
-
-      metric = metrics.compute_metric(
-          logits, targets, num_classes, config.eval_metric_names
-      )
-      return logits, loss, metric
+      return logits, loss
     return evaluate_batch
 
   def run_eval(self, dataset, state, evaluate_batch):
@@ -230,7 +226,7 @@ class Trainer:
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
         batch = common_utils.shard(batch)
-      logits, loss, _ = evaluate_batch(batch, state)
+      logits, loss = evaluate_batch(batch, state)
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
