@@ -174,3 +174,9 @@ def compute_localization_accuracy(localization_targets, localization_predictions
   if localization_predictions is None:
     return None
 
+  print('localization_targets.shape')
+  print(localization_targets)
+  print(localization_targets.shape)
+  print('localization_predictions')
+  print(localization_predictions)
+  print(localization_predictions.shape)
