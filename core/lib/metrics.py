@@ -174,15 +174,16 @@ def compute_localization_accuracy(localization_targets, localization_predictions
   if localization_predictions is None:
     return None
 
-  print('localization_targets.shape')
-  print(localization_targets)
-  print(len(localization_targets))
-  print('localization_predictions')
-  print(localization_predictions)
-  print(localization_predictions.shape)
-
+  try:
+    print('localization_targets.shape')
+    print(localization_targets)
+    print(len(localization_targets))
+    print('localization_predictions')
+    print(localization_predictions)
+    print(localization_predictions.shape)
+  except:
+    pass
 
   def matches(targets, num_targets, prediction):
     mask = jnp.arange(targets.shape[0]) < num_targets
     # jnp.max(mask & targets == prediction)
-    

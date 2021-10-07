@@ -327,6 +327,7 @@ class Trainer:
     train_targets = []
     train_localization_predictions = []
     train_localization_targets = []
+    train_localization_num_targets = []
     train_losses = []
     print('Starting training')
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
@@ -345,11 +346,14 @@ class Trainer:
       if 'localization_logits' in aux:
         localization_predictions = jnp.squeeze(jnp.argmax(aux['localization_logits'], axis=-1))
         localization_targets = jnp.squeeze(batch['target_node_indexes'])
+        localization_num_targets = jnp.squeeze(batch['num_target_nodes'])
         train_localization_predictions.append(localization_predictions)
         train_localization_targets.append(localization_targets)
+        train_localization_num_targets.append(localization_num_targets)
       else:
         localization_predictions = None
         localization_targets = None
+        localization_num_targets = None
 
       # Save checkpoints.
       if step % config.save_freq == 0:
@@ -364,6 +368,7 @@ class Trainer:
             jnp.reshape(jnp.array(train_predictions), -1),
             num_classes,
             jnp.reshape(jnp.array(train_localization_targets), -1),
+            jnp.reshape(jnp.array(train_localization_num_targets), -1),
             jnp.reshape(jnp.array(train_localization_predictions), -1),
             config.eval_metric_names)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
@@ -375,12 +380,14 @@ class Trainer:
           print(localization_targets[0].shape)
           # localization_targets.shape: d,b,...
           localization_targets = jnp.reshape(localization_targets, -1)
+          localization_num_targets = jnp.reshape(localization_num_targets, -1)
           localization_predictions = jnp.reshape(localization_predictions, -1)
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
             num_classes,
             localization_targets,
+            localization_num_targets,
             localization_predictions,
             [EvaluationMetric.ACCURACY.value])
         batch_accuracy = batch_metrics[EvaluationMetric.ACCURACY.value]
