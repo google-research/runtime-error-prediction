@@ -124,7 +124,6 @@ class IPAGNNLayer(nn.Module):
           'p_false': p_false,
           'raise_node_index': raise_node_index,
           'max_contribution': max_contribution,
-          'raise_contribution': raise_contribution,
           'raise_contributions': raise_contributions,
           'true_contributions': true_contributions,
           'false_contributions': false_contributions,
