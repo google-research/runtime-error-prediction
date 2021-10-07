@@ -29,7 +29,6 @@ from core.lib import metadata
 from core.lib import metrics
 from core.lib import models
 from core.lib import optimizer_lib
-from core.modules.ipagnn import raise_contributions
 
 
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
@@ -212,7 +211,6 @@ class Trainer:
       return {
           'logits': logits,
           'loss': loss,
-          'per_node_raise_contributions': aux.get('per_node_raise_contributions'),
       }
     return evaluate_batch
 
