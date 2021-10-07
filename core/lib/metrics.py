@@ -176,16 +176,23 @@ def compute_localization_accuracy(
   if localization_predictions is None:
     return None
 
-  try:
-    print('localization_targets.shape')
-    print(localization_targets)
-    print(len(localization_targets))
-    print('localization_predictions')
-    print(localization_predictions)
-    print(localization_predictions.shape)
-  except:
-    pass
-
   def matches(targets, num_targets, prediction):
     mask = jnp.arange(targets.shape[0]) < num_targets
-    # jnp.max(mask & targets == prediction)
+    print('mask.shape')
+    print(mask.shape)
+    correct = targets == prediction
+    print('correct')
+    print(correct.shape)
+    correct_and_valid = jnp.logical_and(mask, correct)
+    print('correct_and_valid')
+    print(correct_and_valid.shape)
+    any_valid = jnp.max(correct_and_valid, axis=-1)
+    print('any_valid.shape')
+    print(any_valid.shape)
+    total = jnp.sum(any_valid)
+    print('total.shape')
+    print(total.shape)
+    print(total)
+    return total
+  a = jax.vmap(matches)(
+      localization_targets, localization_num_targets, localization_predictions)
