@@ -177,7 +177,12 @@ def compute_localization_accuracy(localization_targets, localization_predictions
   print('localization_targets.shape')
   print(localization_targets)
   print(len(localization_targets))
-  print(localization_targets[0].shape)
   print('localization_predictions')
   print(localization_predictions)
   print(localization_predictions.shape)
+
+
+  def matches(targets, num_targets, prediction):
+    mask = jnp.arange(targets.shape[0]) < num_targets
+    # jnp.max(mask & targets == prediction)
+    
