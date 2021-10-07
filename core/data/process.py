@@ -354,7 +354,7 @@ def get_raises_list(nodes, exit_index):
 
 
 def get_nodes_at_lineno(raw, lineno):
-  if lineno is None:
+  if lineno is None or lineno == 0:
     return []
 
   # Compute the line boundaries.
