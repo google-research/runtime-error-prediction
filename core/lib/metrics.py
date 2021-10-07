@@ -14,10 +14,15 @@ from sklearn import metrics
 
 class EvaluationMetric(enum.Enum):
   """Evaluation metric kinds."""
-  ACCURACY = 'accuracy'
-  F1_SCORE = 'f1_score'
-  CONFUSION_MATRIX = 'confusion_matrix'
-  INSTRUCTION_POINTER = 'instruction_pointer'
+
+  def _generate_next_value_(name, start, count, last_values):
+    return name.lower()
+
+  ACCURACY = enum.auto()
+  F1_SCORE = enum.auto()
+  CONFUSION_MATRIX = enum.auto()
+  INSTRUCTION_POINTER = enum.auto()
+  LOCALIZATION_ACCURACY = enum.auto()
 
 
 def all_metric_names() -> Tuple[str]:
@@ -169,4 +174,3 @@ def compute_localization_accuracy(localization_targets, localization_predictions
   if localization_predictions is None:
     return None
 
-  
