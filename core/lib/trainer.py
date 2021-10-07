@@ -371,7 +371,8 @@ class Trainer:
                               if train_accuracy is not None else None)
         if localization_predictions is not None:
           print("localization_targets.shape here")
-          print(localization_targets.shape)
+          print(len(localization_targets)
+          print(localization_targets[0].shape)
           # localization_targets.shape: d,b,...
           localization_targets = jnp.reshape(localization_targets, -1)
           localization_predictions = jnp.reshape(localization_predictions, -1)
