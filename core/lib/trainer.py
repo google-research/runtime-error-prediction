@@ -201,16 +201,6 @@ class Trainer:
       # TODO(dbieber): And if it were to be used, we'd want per-device randoms.
       loss, aux = loss_fn(state.params, batch, dropout_rng)
 
-      # TODO(dbieber): Check with and without multidevice.
-      if config.model_class == 'IPAGNN' and config.raise_in_ipagnn:
-        get_raise_contribution_from_batch_and_aux = raise_contributions.get_raise_contribution_from_batch_and_aux
-        if config.multidevice:
-          get_raise_contribution_from_batch_and_aux = jax.pmap(get_raise_contribution_from_batch_and_aux, axis_name='batch')
-        aux['per_node_raise_contributions'] = get_raise_contribution_from_batch_and_aux(batch, aux)
-        print("aux['per_node_raise_contributions']")
-        print(aux['per_node_raise_contributions'])
-        print(aux['per_node_raise_contributions'].shape)
-
       logits = aux['logits']
       targets = jnp.squeeze(batch['target'], axis=-1)
       if config.multidevice:
@@ -219,7 +209,11 @@ class Trainer:
         targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
       # logits.shape: batch_size, num_classes
       # targets.shape: batch_size
-      return logits, loss
+      return {
+          'logits': logits,
+          'loss': loss,
+          'per_node_raise_contributions': aux.get('per_node_raise_contributions'),
+      }
     return evaluate_batch
 
   def run_eval(self, dataset, state, evaluate_batch):
@@ -237,7 +231,14 @@ class Trainer:
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
         batch = common_utils.shard(batch)
-      logits, loss = evaluate_batch(batch, state)
+      evaluate_batch_outputs = evaluate_batch(batch, state)
+      logits = evaluate_batch_outputs['logits']
+      loss = evaluate_batch_outputs['loss']
+      if 'per_node_raise_contributions' in evaluate_batch_outputs:
+        print("evaluate_batch_outputs['per_node_raise_contributions']")
+        print(evaluate_batch_outputs['per_node_raise_contributions'])
+        print(evaluate_batch_outputs['per_node_raise_contributions'].shape)
+
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
