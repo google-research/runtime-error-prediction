@@ -378,19 +378,19 @@ class Trainer:
       if step % config.eval_freq == 0:
         # Evaluate on aggregated training data.
         train_loss = jnp.mean(jnp.array(train_losses))
-        train_localization_targets_jnp = jnp.array(train_localization_targets)
-        train_localization_num_targets_jnp = jnp.array(train_localization_num_targets)
-        train_localization_num_targets_jnp = jnp.array(train_localization_predictions)
+        train_localization_targets_jnp = jnp.concatenate(train_localization_targets)
+        train_localization_num_targets_jnp = jnp.concatenate(train_localization_num_targets)
+        train_localization_predictions_jnp = jnp.concatenate(train_localization_predictions)
         print(f'here: {train_localization_targets_jnp.shape}')
         print(f'here: {train_localization_num_targets_jnp.shape}')
-        print(f'here: {train_localization_num_targets_jnp.shape}')
+        print(f'here: {train_localization_predictions_jnp.shape}')
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
             num_classes,
             train_localization_targets_jnp,
             train_localization_num_targets_jnp,
-            train_localization_num_targets_jnp,
+            train_localization_predictions_jnp,
             config.eval_metric_names)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
