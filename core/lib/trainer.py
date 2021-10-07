@@ -257,9 +257,14 @@ class Trainer:
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
-    print(f'before: {jnp.array(localization_targets).shape}')
     localization_targets = jnp.concatenate(localization_targets)
-    print(f'after: {localization_targets.shape}')
+    localization_num_targets = jnp.concatenate(localization_num_targets)
+    localization_predictions = jnp.concatenate(localization_predictions)
+    # localization_targets.shape: num_eval_examples, [batch_per_device,], max_target_nodes
+    if config.multidevice:
+      localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
+      localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
+      localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
     eval_metrics = metrics.evaluate(
         targets, predictions, num_classes,
         jnp.array(localization_targets),
@@ -376,6 +381,9 @@ class Trainer:
         train_localization_targets_jnp = jnp.array(train_localization_targets)
         train_localization_num_targets_jnp = jnp.array(train_localization_num_targets)
         train_localization_num_targets_jnp = jnp.array(train_localization_predictions)
+        print(f'here: {train_localization_targets_jnp.shape}')
+        print(f'here: {train_localization_num_targets_jnp.shape}')
+        print(f'here: {train_localization_num_targets_jnp.shape}')
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
