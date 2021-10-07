@@ -327,8 +327,11 @@ class IPAGNNModule(nn.Module):
     # faise_indexes.shape: batch_size, num_nodes
     hidden_size = config.hidden_size
     batch_size, num_nodes, unused_hidden_size = node_embeddings.shape
+    # start_node_indexes.shape: batch_size, 1
     # exit_node_indexes.shape: batch_size, 1
+    start_node_indexes = jnp.squeeze(start_node_indexes, axis=-1)
     exit_node_indexes = jnp.squeeze(exit_node_indexes, axis=-1)
+    # start_node_indexes.shape: batch_size
     # exit_node_indexes.shape: batch_size
 
     def zero_node_embedding_single_example(node_embeddings, index):
