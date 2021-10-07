@@ -220,7 +220,9 @@ class Trainer:
     config = self.config
     num_classes = self.info.num_classes
     predictions = []
+    localization_predictions = []
     targets = []
+    localization_targets = []
     losses = []
     dataset = (
         dataset
@@ -234,10 +236,11 @@ class Trainer:
       evaluate_batch_outputs = evaluate_batch(batch, state)
       logits = evaluate_batch_outputs['logits']
       loss = evaluate_batch_outputs['loss']
-      if 'per_node_raise_contributions' in evaluate_batch_outputs:
-        print("evaluate_batch_outputs['per_node_raise_contributions']")
-        print(evaluate_batch_outputs['per_node_raise_contributions'])
-        print(evaluate_batch_outputs['per_node_raise_contributions'].shape)
+      if 'localization_logits' in evaluate_batch_outputs:
+        localization_logits = evaluate_batch_outputs['localization_logits']
+        # localization_logits.shape: [device,] batch_size[/device], num_nodes
+        localization_predictions.append(jnp.argmax(localization_logits, -1))
+        localization_targets.append(batch['target_node_indexes'])
 
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
@@ -252,7 +255,9 @@ class Trainer:
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
     eval_metrics = metrics.evaluate(
-        targets, predictions, num_classes, config.eval_metric_names)
+        targets, predictions, num_classes,
+        localization_targets, localization_predictions,
+        config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
@@ -322,6 +327,8 @@ class Trainer:
 
     train_predictions = []
     train_targets = []
+    train_localization_predictions = []
+    train_localization_targets = []
     train_losses = []
     print('Starting training')
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
@@ -337,6 +344,14 @@ class Trainer:
       train_predictions.append(predictions)
       train_targets.append(targets)
       train_losses.append(loss)
+      if 'localization_logits' in aux:
+        localization_predictions = jnp.squeeze(jnp.argmax(aux['localization_logits'], axis=-1))
+        localization_targets = jnp.squeeze(batch['target_node_indexes'])
+        train_localization_predictions.append(localization_predictions)
+        train_localization_targets.append(localization_targets)
+      else:
+        localization_predictions = None
+        localization_targets = None
 
       # Save checkpoints.
       if step % config.save_freq == 0:
@@ -350,6 +365,8 @@ class Trainer:
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
             num_classes,
+            jnp.reshape(jnp.array(train_localization_targets), -1),
+            jnp.reshape(jnp.array(train_localization_predictions), -1),
             config.eval_metric_names)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
@@ -358,6 +375,8 @@ class Trainer:
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
             num_classes,
+            jnp.reshape(localization_targets, -1),
+            jnp.reshape(localization_predictions, -1),
             [EvaluationMetric.ACCURACY.value])
         batch_accuracy = batch_metrics[EvaluationMetric.ACCURACY.value]
         print(f"""--- Step {step}

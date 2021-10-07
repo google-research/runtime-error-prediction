@@ -100,7 +100,9 @@ class IPAGNN(nn.Module):
     # logits.shape: batch_size, num_classes
 
     if config.raise_in_ipagnn:
-      ipagnn_output['per_node_raise_contributions'] = raise_contributions_lib.get_raise_contribution_from_batch_and_aux(
+      per_node_raise_contributions = raise_contributions_lib.get_raise_contribution_from_batch_and_aux(
           x, ipagnn_output)
+      localization_logits = per_node_raise_contributions
+      ipagnn_output['localization_logits'] = localization_logits
 
     return logits, ipagnn_output

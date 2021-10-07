@@ -25,7 +25,8 @@ def all_metric_names() -> Tuple[str]:
   return tuple(m.value for m in EvaluationMetric)
 
 
-def evaluate(targets, predictions, num_classes, eval_metric_names):
+def evaluate(targets, predictions, num_classes,
+             localization_targets, localization_predictions, eval_metric_names):
   # Diagnose unknown metrics.
   unknown_metric_names = set(eval_metric_names).difference(all_metric_names())
   if unknown_metric_names:
@@ -45,6 +46,10 @@ def evaluate(targets, predictions, num_classes, eval_metric_names):
         predictions,
         labels=range(num_classes),
         normalize='true')
+  if EvaluationMetric.LOCALIZATION_ACCURACY.value in eval_metric_names:
+    results[EvaluationMetric.LOCALIZATION_ACCURACY.value] = compute_localization_accuracy(
+        localization_targets, localization_predictions
+    )
   return results
 
 
@@ -158,3 +163,10 @@ def pad(array, leading_dim_size: int):
   leading_pad_width = [(0, leading_dim_difference)]
   trailing_pad_widths = [(0, 0)] * (array.ndim - 1)
   return jnp.pad(array, leading_pad_width + trailing_pad_widths)
+
+
+def compute_localization_accuracy(localization_targets, localization_predictions):
+  if localization_predictions is None:
+    return None
+
+  
