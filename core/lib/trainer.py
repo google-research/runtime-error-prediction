@@ -484,7 +484,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         train_losses.clear()
         train_localization_targets.clear()
         train_localization_num_targets.clear()
-        train_localization_num_targets.clear()
+        train_localization_predictions.clear()
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
