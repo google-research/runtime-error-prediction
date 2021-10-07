@@ -14,7 +14,6 @@ _int64_sequence_feature = tf_io.int64_sequence_feature
 _string_scalar_feature = tf_io.string_scalar_feature
 
 
-
 def decode_fn(record_bytes, include_strings=False):
   features = {
       # We omit near all features from the dataset except e.g. the raw source.
@@ -30,7 +29,6 @@ def decode_fn(record_bytes, include_strings=False):
         'human_readable_code': _string_scalar_feature()
     })
   return tf.io.parse_single_example(record_bytes, features)
-
 
 
 def load_dataset(tfrecord_paths, include_strings=False):

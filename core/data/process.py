@@ -6,6 +6,7 @@ from typing import List, Optional, Text
 import bisect
 import collections
 import dataclasses
+import re
 
 import fire
 import gast as ast
@@ -29,6 +30,7 @@ class RawRuntimeErrorProblem:
   node_span_ends: List[int]
   branch_list: List[List[int]]
   raises_list: List[int]
+  start_index: int
   exit_index: int
   step_limit: int
   target: int
@@ -50,6 +52,7 @@ class RuntimeErrorProblem:
   true_branch_nodes: List[int]
   false_branch_nodes: List[int]
   raise_nodes: List[int]
+  start_index: int
   exit_index: int
   step_limit: int
   target: int
@@ -64,17 +67,31 @@ def get_character_index(source, lineno, col_offset):
   return line_start + col_offset
 
 
-def get_span(instruction):
+def get_span(instruction, source):
   ast_node = instruction.node
   if instruction.source == instruction_module.EXCEPTION:
     # Caution: Leaky abstraction.
+    # This is an exception write, e.g. the write to `value` in "except Exception as value:".
     # The accesses of an exception node are defined in control_flow's handle_ExceptHandler.
-    # TODO(dbieber): Add parent accessor to instruction module.
+    # This is a hacky (but hopefully general) way to access the span of the exception write.
+    # We use regex to find 'as' to determine the span.
+    # In "except Exception as value:", the resulting span is "value:".
+    name_node = instruction.node  # A Name, Tuple, or List AST node.
     parent = instruction.accesses[0][-1]  # An AST ExceptHandler node.
     lineno = parent.lineno
     col_offset = parent.col_offset
-    end_lineno = parent.end_lineno
-    end_col_offset = parent.end_col_offset
+    end_lineno = parent.body[0].lineno
+    end_col_offset = parent.body[0].col_offset
+    extended_span_start = get_character_index(source, lineno, col_offset)
+    extended_span_end = get_character_index(source, end_lineno, end_col_offset)
+    match = re.search(r'\bas\b', source[extended_span_start:extended_span_end])
+    after_as = extended_span_start + match.span()[1]
+    untrimmed = source[after_as:extended_span_end]
+    leading_spaces = len(untrimmed) - len(untrimmed.lstrip())
+    trailing_spaces = len(untrimmed) - len(untrimmed.rstrip())
+    span_start = after_as + leading_spaces
+    span_end = extended_span_end - trailing_spaces
+    return span_start, span_end
   elif instruction.source == instruction_module.ARGS:
     arg0 = instruction.accesses[0][1]
     argN = instruction.accesses[-1][1]
@@ -87,7 +104,10 @@ def get_span(instruction):
     col_offset = ast_node.col_offset
     end_lineno = ast_node.end_lineno
     end_col_offset = ast_node.end_col_offset
-  return lineno, col_offset, end_lineno, end_col_offset
+
+  span_start = get_character_index(source, lineno, col_offset)
+  span_end = get_character_index(source, end_lineno, end_col_offset)
+  return span_start, span_end
 
 
 def examine_udfs(graph, problem_id, submission_id):
@@ -137,7 +157,6 @@ def examine_udfs(graph, problem_id, submission_id):
     for f in calls_by_function_name:
       if calls_by_function_name[f] == n:
         break
-    print(f'Calling function {f} {n} times')
     return 'Function called more than once'
   elif total_function_calls == 0:
     return 'No UDFs called'
@@ -169,6 +188,14 @@ def make_rawruntimeerrorproblem(
   num_nodes = len(nodes) + 1
   exit_index = len(nodes)
 
+  start_node = graph.get_start_control_flow_node()
+  if start_node == '<exit>':
+    start_index = exit_index
+  elif start_node == '<raise>' or start_node == '<return>':
+    start_index = exit_index + 1
+  else:
+    start_index = nodes.index(start_node)
+
   # node_span_starts and node_span_ends
   node_span_starts = []
   node_span_ends = []
@@ -176,9 +203,7 @@ def make_rawruntimeerrorproblem(
   for node_index, node in enumerate(nodes):
     node_indexes[node.uuid] = node_index
 
-    lineno, col_offset, end_lineno, end_col_offset = get_span(node.instruction)
-    node_span_start = get_character_index(source, lineno, col_offset)
-    node_span_end = get_character_index(source, end_lineno, end_col_offset)
+    node_span_start, node_span_end = get_span(node.instruction, source)
     node_span_starts.append(node_span_start)
     node_span_ends.append(node_span_end)
 
@@ -207,6 +232,7 @@ def make_rawruntimeerrorproblem(
       node_span_ends=node_span_ends,
       branch_list=branch_list,
       raises_list=raises_list,
+      start_index=start_index,
       exit_index=exit_index,
       step_limit=step_limit,
       target=target,
@@ -232,6 +258,15 @@ def get_step_limit(lines):
   return step_limit
 
 
+def get_node_index(node_or_label, indexes_by_id, exit_index, raise_index):
+  if node_or_label == '<raise>':
+    return raise_index
+  elif node_or_label == '<exit>' or node_or_label == '<return>':
+    return exit_index
+  else:
+    return indexes_by_id[id(node_or_label)]
+
+
 def get_branch_list(nodes, exit_index):
   """Computes the branch list for the control flow graph.
 
@@ -249,24 +284,29 @@ def get_branch_list(nodes, exit_index):
   indexes_by_id = {
       id(node): index for index, node in enumerate(nodes)
   }
-  indexes_by_id[id(None)] = exit_index
+  raise_index = exit_index + 1
   branches = []
   for node in nodes:
     node_branches = node.get_branches(
         include_except_branches=True,
         include_reraise_branches=True)
     if node_branches:
-      branches.append([indexes_by_id[id(node_branches[True])],
-                       indexes_by_id[id(node_branches[False])]])
+      true_branch = node_branches[True]
+      false_branch = node_branches[False]
+      true_index = get_node_index(true_branch, indexes_by_id, exit_index, raise_index)
+      false_index = get_node_index(false_branch, indexes_by_id, exit_index, raise_index)
+      branches.append([true_index, false_index])
     else:
-      try:
-        next_node = next(iter(node.next))
-        next_index = indexes_by_id[id(next_node)]
-      except StopIteration:
-        next_index = exit_index
+      next_nodes = node.next_from_end
+      assert len(next_nodes) <= 1
+      if next_nodes:
+        next_node = next(iter(next_nodes))
+        next_index = get_node_index(next_node, indexes_by_id, exit_index, raise_index)
+      else:
+        # NOTE(dbieber): We are sending the true and false branches of a raise node
+        # to itself. We may wish to change this behavior.
+        next_index = indexes_by_id[id(node)]
       branches.append([next_index, next_index])
-  # TODO(dbieber): Write a test to make sure branches out of finally blocks are
-  # present and consistent.
 
   # Finally we add branches from the exit node to itself.
   # Omit this if running on BasicBlocks rather than ControlFlowNodes, because
@@ -298,12 +338,18 @@ def get_raises_list(nodes, exit_index):
       raise_block = next(iter(exits_from_middle))
       if raise_block.label == '<raise>':
         index = raise_index
+      elif raise_block.label == '<exit>' or raise_block.label == '<return>':
+        index = exit_index
       else:
         raise_node = raise_block.control_flow_nodes[0]
         index = indexes_by_id[id(raise_node)]
     else:
       index = raise_index
     raises_list.append(index)
+
+  # Finally we add an unused raise edge from the exit node to the raise node.
+  # The raise edge from the raise node will be added later.
+  raises_list.append(raise_index)
   return raises_list
 
 
@@ -356,6 +402,7 @@ def make_runtimeerrorproblem(source, target, target_lineno=None, tokenizer=None,
       true_branch_nodes=branch_list[:, 0],
       false_branch_nodes=branch_list[:, 1],
       raise_nodes=raw.raises_list,
+      start_index=raw.start_index,
       exit_index=raw.exit_index,
       step_limit=raw.step_limit,
       target=raw.target,

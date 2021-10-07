@@ -59,7 +59,9 @@ class IPAGNN(nn.Module):
         edge_types=x['edge_types'],
         true_indexes=x['true_branch_nodes'],
         false_indexes=x['false_branch_nodes'],
-        exit_indexes=x['exit_index'],
+        raise_indexes=x['raise_nodes'],
+        start_node_indexes=x['start_index'],
+        exit_node_indexes=x['exit_index'],
         step_limits=x['step_limit'],
     )
     # ipagnn_output['exit_node_embeddings'].shape: batch_size, hidden_size

@@ -142,6 +142,8 @@ def process_codenet(
     count += 1
     if count < start_at:
       continue
+    if count % 100000 == 0 or count == 5000:
+      print(count)
 
     python_major_version = codenet.get_python_major_version(
         problem_id, submission_id)
@@ -163,25 +165,35 @@ def process_codenet(
           problem_id=problem_id, submission_id=submission_id)
       yield problem
     except ValueError as e:
-      print(f'ValueError: {python_path} - {e}')
+      if str(e) == 'UDF not currently supported.':
+        continue
+      print(f'ValueError: {python_path}')
+      raise
     except SyntaxError:
-      print(f'SyntaxError: {python_path}')
+      # print(f'SyntaxError: {python_path}')
+      pass
     except IndexError:
       print(f'IndexError: {python_path}')
-      # raise
-    except RuntimeError:
-      # Could be "return occurs outside of a function frame".
-      print(f'RuntimeError: {python_path}')
-    except AttributeError:
-      print(f'AttributeError: {python_path}')
-    except AssertionError:
-      print(f'AssertionError: {python_path}')
+      raise
+    except RuntimeError as e:
+      if str(e).startswith('maximum recursion depth exceeded while calling a Python object'):  # e.g. p03107/Python/s405509758.py
+        continue
+      if str(e) == 'return occurs outside of a function frame.':
+        continue
+      if str(e) == 'break occurs outside of a loop frame.':
+        continue
+      if str(e) == 'continue occurs outside of a loop frame.':
+        continue
+      print(f'RuntimeError: {python_path} - {e}')
+      raise
+    except AttributeError as e:
+      print(f'AttributeError: {python_path} - {e}')
+      raise
+    except AssertionError as e:
+      print(f'AssertionError: {python_path} - {e}')
     except:
       print(f'Unexpected error: {python_path}')
       # raise
-
-    if count % 1000 == 0:
-      print(count)
 
 
 def investigate_udf_usage(problem_ids=None, start_at=0):
@@ -198,6 +210,9 @@ def investigate_udf_usage(problem_ids=None, start_at=0):
     count += 1
     if count < start_at:
       continue
+    if count % 50000 == 0:
+      print(count)
+      print(dict(udf_usages))
 
     python_path = codenet.get_python_path(problem_id, submission_id)
     with open(python_path, 'r') as f:
@@ -227,10 +242,8 @@ def investigate_udf_usage(problem_ids=None, start_at=0):
       print(f'AssertionError: {python_path}')
     except:
       print(f'Unexpected error: {python_path}')
-
-    if count % 1000 == 0:
-      print(count)
-      print(dict(udf_usages))
+  print(dict(udf_usages))
+  return dict(udf_usages)
 
 
 def run_codenet_submissions(max_files=None):
