@@ -239,6 +239,7 @@ class Trainer:
         # localization_logits.shape: [device,] batch_size[/device], num_nodes
         localization_predictions.append(jnp.argmax(localization_logits, -1))
         localization_targets.append(batch['target_node_indexes'])
+        localization_num_targets.append(batch['num_target_nodes'])
 
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
@@ -254,7 +255,7 @@ class Trainer:
     assert len(predictions.shape) == 1
     eval_metrics = metrics.evaluate(
         targets, predictions, num_classes,
-        localization_targets, localization_predictions,
+        jnp.array(localization_targets), jnp.array(localization_num_targets), jnp.array(localization_predictions),
         config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
@@ -344,12 +345,12 @@ class Trainer:
       train_targets.append(targets)
       train_losses.append(loss)
       if 'localization_logits' in aux:
-        localization_predictions = jnp.squeeze(jnp.argmax(aux['localization_logits'], axis=-1))
         localization_targets = jnp.squeeze(batch['target_node_indexes'])
         localization_num_targets = jnp.squeeze(batch['num_target_nodes'])
-        train_localization_predictions.append(localization_predictions)
+        localization_predictions = jnp.squeeze(jnp.argmax(aux['localization_logits'], axis=-1))
         train_localization_targets.append(localization_targets)
         train_localization_num_targets.append(localization_num_targets)
+        train_localization_predictions.append(localization_predictions)
       else:
         localization_predictions = None
         localization_targets = None
