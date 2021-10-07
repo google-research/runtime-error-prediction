@@ -59,11 +59,11 @@ class Trainer:
     allowlist = config.allowlist
 
     padded_shapes = data_io.get_padded_shapes(
-        config.max_tokens, config.max_num_nodes, config.max_num_edges, include_strings=include_strings)
+        config.max_tokens, config.max_num_nodes, include_strings=include_strings)
     if allowlist == 'TIER1_ERROR_IDS':
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
-        config.max_tokens, config.max_num_nodes, config.max_num_edges,
+        config.max_tokens, config.max_num_nodes,
         config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0672})
 
     if split.endswith('-batch'):
@@ -93,7 +93,7 @@ class Trainer:
     """Creates initial TrainState."""
     config = self.config
     fake_input = data_io.get_fake_input(
-        config.batch_size, config.max_tokens, config.max_num_nodes, config.max_num_edges)
+        config.batch_size, config.max_tokens, config.max_num_nodes)
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
     variables = model.init(
         {'params': params_rng, 'dropout': dropout_rng},

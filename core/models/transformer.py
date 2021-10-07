@@ -19,7 +19,6 @@ class Transformer(nn.Module):
     vocab_size = self.info.vocab_size
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
-    max_num_edges = config.max_num_edges
     self.token_embedder = spans.NodeAwareTokenEmbedder(
         transformer_config=self.transformer_config,
         num_embeddings=vocab_size,

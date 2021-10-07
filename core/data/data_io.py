@@ -19,9 +19,6 @@ def to_tf_example(problem):
   """Constructs a tf.train.Example for the process.RuntimeErrorProblem."""
   return tf.train.Example(features=tf.train.Features(feature={
       'tokens': _int64_feature(problem.tokens),
-      'edge_sources': _int64_feature(problem.edge_sources),
-      'edge_dests': _int64_feature(problem.edge_dests),
-      'edge_types': _int64_feature(problem.edge_types),
       'node_token_span_starts': _int64_feature(problem.node_token_span_starts),
       'node_token_span_ends': _int64_feature(problem.node_token_span_ends),
       'token_node_indexes': _int64_feature(problem.token_node_indexes),
@@ -41,16 +38,12 @@ def to_tf_example(problem):
 
       'num_tokens': _int64_feature([len(problem.tokens)]),
       'num_nodes': _int64_feature([len(problem.true_branch_nodes)]),
-      'num_edges': _int64_feature([len(problem.edge_sources)]),
   }))
 
 
 def decode_fn(record_bytes, include_strings=False):
   features = {
       'tokens': _int64_sequence_feature(),
-      'edge_sources': _int64_sequence_feature(),
-      'edge_dests': _int64_sequence_feature(),
-      'edge_types': _int64_sequence_feature(),
       'node_token_span_starts': _int64_sequence_feature(),
       'node_token_span_ends': _int64_sequence_feature(),
       'token_node_indexes': _int64_sequence_feature(),
@@ -67,7 +60,6 @@ def decode_fn(record_bytes, include_strings=False):
 
       'num_tokens': _int64_scalar_feature(),
       'num_nodes': _int64_scalar_feature(),
-      'num_edges': _int64_scalar_feature(),
   }
   if include_strings:
     features.update({
@@ -77,12 +69,9 @@ def decode_fn(record_bytes, include_strings=False):
   return tf.io.parse_single_example(record_bytes, features)
 
 
-def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
+def get_fake_input(batch_size, max_tokens, max_num_nodes):
   return {
       'tokens': jnp.ones((batch_size, max_tokens), dtype=jnp.int32),
-      'edge_sources': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
-      'edge_dests': jnp.ones((batch_size, max_num_edges), dtype=jnp.int32),
-      'edge_types': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
       'node_token_span_starts': jnp.zeros((batch_size, max_num_nodes), dtype=jnp.int32),
       'node_token_span_ends': jnp.ones((batch_size, max_num_nodes), dtype=jnp.int32),
       'true_branch_nodes': jnp.ones((batch_size, max_num_nodes), dtype=jnp.int32),
@@ -103,19 +92,15 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
 
       'num_tokens': jnp.full((batch_size, 1), max_tokens, dtype=jnp.int32),
       'num_nodes': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
-      'num_edges': jnp.full((batch_size, 1), max_num_edges, dtype=jnp.int32),
   }
 
 
-def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=False):
+def get_padded_shapes(max_tokens, max_num_nodes, include_strings=False):
   # We do not expect an error to occur on a line containing more than
   # max_target_nodes statements. Most lines have only a single statement.
   max_target_nodes = 5
   shapes = {
       'tokens': [max_tokens],
-      'edge_sources': [max_num_edges],
-      'edge_dests': [max_num_edges],
-      'edge_types': [max_num_edges],
       'node_token_span_starts': [max_num_nodes],
       'node_token_span_ends': [max_num_nodes],
       'token_node_indexes': [max_tokens],
@@ -132,7 +117,6 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
 
       'num_tokens': [1],
       'num_nodes': [1],
-      'num_edges': [1],
   }
   if include_strings:
     shapes.update({
@@ -144,7 +128,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
 
 
 def make_filter(
-    max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=None,
+    max_tokens, max_num_nodes, max_steps, allowlist=None,
     class_subsample_values=None,
 ):
   """Makes a tf.Dataset filter function.
@@ -152,7 +136,6 @@ def make_filter(
   Args:
     max_tokens: Filter out any examples with more than max_tokens tokens.
     max_num_nodes: Filter out any examples with more than max_num_nodes nodes.
-    max_num_edges: Filter out any examples with more than max_num_edges edges.
     max_steps: Filter out any examples with step_limit more than max_steps.
     allowlist: (Optional) If set, only admit examples with targets in this list.
     class_subsample_values: (Optional[Dict]) If set, keys indicate which target
@@ -167,7 +150,6 @@ def make_filter(
     allowed = tf.squeeze(
         (example['num_tokens'] <= max_tokens)
         & (example['num_nodes'] <= max_num_nodes)
-        & (example['num_edges'] <= max_num_edges)
         & (example['step_limit'] <= max_steps),
         axis=-1
     )

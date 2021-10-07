@@ -24,7 +24,6 @@ class IPAGNN(nn.Module):
     vocab_size = self.info.vocab_size
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
-    max_num_edges = config.max_num_edges
     max_steps = config.max_steps
     self.node_span_encoder = spans.NodeSpanEncoder(
         info=self.info,
@@ -54,9 +53,6 @@ class IPAGNN(nn.Module):
     # encoded_inputs.shape: batch_size, max_num_nodes, hidden_size
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
-        edge_sources=x['edge_sources'],
-        edge_dests=x['edge_dests'],
-        edge_types=x['edge_types'],
         true_indexes=x['true_branch_nodes'],
         false_indexes=x['false_branch_nodes'],
         raise_indexes=x['raise_nodes'],

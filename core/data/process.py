@@ -23,9 +23,6 @@ class RawRuntimeErrorProblem:
   source: Text
   problem_id: Optional[Text]
   submission_id: Optional[Text]
-  edge_sources: List[int]
-  edge_dests: List[int]
-  edge_types: List[int]
   node_span_starts: List[int]
   node_span_ends: List[int]
   branch_list: List[List[int]]
@@ -43,9 +40,6 @@ class RuntimeErrorProblem:
   tokens: List[int]
   problem_id: Text
   submission_id: Text
-  edge_sources: List[int]
-  edge_dests: List[int]
-  edge_types: List[int]
   node_token_span_starts: List[int]
   node_token_span_ends: List[int]
   token_node_indexes: List[int]
@@ -170,11 +164,17 @@ def make_rawruntimeerrorproblem(
 
   Fields:
   - source: The text of a program
-  - edge_sources: Together with edge_dests, forms an adjacency list of all edges in the program's graph representation
-  - edge_dests: Together with edge_sources, forms an adjacency list of all edges in the program's graph representation
-  - edge_types: A list the same length as edge_sources and edge_dests, contains the integer enum type of each edge in the program's graph representation.
+  - problem_id: The id of the competitive programming problem the submission is for.
+  - submission_id: The id of the specific submission.
   - node_span_starts: A list of the source span start for each node in the program's graph representation.
   - node_span_ends: A list of the source span ends for each node in the program's graph representation.
+  - branch_list: For each node, the node index the control flows to if the True branch is taken.
+  - raises_list: For each node, the node index the control flows to if the True branch is taken.
+  - start_index: The index of the start node of the program.
+  - exit_index: The index of the exit node of the program.
+  - step_limit: The maximum number of IPA-GNN execution steps permitted for the program.
+  - target: The int id representing the target class.
+  - target_lineno: The line number where the error occurs, or 0 for no error.
   """
   graph = control_flow.get_control_flow_graph(source)
   lines = source.strip().split('\n')
@@ -207,16 +207,6 @@ def make_rawruntimeerrorproblem(
     node_span_starts.append(node_span_start)
     node_span_ends.append(node_span_end)
 
-  # edge_sources, edge_dests, and edge_types
-  edge_sources = []
-  edge_dests = []
-  edge_types = []
-  for node_index, node in enumerate(nodes):
-    for next_node in node.next:
-      edge_sources.append(node_index)
-      edge_dests.append(node_indexes[next_node.uuid])
-      edge_types.append(0)
-
   branch_list = get_branch_list(nodes, exit_index)
   raises_list = get_raises_list(nodes, exit_index)
   step_limit = get_step_limit(lines)
@@ -225,9 +215,6 @@ def make_rawruntimeerrorproblem(
       source=source,
       problem_id=problem_id,
       submission_id=submission_id,
-      edge_sources=edge_sources,
-      edge_dests=edge_dests,
-      edge_types=edge_types,
       node_span_starts=node_span_starts,
       node_span_ends=node_span_ends,
       branch_list=branch_list,
@@ -393,9 +380,6 @@ def make_runtimeerrorproblem(source, target, target_lineno=None, tokenizer=None,
       tokens=token_data['tokens'],
       problem_id=raw.problem_id,
       submission_id=raw.submission_id,
-      edge_sources=raw.edge_sources,
-      edge_dests=raw.edge_dests,
-      edge_types=raw.edge_types,
       node_token_span_starts=token_data['node_token_span_starts'],
       node_token_span_ends=token_data['node_token_span_ends'],
       token_node_indexes=token_data['token_node_indexes'],

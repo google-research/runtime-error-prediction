@@ -15,7 +15,7 @@ def validate_forward_pass(config, info):
   model = models.make_model(config, info, deterministic=True)
 
   fake_input = data_io.get_fake_input(
-      config.batch_size, config.max_tokens, config.max_num_nodes, config.max_num_edges)
+      config.batch_size, config.max_tokens, config.max_num_nodes)
   rng = jax.random.PRNGKey(0)
   rng, params_rng, dropout_rng = jax.random.split(rng, 3)
   variables = model.init(
@@ -24,10 +24,9 @@ def validate_forward_pass(config, info):
   params = variables['params']
 
   padded_shapes = data_io.get_padded_shapes(
-      config.max_tokens, config.max_num_nodes, config.max_num_edges)
+      config.max_tokens, config.max_num_nodes)
   filter_fn = data_io.make_filter(
-      config.max_tokens, config.max_num_nodes, config.max_num_edges,
-      config.max_steps)
+      config.max_tokens, config.max_num_nodes, config.max_steps)
   dataset_path = codenet_paths.TEST_DATASET_PATH
   dataset = (
       data_io.load_dataset(dataset_path, split='train')

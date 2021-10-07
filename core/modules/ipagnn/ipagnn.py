@@ -47,9 +47,6 @@ class IPAGNNLayer(nn.Module):
       carry,
       # Inputs. Shared across all steps.
       node_embeddings,
-      edge_sources,
-      edge_dests,
-      edge_types,
       true_indexes,
       false_indexes,
       raise_indexes,
@@ -309,9 +306,6 @@ class IPAGNNModule(nn.Module):
   def __call__(
       self,
       node_embeddings,
-      edge_sources,
-      edge_dests,
-      edge_types,
       true_indexes,
       false_indexes,
       raise_indexes,
@@ -406,9 +400,6 @@ class IPAGNNModule(nn.Module):
         (hidden_states, instruction_pointer, current_step),
         # Inputs:
         node_embeddings,
-        edge_sources,
-        edge_dests,
-        edge_types,
         true_indexes,
         false_indexes,
         raise_indexes,

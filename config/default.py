@@ -38,7 +38,6 @@ def default_config():
   config.allowlist: Optional[List[int]] = None
   config.max_tokens: int = 512
   config.max_num_nodes: int = 128
-  config.max_num_edges: int = 128
   config.max_steps: int = 174
 
   # Transformer configs
