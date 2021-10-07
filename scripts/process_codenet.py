@@ -142,6 +142,8 @@ def process_codenet(
     count += 1
     if count < start_at:
       continue
+    if count % 100000 == 0 or count == 5000:
+      print(count)
 
     python_major_version = codenet.get_python_major_version(
         problem_id, submission_id)
@@ -193,9 +195,6 @@ def process_codenet(
       print(f'Unexpected error: {python_path}')
       # raise
 
-    if count % 1000 == 0:
-      print(count)
-
 
 def investigate_udf_usage(problem_ids=None, start_at=0):
   if problem_ids:
@@ -211,6 +210,9 @@ def investigate_udf_usage(problem_ids=None, start_at=0):
     count += 1
     if count < start_at:
       continue
+    if count % 50000 == 0:
+      print(count)
+      print(dict(udf_usages))
 
     python_path = codenet.get_python_path(problem_id, submission_id)
     with open(python_path, 'r') as f:
@@ -240,10 +242,8 @@ def investigate_udf_usage(problem_ids=None, start_at=0):
       print(f'AssertionError: {python_path}')
     except:
       print(f'Unexpected error: {python_path}')
-
-    if count % 1000 == 0:
-      print(count)
-      print(dict(udf_usages))
+  print(dict(udf_usages))
+  return dict(udf_usages)
 
 
 def run_codenet_submissions(max_files=None):
