@@ -369,12 +369,18 @@ class Trainer:
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
+        if localization_predictions is not None:
+          print("localization_targets.shape here")
+          print(localization_targets.shape)
+          # localization_targets.shape: d,b,...
+          localization_targets = jnp.reshape(localization_targets, -1)
+          localization_predictions = jnp.reshape(localization_predictions, -1)
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
             num_classes,
-            jnp.reshape(localization_targets, -1),
-            jnp.reshape(localization_predictions, -1),
+            localization_targets,
+            localization_predictions,
             [EvaluationMetric.ACCURACY.value])
         batch_accuracy = batch_metrics[EvaluationMetric.ACCURACY.value]
         print(f"""--- Step {step}
