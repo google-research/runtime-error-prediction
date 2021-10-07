@@ -209,6 +209,7 @@ class Trainer:
         aux['per_node_raise_contributions'] = get_raise_contribution_from_batch_and_aux(batch, aux)
         print("aux['per_node_raise_contributions']")
         print(aux['per_node_raise_contributions'])
+        print(aux['per_node_raise_contributions'].shape)
 
       logits = aux['logits']
       targets = jnp.squeeze(batch['target'], axis=-1)
