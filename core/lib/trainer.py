@@ -212,6 +212,7 @@ class Trainer:
       return {
           'logits': logits,
           'loss': loss,
+          'localization_logits': aux.get('localization_logits'),
       }
     return evaluate_batch
 
@@ -237,27 +238,33 @@ class Trainer:
       logits = evaluate_batch_outputs['logits']
       loss = evaluate_batch_outputs['loss']
       if 'localization_logits' in evaluate_batch_outputs:
+        localization_targets.append(batch['target_node_indexes'])
+        localization_num_targets.append(batch['num_target_nodes'])
+
         localization_logits = evaluate_batch_outputs['localization_logits']
         # localization_logits.shape: [device,] batch_size[/device], num_nodes
         localization_predictions.append(jnp.argmax(localization_logits, -1))
-        localization_targets.append(batch['target_node_indexes'])
-        localization_num_targets.append(batch['num_target_nodes'])
 
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
     print('Done evaluating.')
-    predictions = jnp.array(jnp.concatenate(predictions))
-    targets = jnp.array(jnp.concatenate(targets)).flatten()
+    predictions = jnp.concatenate(predictions)
+    targets = jnp.concatenate(targets).flatten()
     num_examples = targets.shape[0]
     eval_loss = jnp.mean(jnp.array(losses))
     # targets.shape: num_eval_examples
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
+    print(f'before: {jnp.array(localization_targets).shape}')
+    localization_targets = jnp.concatenate(localization_targets)
+    print(f'after: {localization_targets.shape}')
     eval_metrics = metrics.evaluate(
         targets, predictions, num_classes,
-        jnp.array(localization_targets), jnp.array(localization_num_targets), jnp.array(localization_predictions),
+        jnp.array(localization_targets),
+        jnp.array(localization_num_targets),
+        jnp.array(localization_predictions),
         config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
@@ -366,26 +373,27 @@ class Trainer:
       if step % config.eval_freq == 0:
         # Evaluate on aggregated training data.
         train_loss = jnp.mean(jnp.array(train_losses))
+        train_localization_targets_jnp = jnp.array(train_localization_targets)
+        train_localization_num_targets_jnp = jnp.array(train_localization_num_targets)
+        train_localization_num_targets_jnp = jnp.array(train_localization_predictions)
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
             num_classes,
-            jnp.reshape(jnp.array(train_localization_targets), -1),
-            jnp.reshape(jnp.array(train_localization_num_targets), -1),
-            jnp.reshape(jnp.array(train_localization_predictions), -1),
+            train_localization_targets_jnp,
+            train_localization_num_targets_jnp,
+            train_localization_num_targets_jnp,
             config.eval_metric_names)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
         if localization_predictions is not None:
-          # localization_targets.shape: batch_size, max_target_nodes
           localization_targets = jnp.array(localization_targets)
           localization_num_targets = jnp.array(localization_num_targets)
           localization_predictions = jnp.array(localization_predictions)
-          print('385 shapes:')
-          print(localization_targets.shape)
-          print(localization_num_targets.shape)
-          print(localization_predictions.shape)
+          # localization_targets.shape: device, batch_size, max_target_nodes
+          # localization_num_targets.shape: device, batch_size
+          # localization_predictions.shape: device, batch_size
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
@@ -466,6 +474,9 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         train_predictions.clear()
         train_targets.clear()
         train_losses.clear()
+        train_localization_targets.clear()
+        train_localization_num_targets.clear()
+        train_localization_num_targets.clear()
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
