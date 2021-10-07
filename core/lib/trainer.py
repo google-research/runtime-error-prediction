@@ -207,6 +207,8 @@ class Trainer:
         if config.multidevice:
           get_raise_contribution_from_batch_and_aux = jax.pmap(get_raise_contribution_from_batch_and_aux, axis_name='batch')
         aux['per_node_raise_contributions'] = get_raise_contribution_from_batch_and_aux(batch, aux)
+        print("aux['per_node_raise_contributions']")
+        print(aux['per_node_raise_contributions'])
 
       logits = aux['logits']
       targets = jnp.squeeze(batch['target'], axis=-1)
