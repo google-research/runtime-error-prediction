@@ -176,7 +176,8 @@ def compute_localization_accuracy(localization_targets, localization_predictions
 
   print('localization_targets.shape')
   print(localization_targets)
-  print(localization_targets.shape)
+  print(len(localization_targets))
+  print(localization_targets[0].shape)
   print('localization_predictions')
   print(localization_predictions)
   print(localization_predictions.shape)
