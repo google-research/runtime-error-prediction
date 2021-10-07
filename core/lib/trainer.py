@@ -455,6 +455,9 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             transform_fn=functools.partial(
                 metrics.instruction_pointers_to_images,
                 multidevice=config.multidevice))
+        metrics.write_metric(
+            EvaluationMetric.LOCALIZATION_ACCURACY.value,
+            train_metrics, train_writer.scalar, step)
 
         # Write validation metrics.
         valid_writer.scalar('loss', valid_loss, step)
@@ -469,6 +472,9 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             step,
             transform_fn=functools.partial(
                 metrics.confusion_matrix_to_image, class_names=all_error_kinds))
+        metrics.write_metric(
+            EvaluationMetric.LOCALIZATION_ACCURACY.value,
+            valid_metrics, valid_writer.scalar, step)
 
         did_improve, es = es.update(-1 * valid_loss)
         if es.should_stop and config.early_stopping_on:
