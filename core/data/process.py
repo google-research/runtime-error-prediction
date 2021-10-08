@@ -380,7 +380,7 @@ def get_nodes_at_lineno(raw, lineno):
   return overlapping_nodes
 
 
-def make_runtimeerrorproblem(source, target, target_lineno=None, tokenizer=None,
+def make_runtimeerrorproblem(source, target, target_lineno=0, tokenizer=None,
                              problem_id=None, submission_id=None):
   raw = make_rawruntimeerrorproblem(
         source, target, target_lineno=target_lineno,
