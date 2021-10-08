@@ -404,17 +404,17 @@ class Trainer:
           # localization_num_targets.shape: [device,] batch_size, 1
           # localization_predictions.shape: [device,] batch_size
           print('train_localization_targets_jnp.shape 1')
-          print(localization_targets_jnp.shape)
-          print(localization_num_targets_jnp.shape)
-          print(localization_predictions_jnp.shape)
+          print(localization_targets.shape)
+          print(localization_num_targets.shape)
+          print(localization_predictions.shape)
           if config.multidevice:
             localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
             localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
             localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
           print('train_localization_targets_jnp.shape 2')
-          print(localization_targets_jnp.shape)
-          print(localization_num_targets_jnp.shape)
-          print(localization_predictions_jnp.shape)
+          print(localization_targets.shape)
+          print(localization_num_targets.shape)
+          print(localization_predictions.shape)
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
