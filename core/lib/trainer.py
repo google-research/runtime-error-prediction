@@ -64,7 +64,7 @@ class Trainer:
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
         config.max_tokens, config.max_num_nodes, config.max_num_edges,
-        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0672})
+        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0660801055})
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
