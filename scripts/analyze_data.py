@@ -106,14 +106,18 @@ Source: {source}""")
     num_edges = []
     num_nodes = []
     step_limits = []
+    target_lineno = []
+    num_target_nodes = []
     for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       targets.append(example['target'][0])
       num_tokens.append(example['num_tokens'][0])
       num_edges.append(example['num_edges'][0])
       num_nodes.append(example['num_nodes'][0])
       step_limits.append(example['step_limit'][0])
+      target_lineno.append(example['target_lineno'][0])
+      num_target_nodes.append(example['num_target_nodes'][0])
 
-    return (targets, num_tokens, num_edges, num_nodes, step_limits)
+    return (targets, num_tokens, num_edges, num_nodes, step_limits, target_lineno, num_target_nodes)
 
 
 if __name__ == '__main__':
