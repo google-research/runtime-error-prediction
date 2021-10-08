@@ -359,9 +359,9 @@ class Trainer:
       train_targets.append(targets)
       train_losses.append(loss)
       if 'localization_logits' in aux:
-        localization_targets = jnp.squeeze(batch['target_node_indexes'])
-        localization_num_targets = jnp.squeeze(batch['num_target_nodes'])
-        localization_predictions = jnp.squeeze(jnp.argmax(aux['localization_logits'], axis=-1))
+        localization_targets = batch['target_node_indexes']
+        localization_num_targets = batch['num_target_nodes']
+        localization_predictions = jnp.argmax(aux['localization_logits'], axis=-1)
         train_localization_targets.append(localization_targets)
         train_localization_num_targets.append(localization_num_targets)
         train_localization_predictions.append(localization_predictions)
@@ -381,11 +381,15 @@ class Trainer:
         train_localization_targets_jnp = jnp.concatenate(train_localization_targets)
         train_localization_num_targets_jnp = jnp.concatenate(train_localization_num_targets)
         train_localization_predictions_jnp = jnp.concatenate(train_localization_predictions)
+        print('train_localization_targets_jnp.shape 1')
+        print(train_localization_targets_jnp.shape)
+        print(train_localization_num_targets_jnp.shape)
+        print(train_localization_predictions_jnp.shape)
         if config.multidevice:
           train_localization_targets_jnp = jnp.reshape(train_localization_targets_jnp, (-1,) + train_localization_targets_jnp.shape[2:])
           train_localization_num_targets_jnp = jnp.reshape(train_localization_num_targets_jnp, (-1,) + train_localization_num_targets_jnp.shape[2:])
           train_localization_predictions_jnp = jnp.reshape(train_localization_predictions_jnp, (-1,) + train_localization_predictions_jnp.shape[2:])
-        print('train_localization_targets_jnp.shape')
+        print('train_localization_targets_jnp.shape 2')
         print(train_localization_targets_jnp.shape)
         print(train_localization_num_targets_jnp.shape)
         print(train_localization_predictions_jnp.shape)
