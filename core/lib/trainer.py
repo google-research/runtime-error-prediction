@@ -385,6 +385,10 @@ class Trainer:
           train_localization_targets_jnp = jnp.reshape(train_localization_targets_jnp, (-1,) + train_localization_targets_jnp.shape[2:])
           train_localization_num_targets_jnp = jnp.reshape(train_localization_num_targets_jnp, (-1,) + train_localization_num_targets_jnp.shape[2:])
           train_localization_predictions_jnp = jnp.reshape(train_localization_predictions_jnp, (-1,) + train_localization_predictions_jnp.shape[2:])
+        print('train_localization_targets_jnp.shape')
+        print(train_localization_targets_jnp.shape)
+        print(train_localization_num_targets_jnp.shape)
+        print(train_localization_predictions_jnp.shape)
         # train_localization_targets_jnp.shape: num_examples, max_target_nodes
         # train_localization_num_targets_jnp.shape: num_examples
         # train_localization_predictions_jnp.shape: num_examples
