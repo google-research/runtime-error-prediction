@@ -110,7 +110,7 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
 def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=False):
   # We do not expect an error to occur on a line containing more than
   # max_target_nodes statements. Most lines have only a single statement.
-  max_target_nodes = 10
+  max_target_nodes = 20
   shapes = {
       'tokens': [max_tokens],
       'edge_sources': [max_num_edges],
