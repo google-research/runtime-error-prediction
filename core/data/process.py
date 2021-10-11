@@ -354,7 +354,7 @@ def get_raises_list(nodes, exit_index):
 
 
 def get_nodes_at_lineno(raw, lineno):
-  if lineno is None:
+  if lineno is None or lineno == 0:
     return []
 
   # Compute the line boundaries.
@@ -380,7 +380,7 @@ def get_nodes_at_lineno(raw, lineno):
   return overlapping_nodes
 
 
-def make_runtimeerrorproblem(source, target, target_lineno=None, tokenizer=None,
+def make_runtimeerrorproblem(source, target, target_lineno=0, tokenizer=None,
                              problem_id=None, submission_id=None):
   raw = make_rawruntimeerrorproblem(
         source, target, target_lineno=target_lineno,

@@ -64,7 +64,7 @@ class Trainer:
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
         config.max_tokens, config.max_num_nodes, config.max_num_edges,
-        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0672})
+        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0660801055})
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
@@ -167,6 +167,7 @@ class Trainer:
           'raise_decisions',
           EvaluationMetric.INSTRUCTION_POINTER.value,
           'instruction_pointer_orig',
+          'localization_logits',
       ]:
         if key in loss_aux:
           aux[key] = loss_aux[key]
@@ -208,14 +209,21 @@ class Trainer:
         targets = jnp.reshape(targets, (-1,) + targets.shape[2:])
       # logits.shape: batch_size, num_classes
       # targets.shape: batch_size
-      return logits, loss
+      return {
+          'logits': logits,
+          'loss': loss,
+          'localization_logits': aux.get('localization_logits'),
+      }
     return evaluate_batch
 
   def run_eval(self, dataset, state, evaluate_batch):
     config = self.config
     num_classes = self.info.num_classes
     predictions = []
+    localization_predictions = []
     targets = []
+    localization_targets = []
+    localization_num_targets = []
     losses = []
     dataset = (
         dataset
@@ -226,21 +234,43 @@ class Trainer:
     for batch in tfds.as_numpy(dataset):
       if config.multidevice:
         batch = common_utils.shard(batch)
-      logits, loss = evaluate_batch(batch, state)
+      evaluate_batch_outputs = evaluate_batch(batch, state)
+      logits = evaluate_batch_outputs['logits']
+      loss = evaluate_batch_outputs['loss']
+      if 'localization_logits' in evaluate_batch_outputs:
+        localization_targets.append(batch['target_node_indexes'])
+        localization_num_targets.append(batch['num_target_nodes'])
+
+        localization_logits = evaluate_batch_outputs['localization_logits']
+        # localization_logits.shape: [device,] batch_size[/device], num_nodes
+        localization_predictions.append(jnp.argmax(localization_logits, -1))
+
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
     print('Done evaluating.')
-    predictions = jnp.array(jnp.concatenate(predictions))
-    targets = jnp.array(jnp.concatenate(targets)).flatten()
+    predictions = jnp.concatenate(predictions)
+    targets = jnp.concatenate(targets).flatten()
     num_examples = targets.shape[0]
     eval_loss = jnp.mean(jnp.array(losses))
     # targets.shape: num_eval_examples
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
+    localization_targets = jnp.concatenate(localization_targets)
+    localization_num_targets = jnp.concatenate(localization_num_targets)
+    localization_predictions = jnp.concatenate(localization_predictions)
+    # localization_targets.shape: num_eval_examples, [batch_per_device,], max_target_nodes
+    if config.multidevice:
+      localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
+      localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
+      localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
     eval_metrics = metrics.evaluate(
-        targets, predictions, num_classes, config.eval_metric_names)
+        targets, predictions, num_classes,
+        jnp.array(localization_targets),
+        jnp.array(localization_num_targets),
+        jnp.array(localization_predictions),
+        config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
@@ -310,6 +340,9 @@ class Trainer:
 
     train_predictions = []
     train_targets = []
+    train_localization_predictions = []
+    train_localization_targets = []
+    train_localization_num_targets = []
     train_losses = []
     print('Starting training')
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
@@ -325,6 +358,17 @@ class Trainer:
       train_predictions.append(predictions)
       train_targets.append(targets)
       train_losses.append(loss)
+      if 'localization_logits' in aux:
+        localization_targets = batch['target_node_indexes']
+        localization_num_targets = batch['num_target_nodes']
+        localization_predictions = jnp.argmax(aux['localization_logits'], axis=-1)
+        train_localization_targets.append(localization_targets)
+        train_localization_num_targets.append(localization_num_targets)
+        train_localization_predictions.append(localization_predictions)
+      else:
+        localization_predictions = None
+        localization_targets = None
+        localization_num_targets = None
 
       # Save checkpoints.
       if step % config.save_freq == 0:
@@ -334,18 +378,45 @@ class Trainer:
       if step % config.eval_freq == 0:
         # Evaluate on aggregated training data.
         train_loss = jnp.mean(jnp.array(train_losses))
+        train_localization_targets_jnp = jnp.concatenate(train_localization_targets)
+        train_localization_num_targets_jnp = jnp.concatenate(train_localization_num_targets)
+        train_localization_predictions_jnp = jnp.concatenate(train_localization_predictions)
+        if config.multidevice:
+          train_localization_targets_jnp = jnp.reshape(train_localization_targets_jnp, (-1,) + train_localization_targets_jnp.shape[2:])
+          train_localization_num_targets_jnp = jnp.reshape(train_localization_num_targets_jnp, (-1,) + train_localization_num_targets_jnp.shape[2:])
+          train_localization_predictions_jnp = jnp.reshape(train_localization_predictions_jnp, (-1,) + train_localization_predictions_jnp.shape[2:])
+        # train_localization_targets_jnp.shape: num_examples, max_target_nodes
+        # train_localization_num_targets_jnp.shape: num_examples, 1
+        # train_localization_predictions_jnp.shape: num_examples
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
             num_classes,
+            train_localization_targets_jnp,
+            train_localization_num_targets_jnp,
+            train_localization_predictions_jnp,
             config.eval_metric_names)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
+        if localization_predictions is not None:
+          # localization_targets.shape: [device,] batch_size, max_target_nodes
+          # localization_num_targets.shape: [device,] batch_size, 1
+          # localization_predictions.shape: [device,] batch_size
+          if config.multidevice:
+            localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
+            localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
+            localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
+          # localization_targets.shape: batch_size, max_target_nodes
+          # localization_num_targets.shape: batch_size, 1
+          # localization_predictions.shape: batch_size
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
             num_classes,
+            localization_targets,
+            localization_num_targets,
+            localization_predictions,
             [EvaluationMetric.ACCURACY.value])
         batch_accuracy = batch_metrics[EvaluationMetric.ACCURACY.value]
         print(f"""--- Step {step}
@@ -387,6 +458,9 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             transform_fn=functools.partial(
                 metrics.instruction_pointers_to_images,
                 multidevice=config.multidevice))
+        metrics.write_metric(
+            EvaluationMetric.LOCALIZATION_ACCURACY.value,
+            train_metrics, train_writer.scalar, step)
 
         # Write validation metrics.
         valid_writer.scalar('loss', valid_loss, step)
@@ -401,6 +475,9 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             step,
             transform_fn=functools.partial(
                 metrics.confusion_matrix_to_image, class_names=all_error_kinds))
+        metrics.write_metric(
+            EvaluationMetric.LOCALIZATION_ACCURACY.value,
+            valid_metrics, valid_writer.scalar, step)
 
         did_improve, es = es.update(-1 * valid_loss)
         if es.should_stop and config.early_stopping_on:
@@ -419,6 +496,9 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         train_predictions.clear()
         train_targets.clear()
         train_losses.clear()
+        train_localization_targets.clear()
+        train_localization_num_targets.clear()
+        train_localization_predictions.clear()
 
     # Save final state.
     checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)

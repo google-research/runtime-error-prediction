@@ -10,6 +10,7 @@ from core.data import error_kinds
 from core.modules.ipagnn import ipagnn
 from core.modules.ipagnn import logit_math
 from core.modules.ipagnn import spans
+from core.modules.ipagnn import raise_contributions as raise_contributions_lib
 from third_party.flax_examples import transformer_modules
 
 
@@ -97,4 +98,11 @@ class IPAGNN(nn.Module):
           features=num_classes, name='output'
       )(exit_node_embeddings)
     # logits.shape: batch_size, num_classes
+
+    if config.raise_in_ipagnn:
+      per_node_raise_contributions = raise_contributions_lib.get_raise_contribution_from_batch_and_aux(
+          x, ipagnn_output)
+      localization_logits = per_node_raise_contributions
+      ipagnn_output['localization_logits'] = localization_logits
+
     return logits, ipagnn_output

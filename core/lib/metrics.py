@@ -5,6 +5,7 @@ import io
 from typing import Tuple
 
 import imageio
+import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,10 +15,15 @@ from sklearn import metrics
 
 class EvaluationMetric(enum.Enum):
   """Evaluation metric kinds."""
-  ACCURACY = 'accuracy'
-  F1_SCORE = 'f1_score'
-  CONFUSION_MATRIX = 'confusion_matrix'
-  INSTRUCTION_POINTER = 'instruction_pointer'
+
+  def _generate_next_value_(name, start, count, last_values):
+    return name.lower()
+
+  ACCURACY = enum.auto()
+  F1_SCORE = enum.auto()
+  CONFUSION_MATRIX = enum.auto()
+  INSTRUCTION_POINTER = enum.auto()
+  LOCALIZATION_ACCURACY = enum.auto()
 
 
 def all_metric_names() -> Tuple[str]:
@@ -25,7 +31,9 @@ def all_metric_names() -> Tuple[str]:
   return tuple(m.value for m in EvaluationMetric)
 
 
-def evaluate(targets, predictions, num_classes, eval_metric_names):
+def evaluate(targets, predictions, num_classes,
+             localization_targets, localization_num_targets, localization_predictions,
+             eval_metric_names):
   # Diagnose unknown metrics.
   unknown_metric_names = set(eval_metric_names).difference(all_metric_names())
   if unknown_metric_names:
@@ -45,6 +53,10 @@ def evaluate(targets, predictions, num_classes, eval_metric_names):
         predictions,
         labels=range(num_classes),
         normalize='true')
+  if EvaluationMetric.LOCALIZATION_ACCURACY.value in eval_metric_names:
+    results[EvaluationMetric.LOCALIZATION_ACCURACY.value] = compute_localization_accuracy(
+        localization_targets, localization_num_targets, localization_predictions
+    )
   return results
 
 
@@ -158,3 +170,27 @@ def pad(array, leading_dim_size: int):
   leading_pad_width = [(0, leading_dim_difference)]
   trailing_pad_widths = [(0, 0)] * (array.ndim - 1)
   return jnp.pad(array, leading_pad_width + trailing_pad_widths)
+
+
+def compute_localization_accuracy(
+    localization_targets, localization_num_targets, localization_predictions):
+  if localization_predictions is None:
+    return None
+
+  def is_correct(targets, num_targets, prediction):
+    is_example = num_targets > 0
+    mask = jnp.arange(targets.shape[0]) < num_targets
+    # mask.shape: max_num_nodes
+    correct = targets == prediction
+    # correct.shape: max_num_nodes
+    correct_and_valid = jnp.logical_and(mask, correct)
+    # correct_and_valid.shape: max_num_nodes
+    overall_correct = jnp.max(correct_and_valid, axis=-1)
+    # overall_correct.shape: scalar.
+    return overall_correct, is_example
+  is_corrects, is_examples = jax.vmap(is_correct)(
+      localization_targets, localization_num_targets, localization_predictions)
+  # is_corrects.shape: num_examples
+  total_correct = jnp.sum(is_corrects)
+  total_examples = jnp.maximum(1, jnp.sum(is_examples))
+  return total_correct / total_examples

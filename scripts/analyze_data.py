@@ -90,6 +90,10 @@ Submission ID: {example['problem_id'][0].decode('utf-8')} {example['submission_i
       source, target = explore.get_source_and_target_for_submission(problem_id, submission_id)
       print(f"""Submission ID: {submission_id} {problem_id}
 Source: {source}""")
+      print(example['target'])
+      print(example['target_lineno'])
+      print(example['target_node_indexes'])
+      print(example['num_target_nodes'])
       tokens = tokenizer.convert_ids_to_tokens(example['tokens'])
       for i, (span_start, span_end, true_node, false_node, raise_node) in enumerate(zip(span_starts, span_ends, true_branch_nodes, false_branch_nodes, raise_nodes)):
         print(f"""Span {i} (--> {true_node},{false_node},{raise_node}): {' '.join(tokens[span_start:span_end + 1])}""")
@@ -102,14 +106,18 @@ Source: {source}""")
     num_edges = []
     num_nodes = []
     step_limits = []
+    target_lineno = []
+    num_target_nodes = []
     for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       targets.append(example['target'][0])
       num_tokens.append(example['num_tokens'][0])
       num_edges.append(example['num_edges'][0])
       num_nodes.append(example['num_nodes'][0])
       step_limits.append(example['step_limit'][0])
+      target_lineno.append(example['target_lineno'][0])
+      num_target_nodes.append(example['num_target_nodes'][0])
 
-    return (targets, num_tokens, num_edges, num_nodes, step_limits)
+    return (targets, num_tokens, num_edges, num_nodes, step_limits, target_lineno, num_target_nodes)
 
 
 if __name__ == '__main__':
