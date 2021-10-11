@@ -441,7 +441,13 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         train_writer.scalar('loss', train_loss, step)
         metrics.write_metric(EvaluationMetric.ACCURACY.value, train_metrics,
                              train_writer.scalar, step)
-        metrics.write_metric(EvaluationMetric.F1_SCORE.value, train_metrics,
+        metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE.value, train_metrics,
+                             train_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.MACRO_F1_SCORE.value, train_metrics,
+                             train_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.BINARY_F1_SCORE.value, train_metrics,
+                             train_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value, train_metrics,
                              train_writer.scalar, step)
         metrics.write_metric(
             EvaluationMetric.CONFUSION_MATRIX.value,
@@ -466,7 +472,13 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         valid_writer.scalar('loss', valid_loss, step)
         metrics.write_metric(EvaluationMetric.ACCURACY.value, valid_metrics,
                              valid_writer.scalar, step)
-        metrics.write_metric(EvaluationMetric.F1_SCORE.value, valid_metrics,
+        metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE.value, valid_metrics,
+                             valid_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.MACRO_F1_SCORE.value, valid_metrics,
+                             valid_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.BINARY_F1_SCORE.value, valid_metrics,
+                             valid_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value, valid_metrics,
                              valid_writer.scalar, step)
         metrics.write_metric(
             EvaluationMetric.CONFUSION_MATRIX.value,

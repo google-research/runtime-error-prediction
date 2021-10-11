@@ -12,6 +12,8 @@ import numpy as np
 
 from sklearn import metrics
 
+from core.data import error_kinds
+
 
 class EvaluationMetric(enum.Enum):
   """Evaluation metric kinds."""
@@ -20,7 +22,10 @@ class EvaluationMetric(enum.Enum):
     return name.lower()
 
   ACCURACY = enum.auto()
-  F1_SCORE = enum.auto()
+  WEIGHTED_F1_SCORE = enum.auto()
+  WEIGHTED_F1_SCORE_ERROR_ONLY = enum.auto()
+  MACRO_F1_SCORE = enum.auto()
+  BINARY_F1_SCORE = enum.auto()
   CONFUSION_MATRIX = enum.auto()
   INSTRUCTION_POINTER = enum.auto()
   LOCALIZATION_ACCURACY = enum.auto()
@@ -44,9 +49,18 @@ def evaluate(targets, predictions, num_classes,
   if EvaluationMetric.ACCURACY.value in eval_metric_names:
     results[EvaluationMetric.ACCURACY.value] = (
         jnp.sum(predictions == targets) / jnp.sum(jnp.ones_like(targets)))
-  if EvaluationMetric.F1_SCORE.value in eval_metric_names:
-    results[EvaluationMetric.F1_SCORE.value] = metrics.f1_score(
+  if EvaluationMetric.MACRO_F1_SCORE.value in eval_metric_names:
+    results[EvaluationMetric.MACRO_F1_SCORE.value] = metrics.f1_score(
         targets, predictions, average='macro')
+  if EvaluationMetric.WEIGHTED_F1_SCORE.value in eval_metric_names:
+    results[EvaluationMetric.WEIGHTED_F1_SCORE.value] = metrics.f1_score(
+        targets, predictions, average='weighted')
+  if EvaluationMetric.BINARY_F1_SCORE.value in eval_metric_names:
+    results[EvaluationMetric.BINARY_F1_SCORE.value] = compute_binary_f1_score(
+        targets, predictions)
+  if EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value in eval_metric_names:
+    results[EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value] = compute_weighted_f1_score_error_only(
+        targets, predictions)
   if EvaluationMetric.CONFUSION_MATRIX.value in eval_metric_names:
     results[EvaluationMetric.CONFUSION_MATRIX.value] = metrics.confusion_matrix(
         targets,
@@ -194,3 +208,19 @@ def compute_localization_accuracy(
   total_correct = jnp.sum(is_corrects)
   total_examples = jnp.maximum(1, jnp.sum(is_examples))
   return total_correct / total_examples
+
+
+def compute_binary_f1_score(targets, predictions):
+  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)
+  binary_predictions = jnp.where(predictions != error_kinds.NO_ERROR_ID, 1, 0)
+  metric = metrics.f1_score(binary_targets, binary_predictions, average='binary')
+  return metric
+
+
+def compute_weighted_f1_score_error_only(targets, predictions):
+  labels = [
+      error_kinds.to_index(kind) for kind in error_kinds.ALL_ERROR_KINDS
+  ]
+  labels.remove(error_kinds.NO_ERROR_ID)
+  metric = metrics.f1_score(targets, predictions, labels=labels, average='weighted')
+  return metric
