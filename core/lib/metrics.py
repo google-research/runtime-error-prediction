@@ -224,12 +224,8 @@ def compute_binary_f1_score(targets, predictions):
 
 
 def compute_binary_auc(targets, logits):
-  print('logits.shape')
-  print(logits.shape)
   binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
   probabilities = jax.nn.softmax(logits, axis=-1)
-  print('probabilities.shape')
-  print(probabilities.shape)
   binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
   fpr, tpr, thresholds = metrics.roc_curve(binary_targets, binary_predictions, pos_label=1)
   metric = metrics.auc(fpr, tpr)
