@@ -26,6 +26,7 @@ class EvaluationMetric(enum.Enum):
   WEIGHTED_F1_SCORE_ERROR_ONLY = enum.auto()
   MACRO_F1_SCORE = enum.auto()
   BINARY_F1_SCORE = enum.auto()
+  BINARY_AUC = enum.auto()
   CONFUSION_MATRIX = enum.auto()
   INSTRUCTION_POINTER = enum.auto()
   LOCALIZATION_ACCURACY = enum.auto()
@@ -36,7 +37,7 @@ def all_metric_names() -> Tuple[str]:
   return tuple(m.value for m in EvaluationMetric)
 
 
-def evaluate(targets, predictions, num_classes,
+def evaluate(targets, predictions, logits, num_classes,
              localization_targets, localization_num_targets, localization_predictions,
              eval_metric_names):
   # Diagnose unknown metrics.
@@ -58,6 +59,9 @@ def evaluate(targets, predictions, num_classes,
   if EvaluationMetric.BINARY_F1_SCORE.value in eval_metric_names:
     results[EvaluationMetric.BINARY_F1_SCORE.value] = compute_binary_f1_score(
         targets, predictions)
+  if EvaluationMetric.BINARY_AUC.value in eval_metric_names:
+    results[EvaluationMetric.BINARY_AUC.value] = compute_binary_auc(
+        targets, logits)
   if EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value in eval_metric_names:
     results[EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value] = compute_weighted_f1_score_error_only(
         targets, predictions)
@@ -68,9 +72,11 @@ def evaluate(targets, predictions, num_classes,
         labels=range(num_classes),
         normalize='true')
   if EvaluationMetric.LOCALIZATION_ACCURACY.value in eval_metric_names:
-    results[EvaluationMetric.LOCALIZATION_ACCURACY.value] = compute_localization_accuracy(
+    localization_accuracy = compute_localization_accuracy(
         localization_targets, localization_num_targets, localization_predictions
     )
+    if localization_accuracy is not None:
+      results[EvaluationMetric.LOCALIZATION_ACCURACY.value] = localization_accuracy
   return results
 
 
@@ -214,6 +220,15 @@ def compute_binary_f1_score(targets, predictions):
   binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)
   binary_predictions = jnp.where(predictions != error_kinds.NO_ERROR_ID, 1, 0)
   metric = metrics.f1_score(binary_targets, binary_predictions, average='binary')
+  return metric
+
+
+def compute_binary_auc(targets, logits):
+  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
+  probabilities = jax.nn.softmax(logits, axis=-1)
+  binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
+  fpr, tpr, thresholds = metrics.roc_curve(binary_targets, binary_predictions, pos_label=1)
+  metric = metrics.auc(fpr, tpr)
   return metric
 
 
