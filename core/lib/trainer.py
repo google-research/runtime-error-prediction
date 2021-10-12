@@ -431,9 +431,12 @@ class Trainer:
           # localization_targets.shape: batch_size, max_target_nodes
           # localization_num_targets.shape: batch_size, 1
           # localization_predictions.shape: batch_size
+        if config.multidevice:
+          logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
         batch_metrics = metrics.evaluate(
             jnp.reshape(targets, -1),
             jnp.reshape(predictions, -1),
+            logits,
             num_classes,
             localization_targets,
             localization_num_targets,
