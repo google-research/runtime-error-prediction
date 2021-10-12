@@ -378,16 +378,21 @@ class Trainer:
       if step % config.eval_freq == 0:
         # Evaluate on aggregated training data.
         train_loss = jnp.mean(jnp.array(train_losses))
-        train_localization_targets_jnp = jnp.concatenate(train_localization_targets)
-        train_localization_num_targets_jnp = jnp.concatenate(train_localization_num_targets)
-        train_localization_predictions_jnp = jnp.concatenate(train_localization_predictions)
-        if config.multidevice:
-          train_localization_targets_jnp = jnp.reshape(train_localization_targets_jnp, (-1,) + train_localization_targets_jnp.shape[2:])
-          train_localization_num_targets_jnp = jnp.reshape(train_localization_num_targets_jnp, (-1,) + train_localization_num_targets_jnp.shape[2:])
-          train_localization_predictions_jnp = jnp.reshape(train_localization_predictions_jnp, (-1,) + train_localization_predictions_jnp.shape[2:])
-        # train_localization_targets_jnp.shape: num_examples, max_target_nodes
-        # train_localization_num_targets_jnp.shape: num_examples, 1
-        # train_localization_predictions_jnp.shape: num_examples
+        if train_localization_targets:
+          train_localization_targets_jnp = jnp.concatenate(train_localization_targets)
+          train_localization_num_targets_jnp = jnp.concatenate(train_localization_num_targets)
+          train_localization_predictions_jnp = jnp.concatenate(train_localization_predictions)
+          if config.multidevice:
+            train_localization_targets_jnp = jnp.reshape(train_localization_targets_jnp, (-1,) + train_localization_targets_jnp.shape[2:])
+            train_localization_num_targets_jnp = jnp.reshape(train_localization_num_targets_jnp, (-1,) + train_localization_num_targets_jnp.shape[2:])
+            train_localization_predictions_jnp = jnp.reshape(train_localization_predictions_jnp, (-1,) + train_localization_predictions_jnp.shape[2:])
+          # train_localization_targets_jnp.shape: num_examples, max_target_nodes
+          # train_localization_num_targets_jnp.shape: num_examples, 1
+          # train_localization_predictions_jnp.shape: num_examples
+        else:
+          train_localization_targets_jnp = None
+          train_localization_num_targets_jnp = None
+          train_localization_predictions_jnp = None
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
