@@ -406,6 +406,8 @@ class Trainer:
           train_localization_num_targets_jnp = None
           train_localization_predictions_jnp = None
         train_logits_jnp = jnp.concatenate(train_logits)
+        if config.multidevice:
+          train_logits_jnp = jnp.reshape(train_logits_jnp, (-1,) + train_logits_jnp.shape[2:])
         print('train_logits_jnp.shape')
         print(train_logits_jnp.shape)
         train_metrics = metrics.evaluate(
