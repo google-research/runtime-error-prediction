@@ -61,7 +61,7 @@ def evaluate(targets, predictions, logits, num_classes,
         targets, predictions)
   if EvaluationMetric.BINARY_AUC.value in eval_metric_names:
     results[EvaluationMetric.BINARY_AUC.value] = compute_binary_auc(
-        targets, predictions)
+        targets, logits)
   if EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value in eval_metric_names:
     results[EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value] = compute_weighted_f1_score_error_only(
         targets, predictions)
@@ -223,9 +223,10 @@ def compute_binary_f1_score(targets, predictions):
   return metric
 
 
-def compute_binary_auc(targets, predictions):
-  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)
-  binary_predictions = jnp.where(predictions != error_kinds.NO_ERROR_ID, 1, 0)
+def compute_binary_auc(targets, logits):
+  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
+  probabilities = jax.nn.softmax(logits, axis=-1)
+  binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
   fpr, tpr, thresholds = metrics.roc_curve(binary_targets, binary_predictions, pos_label=1)
   metric = metrics.auc(fpr, tpr)
   return metric
