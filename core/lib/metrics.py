@@ -26,6 +26,7 @@ class EvaluationMetric(enum.Enum):
   WEIGHTED_F1_SCORE_ERROR_ONLY = enum.auto()
   MACRO_F1_SCORE = enum.auto()
   BINARY_F1_SCORE = enum.auto()
+  BINARY_AUC = enum.auto()
   CONFUSION_MATRIX = enum.auto()
   INSTRUCTION_POINTER = enum.auto()
   LOCALIZATION_ACCURACY = enum.auto()
@@ -68,9 +69,11 @@ def evaluate(targets, predictions, num_classes,
         labels=range(num_classes),
         normalize='true')
   if EvaluationMetric.LOCALIZATION_ACCURACY.value in eval_metric_names:
-    results[EvaluationMetric.LOCALIZATION_ACCURACY.value] = compute_localization_accuracy(
+    localization_accuracy = compute_localization_accuracy(
         localization_targets, localization_num_targets, localization_predictions
     )
+    if localization_accuracy is not None:
+      results[EvaluationMetric.LOCALIZATION_ACCURACY.value] = localization_accuracy
   return results
 
 
