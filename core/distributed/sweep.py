@@ -14,12 +14,12 @@ hparams = {
     'config.learning_rate': [0.1, 0.3, 0.5],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
-    'config.hidden_size': [256],
+    'config.hidden_size':  [64, 128, 256, 512],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
     'config.transformer_dropout_rate': [0, 0.1],
     'config.transformer_attention_dropout_rate': [0, 0.1],
     'config.permissive_node_embeddings': [False],
-    'transformer_size': ['default']
+    'transformer_size': ['tiny', 'small', 'default'],
 }
 
 transformer_configs = {
@@ -99,8 +99,8 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
         '--config.eval_subsample=1 '
         '--config.eval_max_batches=500 '
         '--config.save_freq=5000 '
-        '--config.restore_checkpoint_dir=/mnt/runtime-error-problems-experiments/experiments/2021-09-24-pretrain-004-copy/6-003/I1466,o=sgd,bs=32,lr=0.3,gc=2,hs=256,span=max,tdr=0,tadr=0,pe=False,T=default/checkpoints/ '
-        '--config.finetune=IPAGNN '
+        # '--config.restore_checkpoint_dir=/mnt/runtime-error-problems-experiments/experiments/2021-09-24-pretrain-004-copy/6-003/I1466,o=sgd,bs=32,lr=0.3,gc=2,hs=256,span=max,tdr=0,tadr=0,pe=False,T=default/checkpoints/ '
+        # '--config.finetune=IPAGNN '
         f'--config.study_id={study_id} '
         f'--config.experiment_id={experiment_id} '
         f'--config.run_id={run_id} '
@@ -175,17 +175,17 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
 
   n = 20  # Machines per model
 
-  # Exception IPAGNN
-  offset = 20
-  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
+  # # Exception IPAGNN
+  # offset = 20
+  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
   # # IPAGNN
-  offset = 40
-  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
+  # offset = 40
+  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
-  # offset = 40  # The machine index to start with.
-  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
+  offset = 0  # The machine index to start with.
+  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
 
 # # To kill the runner processes:
