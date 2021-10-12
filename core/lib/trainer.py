@@ -408,8 +408,6 @@ class Trainer:
         train_logits_jnp = jnp.concatenate(train_logits)
         if config.multidevice:
           train_logits_jnp = jnp.reshape(train_logits_jnp, (-1,) + train_logits_jnp.shape[2:])
-        print('train_logits_jnp.shape')
-        print(train_logits_jnp.shape)
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
