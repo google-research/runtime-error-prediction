@@ -237,7 +237,7 @@ class Trainer:
       evaluate_batch_outputs = evaluate_batch(batch, state)
       logits = evaluate_batch_outputs['logits']
       loss = evaluate_batch_outputs['loss']
-      if 'localization_logits' in evaluate_batch_outputs:
+      if evaluate_batch_outputs.get('localization_logits'):
         localization_targets.append(batch['target_node_indexes'])
         localization_num_targets.append(batch['num_target_nodes'])
 
@@ -358,7 +358,7 @@ class Trainer:
       train_predictions.append(predictions)
       train_targets.append(targets)
       train_losses.append(loss)
-      if 'localization_logits' in aux:
+      if aux.get('localization_logits'):
         localization_targets = batch['target_node_indexes']
         localization_num_targets = batch['num_target_nodes']
         localization_predictions = jnp.argmax(aux['localization_logits'], axis=-1)
