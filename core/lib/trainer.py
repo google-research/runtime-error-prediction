@@ -257,19 +257,24 @@ class Trainer:
     # predictions.shape: num_eval_examples
     assert predictions.shape == targets.shape
     assert len(predictions.shape) == 1
-    localization_targets = jnp.concatenate(localization_targets)
-    localization_num_targets = jnp.concatenate(localization_num_targets)
-    localization_predictions = jnp.concatenate(localization_predictions)
-    # localization_targets.shape: num_eval_examples, [batch_per_device,], max_target_nodes
-    if config.multidevice:
-      localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
-      localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
-      localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
+    if localization_targets:
+      localization_targets = jnp.concatenate(localization_targets)
+      localization_num_targets = jnp.concatenate(localization_num_targets)
+      localization_predictions = jnp.concatenate(localization_predictions)
+      # localization_targets.shape: num_eval_examples, [batch_per_device,], max_target_nodes
+      if config.multidevice:
+        localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
+        localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
+        localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
+    else:
+      localization_targets = None
+      localization_num_targets = None
+      localization_predictions = None
     eval_metrics = metrics.evaluate(
         targets, predictions, num_classes,
-        jnp.array(localization_targets),
-        jnp.array(localization_num_targets),
-        jnp.array(localization_predictions),
+        localization_targets,
+        localization_num_targets,
+        localization_predictions,
         config.eval_metric_names)
     return eval_loss, eval_metrics, num_examples
 
