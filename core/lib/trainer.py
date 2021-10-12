@@ -220,6 +220,7 @@ class Trainer:
     config = self.config
     num_classes = self.info.num_classes
     predictions = []
+    logits_list = []
     localization_predictions = []
     targets = []
     localization_targets = []
@@ -245,10 +246,14 @@ class Trainer:
         # localization_logits.shape: [device,] batch_size[/device], num_nodes
         localization_predictions.append(jnp.argmax(localization_logits, -1))
 
+      logits_list.append(logits)
       predictions.append(jnp.argmax(logits, -1))
       targets.append(batch['target'])
       losses.append(loss)
     print('Done evaluating.')
+    logits_jnp = jnp.concatenate(logits_list)
+    print('logits_jnp.shape')
+    print(logits_jnp.shape)
     predictions = jnp.concatenate(predictions)
     targets = jnp.concatenate(targets).flatten()
     num_examples = targets.shape[0]
