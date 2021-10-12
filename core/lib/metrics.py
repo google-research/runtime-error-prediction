@@ -37,7 +37,7 @@ def all_metric_names() -> Tuple[str]:
   return tuple(m.value for m in EvaluationMetric)
 
 
-def evaluate(targets, predictions, num_classes,
+def evaluate(targets, predictions, logits, num_classes,
              localization_targets, localization_num_targets, localization_predictions,
              eval_metric_names):
   # Diagnose unknown metrics.

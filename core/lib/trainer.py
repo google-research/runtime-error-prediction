@@ -252,8 +252,7 @@ class Trainer:
       losses.append(loss)
     print('Done evaluating.')
     logits_jnp = jnp.concatenate(logits_list)
-    print('logits_jnp.shape')
-    print(logits_jnp.shape)
+    # logits_jnp.shape: num_eval_examples, num_classes
     predictions = jnp.concatenate(predictions)
     targets = jnp.concatenate(targets).flatten()
     num_examples = targets.shape[0]
@@ -276,7 +275,7 @@ class Trainer:
       localization_num_targets = None
       localization_predictions = None
     eval_metrics = metrics.evaluate(
-        targets, predictions, num_classes,
+        targets, predictions, logits_jnp, num_classes,
         localization_targets,
         localization_num_targets,
         localization_predictions,
@@ -348,6 +347,7 @@ class Trainer:
       os.fsync(train_writer_fd)
     sys.stdout.flush()
 
+    train_logits = []
     train_predictions = []
     train_targets = []
     train_localization_predictions = []
@@ -362,9 +362,11 @@ class Trainer:
       state, aux = train_step(state, batch)
 
       # Record training batch evaluation data.
-      predictions = jnp.squeeze(jnp.argmax(aux['logits'], axis=-1))
+      logits = aux['logits']
+      predictions = jnp.squeeze(jnp.argmax(logits, axis=-1))
       targets = jnp.squeeze(batch['target'])
       loss = jnp.mean(aux['loss'])
+      train_logits.append(logits)
       train_predictions.append(predictions)
       train_targets.append(targets)
       train_losses.append(loss)
@@ -403,9 +405,13 @@ class Trainer:
           train_localization_targets_jnp = None
           train_localization_num_targets_jnp = None
           train_localization_predictions_jnp = None
+        train_logits_jnp = jnp.concatenate(train_logits)
+        print('train_logits_jnp.shape')
+        print(train_logits_jnp.shape)
         train_metrics = metrics.evaluate(
             jnp.reshape(jnp.array(train_targets), -1),
             jnp.reshape(jnp.array(train_predictions), -1),
+            train_logits_jnp,
             num_classes,
             train_localization_targets_jnp,
             train_localization_num_targets_jnp,
@@ -524,6 +530,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
           os.fsync(valid_writer_fd)
 
         # Clear training evaluation data.
+        train_logits.clear()
         train_predictions.clear()
         train_targets.clear()
         train_losses.clear()
