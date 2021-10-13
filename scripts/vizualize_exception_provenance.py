@@ -104,7 +104,7 @@ def set_config(config):
   config.restore_checkpoint_dir=(
       '/mnt/untime-error-problems-experiments/experiments/2021-10-11-finetune-006-copy/10/'
       'E122,o=sgd,bs=32,lr=0.3,gc=2,hs=256,span=max,'
-      'tdr=0.1,tadr=0,pe=False,T=default'
+      'tdr=0.1,tadr=0,pe=False,T=default/checkpoints'
   )
   config.span_encoding_method = 'max'
   return config
