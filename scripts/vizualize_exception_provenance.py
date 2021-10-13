@@ -185,6 +185,9 @@ def main(argv):
             source, target,
             target_lineno=error_lineno, problem_id=problem_id, submission_id=submission_id)
 
+        if 'try:' not in source:
+          continue
+
         # Visualize the data.
         print('---')
         print(f'Problem: {problem_id} {submission_id} ({split})')
