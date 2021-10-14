@@ -473,6 +473,8 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
                              train_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.BINARY_AUC.value, train_metrics,
                              train_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.BINARY_RECALL_AT_90.value, train_metrics,
+                             train_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value, train_metrics,
                              train_writer.scalar, step)
         metrics.write_metric(
@@ -505,6 +507,8 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         metrics.write_metric(EvaluationMetric.BINARY_F1_SCORE.value, valid_metrics,
                              valid_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.BINARY_AUC.value, valid_metrics,
+                             valid_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.BINARY_RECALL_AT_90.value, valid_metrics,
                              valid_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value, valid_metrics,
                              valid_writer.scalar, step)

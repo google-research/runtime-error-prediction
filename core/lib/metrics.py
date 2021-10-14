@@ -27,6 +27,7 @@ class EvaluationMetric(enum.Enum):
   MACRO_F1_SCORE = enum.auto()
   BINARY_F1_SCORE = enum.auto()
   BINARY_AUC = enum.auto()
+  BINARY_RECALL_AT_90 = enum.auto()
   CONFUSION_MATRIX = enum.auto()
   INSTRUCTION_POINTER = enum.auto()
   LOCALIZATION_ACCURACY = enum.auto()
@@ -62,6 +63,9 @@ def evaluate(targets, predictions, logits, num_classes,
   if EvaluationMetric.BINARY_AUC.value in eval_metric_names:
     results[EvaluationMetric.BINARY_AUC.value] = compute_binary_auc(
         targets, logits)
+  if EvaluationMetric.BINARY_RECALL_AT_90.value in eval_metric_names:
+    results[EvaluationMetric.BINARY_RECALL_AT_90.value] = compute_recall_at_precision(
+        targets, logits, target_precision=0.90)
   if EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value in eval_metric_names:
     results[EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value] = compute_weighted_f1_score_error_only(
         targets, predictions)
@@ -230,6 +234,32 @@ def compute_binary_auc(targets, logits):
   fpr, tpr, thresholds = metrics.roc_curve(binary_targets, binary_predictions, pos_label=1)
   metric = metrics.auc(fpr, tpr)
   return metric
+
+
+def compute_recall_at_precision(targets, logits, target_precision):
+  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
+  probabilities = jax.nn.softmax(logits, axis=-1)
+  binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
+  precisions, recalls, thresholds = metrics.precision_recall_curve(binary_targets, binary_predictions, pos_label=1)
+  for precision, recall in zip(precisions, recalls):
+    # The last precision value is 1, starts from ~0.
+    # The last recall value is 0, starts from ~1.
+    if precision >= target_precision:
+      return recall
+  return 0
+
+
+def compute_precision_at_recall(targets, logits, target_recall):
+  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
+  probabilities = jax.nn.softmax(logits, axis=-1)
+  binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
+  precisions, recalls, thresholds = metrics.precision_recall_curve(binary_targets, binary_predictions, pos_label=1)
+  for precision, recall in reversed(list(zip(precisions, recalls))):
+    # The first precision value is 1, tends toward 0.
+    # The first recall value is 0, tends toward 1.
+    if recall >= target_recall:
+      return precision
+  return 0
 
 
 def compute_weighted_f1_score_error_only(targets, predictions):
