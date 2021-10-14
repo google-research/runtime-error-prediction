@@ -95,11 +95,11 @@ def set_config(config):
   config.transformer_mlp_dim = 2048
 
   config.restore_checkpoint_dir=(
-      '/mnt/runtime-error-problems-experiments/experiments/2021-09-27-finetune-001-copy/8/'
-      'E055,o=sgd,bs=32,lr=0.1,gc=2,hs=256,span=mean,'
-      'tdr=0.1,tadr=0.1,pe=False,T=default/checkpoints'
+      '/mnt/runtime-error-problems-experiments/experiments/2021-10-11-finetune-006-copy/10/'
+      'E122,o=sgd,bs=32,lr=0.3,gc=2,hs=256,span=max,'
+      'tdr=0.1,tadr=0,pe=False,T=default/checkpoints'
   )
-  config.span_encoding_method = 'mean'
+  config.span_encoding_method = 'max'
   return config
 
 
