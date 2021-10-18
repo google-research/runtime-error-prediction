@@ -95,7 +95,7 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
         f'--config.model_class={model_class} '
         f'--config.raise_in_ipagnn={raise_in_ipagnn} '
         f'--dataset_path={dataset_path} '
-        '--config.eval_freq=25000 '
+        '--config.eval_freq=15000 '
         '--config.eval_subsample=1 '
         '--config.eval_max_batches=500 '
         '--config.save_freq=5000 '
