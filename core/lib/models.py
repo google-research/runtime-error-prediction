@@ -1,6 +1,7 @@
 """Models library."""
 
 from core.models import ipagnn
+from core.models import rnn
 from core.models import mlp
 from core.models import transformer
 from core.modules import transformer_config_lib
@@ -26,6 +27,12 @@ def make_model(config, info, deterministic):
     )
   elif model_class == 'IPAGNN':
     return ipagnn.IPAGNN(
+        config=config,
+        info=info,
+        transformer_config=transformer_config,
+    )
+  elif model_class == 'LSTM':
+    return rnn.LSTM(
         config=config,
         info=info,
         transformer_config=transformer_config,

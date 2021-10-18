@@ -1,5 +1,6 @@
 from typing import Any
 
+import jax
 from flax import linen as nn
 import jax.numpy as jnp
 
@@ -13,7 +14,6 @@ class LSTM(nn.Module):
   config: Any
   info: Any
   transformer_config: transformer_modules.TransformerConfig
-  lstm_config: lstm_modules.LSTMConfig
 
   def setup(self):
     config = self.config
@@ -21,6 +21,11 @@ class LSTM(nn.Module):
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
+    lstm_config = lstm_modules.LSTMConfig(
+      vocab_size=vocab_size,
+      emb_dim=config.lstm_emb_dim, 
+      num_layers=config.lstm_num_layers, 
+      hidden_dim=config.lstm_hidden_dim,)
     self.token_embedder = spans.NodeAwareTokenEmbedder(
         transformer_config=self.transformer_config,
         num_embeddings=vocab_size,
@@ -28,11 +33,8 @@ class LSTM(nn.Module):
         max_tokens=max_tokens,
         max_num_nodes=max_num_nodes,
     )
-    self.encoder = encoder.LSTMEncoder(
-        self.lstm_config)
+    self.encoder = encoder.LSTMEncoder(lstm_config)
 
-  def get_end_token(self, inputs, num_tokens):
-    return inputs[:, num_tokens]
 
   @nn.compact
   def __call__(self, x):
@@ -42,13 +44,22 @@ class LSTM(nn.Module):
     # tokens_mask.shape: batch_size, max_tokens
     encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
+    # TODO(rgoel): Ensuring the token encoder is still a Transformer to ensure uniformity.
     encoded_inputs = self.token_embedder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'],
         x['num_nodes'])
     # encoded_inputs.shape: batch_size, max_tokens, hidden_size
     encoded_inputs = self.encoder(encoded_inputs)
     # encoded_inputs.shape: batch_size, max_tokens, hidden_size
-    x = self.get_end_token(encoded_inputs, x['num_tokens'])
+
+    def get_last_state(inputs, last_token):
+      return inputs[last_token-1]
+
+    get_last_state_batch = jax.vmap(get_last_state)
+    # encoded_inputs.shape: batch_size, max_tokens, hidden_size
+    x = get_last_state_batch(encoded_inputs, x['num_tokens'])
+    # x.shape: batch_size, 1, hidden_size
+    x = jnp.squeeze(x, 1)
     # x.shape: batch_size, hidden_size
     x = nn.Dense(features=self.info.num_classes)(x)
     # x.shape: batch_size, num_classes
