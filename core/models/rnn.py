@@ -43,7 +43,7 @@ class LSTM(nn.Module):
     # tokens_mask.shape: batch_size, max_tokens
     encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
-    # TODO(rgoel): Ensuring the token encoder is still a Transformer to ensure uniformity.
+    # NOTE(rgoel): Ensuring the token encoder is still a Transformer to ensure uniformity.
     encoded_inputs = self.token_embedder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'],
         x['num_nodes'])
@@ -51,6 +51,8 @@ class LSTM(nn.Module):
     encoded_inputs = self.encoder(encoded_inputs)
     # encoded_inputs.shape: batch_size, max_tokens, hidden_size
 
+    # NOTE(rgoel): Using only the last state. We can change this to
+    # pooling across time stamps.
     def get_last_state(inputs, last_token):
       return inputs[last_token-1]
 
