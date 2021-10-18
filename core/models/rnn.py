@@ -22,10 +22,9 @@ class LSTM(nn.Module):
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
     lstm_config = lstm_modules.LSTMConfig(
-      vocab_size=vocab_size,
-      emb_dim=config.lstm_emb_dim, 
-      num_layers=config.lstm_num_layers, 
-      hidden_dim=config.lstm_hidden_dim,)
+      vocab_size=vocab_size, 
+      num_layers=config.rnn_layers, 
+      hidden_dim=config.hidden_size,)
     self.token_embedder = spans.NodeAwareTokenEmbedder(
         transformer_config=self.transformer_config,
         num_embeddings=vocab_size,

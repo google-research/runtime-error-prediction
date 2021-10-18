@@ -38,7 +38,6 @@ class LSTMConfig:
   share_embeddings: bool = False
   logits_via_embedding: bool = False
   dtype: Any = jnp.float32
-  emb_dim: int = 512
   num_layers: int = 1
   hidden_dim: int = 2048
   max_len: int = 2048
