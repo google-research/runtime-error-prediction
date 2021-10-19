@@ -4,8 +4,6 @@ Run the following to mount the Project CodeNet raw data and derived outputs to d
 gcsfuse --implicit-dirs project-codenet-storage /mnt/project-codenet-storage/
 """
 
-import IPython
-
 import os
 
 from absl import app
@@ -13,6 +11,7 @@ from absl import flags
 
 from flax.training import checkpoints
 from flax.training import common_utils
+import imageio
 import jax
 import jax.numpy as jnp
 from ml_collections.config_flags import config_flags
@@ -197,7 +196,7 @@ def main(argv):
 
         instruction_pointer_single_trim = instruction_pointer_single[:steps_limit + 1, :num_nodes]
         image = metrics.instruction_pointer_to_image(instruction_pointer_single_trim)
-        IPython.embed()
+        imageio.imwrite('tmp.png', image, format='png')
 
         if error_lineno:
           nodes_at_error = process.get_nodes_at_lineno(raw, error_lineno)
