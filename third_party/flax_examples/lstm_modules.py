@@ -31,6 +31,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+
 @struct.dataclass
 class LSTMConfig:
   """Global hyperparameters used to minimize obnoxious kwarg plumbing."""

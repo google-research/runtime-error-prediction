@@ -34,7 +34,6 @@ class LSTM(nn.Module):
     )
     self.encoder = encoder.LSTMEncoder(lstm_config)
 
-
   @nn.compact
   def __call__(self, x):
     tokens = x['tokens']
@@ -57,7 +56,6 @@ class LSTM(nn.Module):
       return inputs[last_token-1]
 
     get_last_state_batch = jax.vmap(get_last_state)
-    # encoded_inputs.shape: batch_size, max_tokens, hidden_size
     x = get_last_state_batch(encoded_inputs, x['num_tokens'])
     # x.shape: batch_size, 1, hidden_size
     x = jnp.squeeze(x, 1)

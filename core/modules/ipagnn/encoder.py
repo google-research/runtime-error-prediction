@@ -70,6 +70,7 @@ class LSTMEncoder(nn.Module):
     """
     cfg = self.config
     batch_size, max_tokens, _ = encoded_inputs.shape
+
     x = encoded_inputs
     x = nn.Dropout(rate=cfg.dropout_rate)(x, deterministic=cfg.deterministic)
     x = x.astype(cfg.dtype)
