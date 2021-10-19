@@ -4,8 +4,6 @@ Run the following to mount the Project CodeNet raw data and derived outputs to d
 gcsfuse --implicit-dirs project-codenet-storage /mnt/project-codenet-storage/
 """
 
-import IPython
-
 import os
 
 from absl import app
@@ -164,7 +162,7 @@ def main(argv):
       target_error = error_kinds.to_error(target)
       prediction = int(jnp.argmax(aux['logits'][index]))
       prediction_error = error_kinds.to_error(prediction)
-      step_limit = batch['step_limit'][index]
+      step_limit = batch['step_limit'][index, 0]
       instruction_pointer_single = instruction_pointer[index]
 
       total_contribution = jnp.sum(contribution)
@@ -196,10 +194,12 @@ def main(argv):
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
 
-        IPython.embed()
-        instruction_pointer_single_trim = instruction_pointer_single[:step_limit + 1, :num_nodes]
+        instruction_pointer_single_trim = instruction_pointer_single[:step_limit + 1, :num_nodes].T
+        # instruction_pointer_single_trim.shape: num_nodes, timesteps
         image = metrics.instruction_pointer_to_image(instruction_pointer_single_trim)
-        imageio.imwrite('tmp.png', image, format='png')
+        imageio.imwrite('viz-instruction-pointer.png', image, format='png')
+        with open('viz-source.txt', 'w') as f:
+          f.write(source)
 
         if error_lineno:
           nodes_at_error = process.get_nodes_at_lineno(raw, error_lineno)
