@@ -11,7 +11,7 @@ from core.distributed import gcp
 hparams = {
     'config.optimizer': ['sgd'],
     'config.batch_size': [32],
-    'config.learning_rate': [0.0001, 0.0003, 0.001, 0.003],
+    'config.learning_rate': [0.01, 0.03, 0.1, 0.3],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
     'config.hidden_size':  [64, 128, 256, 512],
@@ -95,7 +95,7 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
         f'--config.model_class={model_class} '
         f'--config.raise_in_ipagnn={raise_in_ipagnn} '
         f'--dataset_path={dataset_path} '
-        '--config.eval_freq=25000 '
+        '--config.eval_freq=15000 '
         '--config.eval_subsample=1 '
         '--config.eval_max_batches=500 '
         '--config.save_freq=5000 '
@@ -175,17 +175,17 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
 
   n = 20  # Machines per model
 
-  # # Exception IPAGNN
-  # offset = 20
-  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
+  # Exception IPAGNN
+  offset = 20
+  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
-  # # IPAGNN
-  # offset = 40
-  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
+  # IPAGNN
+  offset = 40
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
-  offset = 0  # The machine index to start with.
-  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
+  # offset = 0  # The machine index to start with.
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
 
 # # To kill the runner processes:
