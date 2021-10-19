@@ -195,7 +195,8 @@ def main(argv):
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
 
-        image = metrics.instruction_pointer_to_image(instruction_pointer_single)
+        instruction_pointer_single_trim = instruction_pointer_single[:steps_limit + 1, :num_nodes]
+        image = metrics.instruction_pointer_to_image(instruction_pointer_single_trim)
         IPython.embed()
 
         if error_lineno:
