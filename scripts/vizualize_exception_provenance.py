@@ -4,6 +4,8 @@ Run the following to mount the Project CodeNet raw data and derived outputs to d
 gcsfuse --implicit-dirs project-codenet-storage /mnt/project-codenet-storage/
 """
 
+import IPython
+
 import os
 
 from absl import app
@@ -194,6 +196,7 @@ def main(argv):
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
 
+        IPython.embed()
         instruction_pointer_single_trim = instruction_pointer_single[:step_limit + 1, :num_nodes]
         image = metrics.instruction_pointer_to_image(instruction_pointer_single_trim)
         imageio.imwrite('tmp.png', image, format='png')
