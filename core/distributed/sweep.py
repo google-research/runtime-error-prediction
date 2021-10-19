@@ -175,17 +175,17 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
 
   n = 20  # Machines per model
 
-  # # Exception IPAGNN
-  # offset = 20
-  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
+  # Exception IPAGNN
+  offset = 20
+  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
-  # # IPAGNN
-  # offset = 40
-  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
+  # IPAGNN
+  offset = 40
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
-  offset = 0  # The machine index to start with.
-  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
+  # offset = 0  # The machine index to start with.
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
 
 # # To kill the runner processes:
