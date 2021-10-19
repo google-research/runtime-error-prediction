@@ -22,6 +22,7 @@ from core.data import codenet_paths
 from core.data import error_kinds
 from core.data import info as info_lib
 from core.data import process
+from core.lib import metrics
 from core.lib import trainer
 import tensorflow_datasets as tfds
 
