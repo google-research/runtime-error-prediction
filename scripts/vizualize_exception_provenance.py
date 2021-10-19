@@ -4,6 +4,8 @@ Run the following to mount the Project CodeNet raw data and derived outputs to d
 gcsfuse --implicit-dirs project-codenet-storage /mnt/project-codenet-storage/
 """
 
+import IPython
+
 import os
 
 from absl import app
@@ -161,6 +163,7 @@ def main(argv):
       prediction = int(jnp.argmax(aux['logits'][index]))
       prediction_error = error_kinds.to_error(prediction)
       step_limit = batch['step_limit'][index]
+      instruction_pointer_single = instruction_pointer[index]
 
       total_contribution = jnp.sum(contribution)
       actual_value = instruction_pointer[index, -1, r_index]
@@ -190,6 +193,9 @@ def main(argv):
         print(contribution[:num_nodes])
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
+
+        image = metrics.instruction_pointer_to_image(instruction_pointer_single)
+        IPython.embed()
 
         if error_lineno:
           nodes_at_error = process.get_nodes_at_lineno(raw, error_lineno)
