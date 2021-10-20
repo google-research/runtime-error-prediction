@@ -11,6 +11,7 @@ from absl import flags
 
 from flax.training import checkpoints
 from flax.training import common_utils
+import imageio
 import jax
 import jax.numpy as jnp
 from ml_collections.config_flags import config_flags
@@ -20,6 +21,7 @@ from core.data import codenet_paths
 from core.data import error_kinds
 from core.data import info as info_lib
 from core.data import process
+from core.lib import metrics
 from core.lib import trainer
 import tensorflow_datasets as tfds
 
@@ -160,7 +162,8 @@ def main(argv):
       target_error = error_kinds.to_error(target)
       prediction = int(jnp.argmax(aux['logits'][index]))
       prediction_error = error_kinds.to_error(prediction)
-      step_limit = batch['step_limit'][index]
+      step_limit = batch['step_limit'][index, 0]
+      instruction_pointer_single = instruction_pointer[index]
 
       total_contribution = jnp.sum(contribution)
       actual_value = instruction_pointer[index, -1, r_index]
@@ -190,6 +193,13 @@ def main(argv):
         print(contribution[:num_nodes])
         print(f'Main contributor: Node {max_contributor} ({max_contribution})')
         print(f'Total contribution: {total_contribution} (Actual: {actual_value})')
+
+        instruction_pointer_single_trim = instruction_pointer_single[:step_limit + 1, :num_nodes].T
+        # instruction_pointer_single_trim.shape: num_nodes, timesteps
+        image = metrics.instruction_pointer_to_image(instruction_pointer_single_trim)
+        imageio.imwrite('viz-instruction-pointer.png', image, format='png')
+        with open('viz-source.txt', 'w') as f:
+          f.write(source)
 
         if error_lineno:
           nodes_at_error = process.get_nodes_at_lineno(raw, error_lineno)
