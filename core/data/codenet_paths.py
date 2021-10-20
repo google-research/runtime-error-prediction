@@ -18,6 +18,9 @@ DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/con
 # Processed control_flow_programs dataset path:
 DEFAULT_CFP_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/processed/decimal-large-state-L10/0.0.48-002/'
 
+RAW_CFP_RAISE_DATA_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs_raise/decimal-large-state-L30/2021-10-19-001/synthetic-20211018-001.tfrecord'
+DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs_raise/processed/decimal-large-state-L30/2021-10-19-001/'
+
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 FILE_DIRNAME = os.path.dirname(__file__)
