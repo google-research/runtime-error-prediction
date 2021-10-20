@@ -371,7 +371,7 @@ class Trainer:
       train_predictions.append(predictions)
       train_targets.append(targets)
       train_losses.append(loss)
-      if aux.get('localization_logits'):
+      if aux.get('localization_logits') is not None:
         localization_targets = batch['target_node_indexes']
         localization_num_targets = batch['num_target_nodes']
         localization_predictions = jnp.argmax(aux['localization_logits'], axis=-1)
