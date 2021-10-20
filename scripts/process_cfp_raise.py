@@ -68,9 +68,9 @@ def process_programs(
     original_step_limit = example['steps'][0].numpy()
 
     if target == 'RuntimeError':
-      target = 1000  # Error class.
+      target_index = 1000  # Error class.
     else:
-      target = int(target)
+      target_index = int(target)
 
     problem = process.make_runtimeerrorproblem(
         source, target_index, tokenizer=tokenizer,
