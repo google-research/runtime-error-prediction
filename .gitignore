@@ -3,6 +3,8 @@ description2code_current.zip
 out
 scratch
 playground
+viz*.png
+viz*.txt
 
 .DS_Store
 __MACOSX
