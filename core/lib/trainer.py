@@ -239,7 +239,7 @@ class Trainer:
       evaluate_batch_outputs = evaluate_batch(batch, state)
       logits = evaluate_batch_outputs['logits']
       loss = evaluate_batch_outputs['loss']
-      if evaluate_batch_outputs.get('localization_logits'):
+      if evaluate_batch_outputs.get('localization_logits') is not None:
         localization_targets.append(batch['target_node_indexes'])
         localization_num_targets.append(batch['num_target_nodes'])
 
