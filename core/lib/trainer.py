@@ -462,7 +462,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         )
 
         # Write training metrics.
-        train_writer.scalar('global_norm', jnp.mean(aux['global_norm']), step)
+        train_writer.scalar('global_norm', np.mean(np.array(aux['global_norm'])), step)
         train_writer.scalar('loss', train_loss, step)
         metrics.write_metric(EvaluationMetric.ACCURACY.value, train_metrics,
                              train_writer.scalar, step)

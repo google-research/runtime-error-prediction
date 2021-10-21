@@ -14,7 +14,7 @@ hparams = {
     'config.learning_rate': [0.01, 0.03, 0.1, 0.3],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
-    'config.hidden_size':  [64, 128, 256, 512],
+    'config.hidden_size':  [64, 128, 256],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
     'config.transformer_dropout_rate': [0, 0.1],
     'config.transformer_attention_dropout_rate': [0, 0.1],
