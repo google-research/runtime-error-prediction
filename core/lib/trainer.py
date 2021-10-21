@@ -237,19 +237,19 @@ class Trainer:
       if config.multidevice:
         batch = common_utils.shard(batch)
       evaluate_batch_outputs = evaluate_batch(batch, state)
-      logits = evaluate_batch_outputs['logits']
-      loss = evaluate_batch_outputs['loss']
+      logits = np.array(evaluate_batch_outputs['logits'])
+      loss = np.array(evaluate_batch_outputs['loss'])
       if evaluate_batch_outputs.get('localization_logits') is not None:
-        localization_targets.append(batch['target_node_indexes'])
-        localization_num_targets.append(batch['num_target_nodes'])
+        localization_targets.append(np.array(batch['target_node_indexes']))
+        localization_num_targets.append(np.array(batch['num_target_nodes']))
 
-        localization_logits = evaluate_batch_outputs['localization_logits']
+        localization_logits = np.array(evaluate_batch_outputs['localization_logits'])
         # localization_logits.shape: [device,] batch_size[/device], num_nodes
         localization_predictions.append(np.argmax(localization_logits, -1))
 
       logits_list.append(logits)
       predictions.append(np.argmax(logits, -1))
-      targets.append(batch['target'])
+      targets.append(np.array(batch['target']))
       losses.append(loss)
     print('Done evaluating.')
     logits_np = np.concatenate(logits_list)
@@ -363,18 +363,18 @@ class Trainer:
       state, aux = train_step(state, batch)
 
       # Record training batch evaluation data.
-      logits = aux['logits']
-      predictions = jnp.squeeze(jnp.argmax(logits, axis=-1))
-      targets = jnp.squeeze(batch['target'])
-      loss = jnp.mean(aux['loss'])
+      logits = np.array(aux['logits'])
+      predictions = np.squeeze(np.argmax(logits, axis=-1))
+      targets = np.squeeze(np.array(batch['target']))
+      loss = np.mean(np.array(aux['loss']))
       train_logits.append(logits)
       train_predictions.append(predictions)
       train_targets.append(targets)
       train_losses.append(loss)
       if aux.get('localization_logits') is not None:
-        localization_targets = batch['target_node_indexes']
-        localization_num_targets = batch['num_target_nodes']
-        localization_predictions = jnp.argmax(aux['localization_logits'], axis=-1)
+        localization_targets = np.array(batch['target_node_indexes'])
+        localization_num_targets = np.array(batch['num_target_nodes'])
+        localization_predictions = np.argmax(np.array(aux['localization_logits']), axis=-1)
         train_localization_targets.append(localization_targets)
         train_localization_num_targets.append(localization_num_targets)
         train_localization_predictions.append(localization_predictions)
@@ -426,17 +426,17 @@ class Trainer:
           # localization_num_targets.shape: [device,] batch_size, 1
           # localization_predictions.shape: [device,] batch_size
           if config.multidevice:
-            localization_targets = jnp.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
-            localization_num_targets = jnp.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
-            localization_predictions = jnp.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
+            localization_targets = np.reshape(localization_targets, (-1,) + localization_targets.shape[2:])
+            localization_num_targets = np.reshape(localization_num_targets, (-1,) + localization_num_targets.shape[2:])
+            localization_predictions = np.reshape(localization_predictions, (-1,) + localization_predictions.shape[2:])
           # localization_targets.shape: batch_size, max_target_nodes
           # localization_num_targets.shape: batch_size, 1
           # localization_predictions.shape: batch_size
         if config.multidevice:
-          logits = jnp.reshape(logits, (-1,) + logits.shape[2:])
+          logits = np.reshape(logits, (-1,) + logits.shape[2:])
         batch_metrics = metrics.evaluate(
-            jnp.reshape(targets, -1),
-            jnp.reshape(predictions, -1),
+            np.reshape(targets, -1),
+            np.reshape(predictions, -1),
             logits,
             num_classes,
             localization_targets,
