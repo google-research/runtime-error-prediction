@@ -14,6 +14,7 @@ DEFAULT_CONFIG_PATH = codenet_paths.DEFAULT_CONFIG_PATH
 
 
 flags.DEFINE_string('dataset_path', DEFAULT_DATASET_PATH, 'Dataset path.')
+flags.DEFINE_string('split', 'train', 'Split for training.')
 config_flags.DEFINE_config_file(
     name='config', default=DEFAULT_CONFIG_PATH, help_string='Config file.'
 )
@@ -24,10 +25,12 @@ def main(argv):
   del argv  # Unused.
 
   dataset_path = FLAGS.dataset_path
+  split = FLAGS.split
   config = FLAGS.config
   jnp.set_printoptions(threshold=config.printoptions_threshold)
   info = info_lib.get_dataset_info(dataset_path)
-  trainer.Trainer(config=config, info=info).run_train(dataset_path=dataset_path)
+  trainer.Trainer(config=config, info=info).run_train(
+      dataset_path=dataset_path, split=split)
 
 
 if __name__ == '__main__':

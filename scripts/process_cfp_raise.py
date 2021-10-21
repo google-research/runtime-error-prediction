@@ -40,7 +40,6 @@ def generate_dataset(
     train_path = codenet_paths.make_tfrecord_path(dataset_path, 'train')
     valid_path = codenet_paths.make_tfrecord_path(dataset_path, 'valid')
     test_path = codenet_paths.make_tfrecord_path(dataset_path, 'test')
-    dataset_tfrecord_path = os.path.join(dataset_path, basename)
     with tf.io.TFRecordWriter(train_path) as train_file_writer:
       with tf.io.TFRecordWriter(valid_path) as valid_file_writer:
         with tf.io.TFRecordWriter(test_path) as test_file_writer:
