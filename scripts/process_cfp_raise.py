@@ -27,6 +27,8 @@ def generate_dataset(
     tokenizer_path: The tokenizer data to use when generating the dataset.
     dataset_path: The path to write the dataset to.
   """
+  random.seed(0)
+
   tfrecord_paths = glob.glob(tfrecord_pattern)
   for tfrecord_path in tfrecord_paths:
     problems_gen = process_programs(
@@ -35,11 +37,22 @@ def generate_dataset(
         fraction=fraction)
     basename = os.path.basename(tfrecord_path)
 
+    train_path = codenet_paths.make_tfrecord_path(dataset_path, 'train')
+    valid_path = codenet_paths.make_tfrecord_path(dataset_path, 'valid')
+    test_path = codenet_paths.make_tfrecord_path(dataset_path, 'test')
     dataset_tfrecord_path = os.path.join(dataset_path, basename)
-    with tf.io.TFRecordWriter(dataset_tfrecord_path) as file_writer:
-      for problem in problems_gen:
-        record_bytes = data_io.to_tf_example(problem).SerializeToString()
-        file_writer.write(record_bytes)
+    with tf.io.TFRecordWriter(train_path) as train_file_writer:
+      with tf.io.TFRecordWriter(valid_path) as valid_file_writer:
+        with tf.io.TFRecordWriter(test_path) as test_file_writer:
+          for index, problem in enumerate(problems_gen):
+            record_bytes = data_io.to_tf_example(problem).SerializeToString()
+            r = random.random()
+            if r < 0.8:
+              train_file_writer.write(record_bytes)
+            elif r < 0.9:
+              valid_file_writer.write(record_bytes)
+            else:
+              test_file_writer.write(record_bytes)
 
 
 def process_programs(
