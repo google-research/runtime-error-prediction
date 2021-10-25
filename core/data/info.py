@@ -16,7 +16,10 @@ class Info:
 
 
 def get_dataset_info(dataset_path=DEFAULT_DATASET_PATH):
-  if 'control_flow_programs' in dataset_path:
+  if 'control_flow_programs_raise' in dataset_path:
+    num_classes = 1001
+    all_error_kinds = list(range(1001))
+  elif 'control_flow_programs' in dataset_path:
     num_classes = 1000
     all_error_kinds = list(range(1000))
   else:
