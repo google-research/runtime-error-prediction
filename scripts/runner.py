@@ -28,7 +28,7 @@ def main(argv):
   split = FLAGS.split
   config = FLAGS.config
   jnp.set_printoptions(threshold=config.printoptions_threshold)
-  info = info_lib.get_dataset_info(dataset_path)
+  info = info_lib.get_dataset_info(dataset_path, config)
   trainer.Trainer(config=config, info=info).run_train(
       dataset_path=dataset_path, split=split)
 
