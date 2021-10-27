@@ -14,10 +14,10 @@ class LSTMEncoder(nn.Module):
   desired positional embeddings have already been aded.
   """
   
-  dropout_rate: float
   num_layers: int
   hidden_dim: int
   deterministic: bool = True
+  dropout_rate: float = 0.1
   dtype: Any = jnp.float32
 
   @nn.compact
