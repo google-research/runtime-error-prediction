@@ -28,8 +28,7 @@ class LSTM(nn.Module):
         max_tokens=max_tokens,
         max_num_nodes=max_num_nodes,
     )
-    self.encoder = encoder.LSTMEncoder(vocab_size=vocab_size, 
-      num_layers=config.rnn_layers, 
+    self.encoder = encoder.LSTMEncoder(num_layers=config.rnn_layers,
       hidden_dim=config.hidden_size)
 
   @nn.compact
