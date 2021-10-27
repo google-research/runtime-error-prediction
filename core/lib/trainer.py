@@ -67,11 +67,17 @@ class Trainer:
         config.max_tokens, config.max_num_nodes, config.max_num_edges,
         config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0660801055})
 
+    if config.binary_targets:
+      map_fn = functools.partial(data_io.binarize_targets, dataset_path=dataset_path)
+    else:
+      map_fn = lambda x: x
+
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
       split = split[:-len('-batch')]
       return (
           data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
+          .map(map_fn)
           .filter(filter_fn)
           .take(batch_size)
           .repeat(epochs)
@@ -81,6 +87,7 @@ class Trainer:
     # Return the requested dataset.
     return (
         data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
+        .map(map_fn)
         .filter(filter_fn)
         .repeat(epochs)
         .shuffle(1000)
