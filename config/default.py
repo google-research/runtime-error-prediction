@@ -50,6 +50,9 @@ def default_config():
   config.transformer_dropout_rate: float = 0.1
   config.transformer_attention_dropout_rate: float = 0.1
 
+  # RNN baseline configs
+  config.rnn_input_embedder_type = "node" # toke, node
+
   # Runner configs
   config.eval_freq = 10000
   config.save_freq = 5000

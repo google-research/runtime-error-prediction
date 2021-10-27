@@ -21,13 +21,25 @@ class LSTM(nn.Module):
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
-    self.token_embedder = spans.NodeAwareTokenEmbedder(
-        transformer_config=self.transformer_config,
-        num_embeddings=vocab_size,
-        features=config.hidden_size,
-        max_tokens=max_tokens,
-        max_num_nodes=max_num_nodes,
-    )
+    input_embedder_type = config.rnn_input_embedder_type
+    if input_embedder_type=="token":
+      self.input_embedder = spans.NodeAwareTokenEmbedder(
+          transformer_config=self.transformer_config,
+          num_embeddings=vocab_size,
+          features=config.hidden_size,
+          max_tokens=max_tokens,
+          max_num_nodes=max_num_nodes,
+      )
+    else:
+      self.input_embedder = spans.NodeSpanEncoder(
+          info=self.info,
+          config=config,
+          transformer_config=self.transformer_config,
+          max_tokens=max_tokens,
+          max_num_nodes=max_num_nodes,
+          use_span_index_encoder=False,
+          use_span_start_indicators=False,
+      )
     self.encoder = encoder.LSTMEncoder(num_layers=config.rnn_layers,
       hidden_dim=config.hidden_size)
 
@@ -40,7 +52,7 @@ class LSTM(nn.Module):
     encoder_mask = nn.make_attention_mask(tokens_mask, tokens_mask, dtype=jnp.float32)
     # encoder_mask.shape: batch_size, 1, max_tokens, max_tokens
     # NOTE(rgoel): Ensuring the token encoder is still a Transformer to ensure uniformity.
-    encoded_inputs = self.token_embedder(
+    encoded_inputs = self.input_embedder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'],
         x['num_nodes'])
     # encoded_inputs.shape: batch_size, max_tokens, hidden_size
@@ -53,7 +65,11 @@ class LSTM(nn.Module):
       return inputs[last_token-1]
 
     get_last_state_batch = jax.vmap(get_last_state)
-    x = get_last_state_batch(encoded_inputs, x['num_tokens'])
+
+    if input_embedder_type=="token":
+      x = get_last_state_batch(encoded_inputs, x['num_tokens'])
+    else:
+      x = get_last_state_batch(encoded_inputs, x['num_nodes'])
     # x.shape: batch_size, 1, hidden_size
     x = jnp.squeeze(x, axis=1)
     # x.shape: batch_size, hidden_size
