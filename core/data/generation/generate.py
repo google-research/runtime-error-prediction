@@ -7,7 +7,10 @@ a new dataset suitable for testing the vanilla IPA-GNN and Exception IPA-GNN.
 import collections
 import dataclasses
 import os
+<<<<<<< HEAD
 import random
+=======
+>>>>>>> ead2c68... Data generation
 from typing import Optional, Sequence, Text, Tuple
 
 from absl import app
@@ -22,8 +25,12 @@ from core.data.generation import python_interpreter
 
 TFRECORD_PATH = codenet_paths.RAW_CFP_RAISE_DATA_PATH
 TFRECORD_PATH = 'tmp.tfrecord'
+<<<<<<< HEAD
 ASSERTION_ERROR_PROB = 0.5
 ADD_ASSERTION_ERRO = True
+=======
+
+>>>>>>> ead2c68... Data generation
 
 DEFAULT_OPS = ("+=", "-=", "*=")
 
@@ -188,12 +195,15 @@ def main(argv: Sequence[str]) -> None:
       )
       print(example)
       source, example = add_assert_error(source, example)
+
       target = example['human_readable_target_output']
       error_type = example['error_type']
       lines = source.split('\n')
       steps = process.get_step_limit(lines)
       counts[target] += 1
       import pdb;pdb.set_trace()
+
+
       if error_type != 'NoError':
         target = error_type
       record_bytes = to_tf_example(source, target, steps).SerializeToString()
