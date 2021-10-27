@@ -4,9 +4,9 @@ import jax
 from flax import linen as nn
 import jax.numpy as jnp
 
-from core.modules.ipagnn import encoder
+from core.modules.rnn import encoder
 from core.modules.ipagnn import spans
-from third_party.flax_examples import transformer_modules, lstm_modules
+from third_party.flax_examples import transformer_modules
 
 
 class LSTM(nn.Module):
@@ -21,10 +21,6 @@ class LSTM(nn.Module):
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
-    lstm_config = lstm_modules.LSTMConfig(
-      vocab_size=vocab_size, 
-      num_layers=config.rnn_layers, 
-      hidden_dim=config.hidden_size,)
     self.token_embedder = spans.NodeAwareTokenEmbedder(
         transformer_config=self.transformer_config,
         num_embeddings=vocab_size,
@@ -32,7 +28,9 @@ class LSTM(nn.Module):
         max_tokens=max_tokens,
         max_num_nodes=max_num_nodes,
     )
-    self.encoder = encoder.LSTMEncoder(lstm_config)
+    self.encoder = encoder.LSTMEncoder(vocab_size=vocab_size, 
+      num_layers=config.rnn_layers, 
+      hidden_dim=config.hidden_size)
 
   @nn.compact
   def __call__(self, x):
@@ -58,7 +56,7 @@ class LSTM(nn.Module):
     get_last_state_batch = jax.vmap(get_last_state)
     x = get_last_state_batch(encoded_inputs, x['num_tokens'])
     # x.shape: batch_size, 1, hidden_size
-    x = jnp.squeeze(x, 1)
+    x = jnp.squeeze(x, axis=1)
     # x.shape: batch_size, hidden_size
     x = nn.Dense(features=self.info.num_classes)(x)
     # x.shape: batch_size, num_classes
