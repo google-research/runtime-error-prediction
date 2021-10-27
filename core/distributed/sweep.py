@@ -14,7 +14,7 @@ hparams = {
     'config.learning_rate': [0.01, 0.03, 0.1, 0.3],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
-    'config.hidden_size':  [64, 128, 256, 512],
+    'config.hidden_size':  [64, 128, 256],
     'config.span_encoding_method': ['first', 'mean', 'max', 'sum'],
     'config.transformer_dropout_rate': [0, 0.1],
     'config.transformer_attention_dropout_rate': [0, 0.1],
@@ -146,7 +146,7 @@ def get_and_increment_global_experiment_id():
   return experiment_id
 
 
-def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
+def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False):
   """Runs a sweep.
 
   To restart any failed jobs in an existing sweep, call this with the experiment_id
@@ -161,15 +161,20 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
       study are used, the commands may be the same as those used previously.
       This can be used to resume failed training jobs.
     study_id: The study_id to use for the experiment sweep.
-    pretrain: If True, use the pretraining dataset.
+    dataset_path: Indicates the dataset to train on. Can be used to choose the pretraining dataset.
     skip_create: If True, skip creating the TPU instances (assumes they already are up).
   """
   random.seed(0)
 
-  if pretrain:
-    dataset_path = codenet_paths.DEFAULT_CFP_DATASET_PATH
-  else:
+  if dataset_path is None:
     dataset_path = codenet_paths.FULL_DATASET_PATH
+  elif dataset_path == 'DEFAULT_CFP_DATASET_PATH':
+    dataset_path = codenet_paths.DEFAULT_CFP_DATASET_PATH
+  elif dataset_path == 'FULL_DATASET_PATH':
+    dataset_path = codenet_paths.FULL_DATASET_PATH
+  elif dataset_path == 'DEFAULT_CFP_RAISE_DATASET_PATH':
+    dataset_path = codenet_paths.DEFAULT_CFP_RAISE_DATASET_PATH
+
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
@@ -184,8 +189,8 @@ def main(experiment_id=None, study_id=None, pretrain=False, skip_create=False):
   run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
   # Transformer
-  # offset = 0  # The machine index to start with.
-  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
+  offset = 0  # The machine index to start with.
+  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
 
 # # To kill the runner processes:

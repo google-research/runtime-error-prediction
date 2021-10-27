@@ -15,8 +15,14 @@ class Info:
   all_error_kinds: Any
 
 
-def get_dataset_info(dataset_path=DEFAULT_DATASET_PATH):
-  if 'control_flow_programs' in dataset_path:
+def get_dataset_info(dataset_path, config):
+  if config.binary_targets:
+    num_classes = 2
+    all_error_kinds = list(range(2))
+  elif 'control_flow_programs_raise' in dataset_path:
+    num_classes = 1001
+    all_error_kinds = list(range(1001))
+  elif 'control_flow_programs' in dataset_path:
     num_classes = 1000
     all_error_kinds = list(range(1000))
   else:

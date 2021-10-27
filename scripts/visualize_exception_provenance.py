@@ -113,7 +113,7 @@ def main(argv):
   config = set_config(config)
 
   jnp.set_printoptions(threshold=config.printoptions_threshold)
-  info = info_lib.get_dataset_info(dataset_path)
+  info = info_lib.get_dataset_info(dataset_path, config)
   t = trainer.Trainer(config=config, info=info)
 
   split = 'valid'

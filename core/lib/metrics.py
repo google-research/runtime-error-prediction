@@ -69,7 +69,7 @@ def evaluate(targets, predictions, logits, num_classes,
   if EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value in eval_metric_names:
     results[EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value] = compute_weighted_f1_score_error_only(
         targets, predictions)
-  if EvaluationMetric.CONFUSION_MATRIX.value in eval_metric_names:
+  if EvaluationMetric.CONFUSION_MATRIX.value in eval_metric_names and num_classes < 40:
     results[EvaluationMetric.CONFUSION_MATRIX.value] = metrics.confusion_matrix(
         targets,
         predictions,

@@ -203,7 +203,10 @@ def load_tfrecords_dataset(tfrecord_paths, include_strings=False):
 
 
 def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train', include_strings=False):
-  if 'control_flow_programs' in dataset_path:
+  if 'control_flow_programs_raise' in dataset_path:
+    tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
+    return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)
+  elif 'control_flow_programs' in dataset_path:
     split_ranges = {
         'train': range(212),
         'valid': range(212, 234),
@@ -217,3 +220,18 @@ def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train',
   else:
     tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
     return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)
+
+
+def binarize_targets(example, dataset_path):
+  if 'control_flow_programs_raise' in dataset_path:
+    error_class = 1000
+    is_error = tf.equal(example['target'], error_class)
+    example['target'] = tf.cast(is_error, tf.int64)
+    return example
+  elif 'control_flow_programs' in dataset_path:
+    raise ValueError('Unexpected dataset for binarization.')
+  else:
+    no_error_class = 1
+    is_error = ~tf.equal(example['target'], no_error_class)
+    example['target'] = tf.cast(is_error, tf.int64)
+    return example
