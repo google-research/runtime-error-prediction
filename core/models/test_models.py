@@ -64,3 +64,9 @@ class ModelsTest(unittest.TestCase):
     config = config_lib.get_test_config()
     config.model_class = 'Transformer'
     validate_forward_pass(config, info)
+
+  def test_lstm(self):
+    info = info_lib.get_test_info()
+    config = config_lib.get_test_config()
+    config.model_class = 'LSTM'
+    validate_forward_pass(config, info)

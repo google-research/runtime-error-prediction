@@ -31,6 +31,7 @@ class EvaluationMetric(enum.Enum):
   CONFUSION_MATRIX = enum.auto()
   INSTRUCTION_POINTER = enum.auto()
   LOCALIZATION_ACCURACY = enum.auto()
+  SIZE_OOD = enum.auto()
 
 
 def all_metric_names() -> Tuple[str]:
