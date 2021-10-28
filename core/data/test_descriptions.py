@@ -19,14 +19,11 @@ class ProcessTest(unittest.TestCase):
         c,
         r"""１行目に巡回記録の個数 n (n ≤ 50)、続く n 行に巡回記録 i を表す文字列 si (1024文字までの半角文字列) が与えられます。""")
 
-    # Known issues in p00569's input description:
-    # * No 'Input' section. In Japanese.
+    # * There's no 'Input' section. This task is in Japanese.
     d = example_problem_descriptions.p00569
     c = descriptions.extract_input_description(d)
     self.assertEqual(c, '')
 
-    # Known issues in p01950's input description:
-    # * N/A
     d = example_problem_descriptions.p01950
     c = descriptions.extract_input_description(d)
     self.assertEqual(
@@ -44,8 +41,6 @@ The graph has no self-loop, i.e., $U_i \ne V_i$ for all $1 \leq i \leq M$.
 The graph has no multi-edge, i.e., $\{Ui,Vi\} \ne \{U_j,V_j\}$ for all $1 \leq i < j \leq M$.
 The graph is connected, i.e., there is at least one path from $U$ to $V$ (and vice versa) for all vertices $1 \leq U, V \leq N$""")
 
-    # Known issues in p03050's input description:
-    # * N/A
     d = example_problem_descriptions.p03050
     c = descriptions.extract_input_description(d)
     self.assertEqual(
@@ -54,8 +49,6 @@ The graph is connected, i.e., there is at least one path from $U$ to $V$ (and vi
 
 N""")
 
-    # Known issues in p04019's input description:
-    # * N/A
     d = example_problem_descriptions.p04019
     c = descriptions.extract_input_description(d)
     self.assertEqual(
@@ -65,33 +58,24 @@ N""")
 S""")
 
   def test_extract_input_constraints(self):
-    # Known issues in p00130's input constraints:
-    # * N/A
     d = example_problem_descriptions.p00130
     c = descriptions.extract_input_constraints(d)
     self.assertEqual(c, '')
 
-    # Known issues in p00569's input constraints:
-    # * No 'Constraints' section. In Japanese.
+    # There's no 'Constraints' section. This problem is in Japanese.
     d = example_problem_descriptions.p00569
     c = descriptions.extract_input_constraints(d)
     self.assertEqual(c, '')
 
-    # Known issues in p01950's input constraints:
-    # * N/A
     d = example_problem_descriptions.p01950
     c = descriptions.extract_input_constraints(d)
     self.assertEqual(c, '')
 
-    # Known issues in p03050's input constraints:
-    # * N/A
     d = example_problem_descriptions.p03050
     c = descriptions.extract_input_constraints(d)
     self.assertEqual(c, r"""All values in input are integers.
 1 \leq N \leq 10^{12}""")
 
-    # Known issues in p04019's input constraints:
-    # * N/A
     d = example_problem_descriptions.p04019
     c = descriptions.extract_input_constraints(d)
     self.assertEqual(c, r"""1 ≦ | S | ≦ 1000
@@ -100,8 +84,6 @@ S consists of the letters N, W, S, E.""")
   def test_extract_input_information(self):
     self.maxDiff = None
 
-    # Known issues in p00569's input constraints:
-    # * N/A
     d = example_problem_descriptions.p00569
     c = descriptions.extract_input_information(d)
     self.assertEqual(c, r"""制約:
