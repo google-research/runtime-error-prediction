@@ -1,4 +1,5 @@
 import bs4
+import fire
 import re
 
 
@@ -46,3 +47,7 @@ def get_all_input_descriptions():
     print(i)
     print(input_description)
     print(input_constraints)
+
+
+if __name__ == '__main__':
+  fire.Fire()
