@@ -44,9 +44,9 @@ def get_all_input_descriptions():
       text = f.read()
     input_description = extract_input_description(text)
     input_constraints = extract_input_constraints(text)
-    print(i)
-    print(input_description)
-    print(input_constraints)
+    print('Index:', i)
+    print('Description:', input_description)
+    print('Constraints:', input_constraints)
 
 
 if __name__ == '__main__':
