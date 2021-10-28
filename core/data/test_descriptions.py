@@ -17,10 +17,10 @@ class ProcessTest(unittest.TestCase):
     c = descriptions.extract_input_description(d)
     self.assertEqual(
         c,
-        r"""１行目に巡回記録の個数n(n≤ 50)、続くn行に巡回記録iを表す文字列si(1024文字までの半角文字列) が与えられます。""")
+        r"""１行目に巡回記録の個数 n (n ≤ 50)、続く n 行に巡回記録 i を表す文字列 si (1024文字までの半角文字列) が与えられます。""")
 
     # Known issues in p01950's input description:
-    # * No space is included between the li items in the ul.
+    # * N/A
     d = example_problem_descriptions.p01950
     c = descriptions.extract_input_description(d)
     self.assertEqual(
@@ -34,7 +34,9 @@ $U_M$ $V_M$
 
 The first line consists of two integers $N$ ($2 \leq N \leq 100,000$) and $M$ ($1 \leq M \leq 100,000$), where $N$ is the number of vertices and $M$ is the number of edges in a given undirected graph, respectively. The $i$-th line of the following $M$ lines consists of two integers $U_i$ and $V_i$ ($1 \leq U_i, V_i \leq N$), which means the vertices $U_i$ and $V_i$ are adjacent in the given graph. The vertex 1 is the start vertex, i.e. $start\_vertex$ in the pseudo codes. You can assume that the given graph also meets the following conditions.
 
-The graph has no self-loop, i.e., $U_i \ne V_i$ for all $1 \leq i \leq M$.The graph has no multi-edge, i.e., $\{Ui,Vi\} \ne \{U_j,V_j\}$ for all $1 \leq i < j \leq M$.The graph is connected, i.e., there is at least one path from $U$ to $V$ (and vice versa) for all vertices $1 \leq U, V \leq N$""")
+The graph has no self-loop, i.e., $U_i \ne V_i$ for all $1 \leq i \leq M$.
+The graph has no multi-edge, i.e., $\{Ui,Vi\} \ne \{U_j,V_j\}$ for all $1 \leq i < j \leq M$.
+The graph is connected, i.e., there is at least one path from $U$ to $V$ (and vice versa) for all vertices $1 \leq U, V \leq N$""")
 
     # Known issues in p03050's input description:
     # * N/A
@@ -70,16 +72,18 @@ S""")
     self.assertEqual(c, '')
 
     # Known issues in p03050's input constraints:
-    # * Missing spaces between elements.
+    # * N/A
     d = example_problem_descriptions.p03050
     c = descriptions.extract_input_constraints(d)
-    self.assertEqual(c, r'All values in input are integers.1 \leq N \leq 10^{12}')
+    self.assertEqual(c, r"""All values in input are integers.
+1 \leq N \leq 10^{12}""")
 
     # Known issues in p04019's input constraints:
-    # * Missing spaces between elements.
+    # * N/A
     d = example_problem_descriptions.p04019
     c = descriptions.extract_input_constraints(d)
-    self.assertEqual(c, r'1 ≦ | S | ≦ 1000Sconsists of the lettersN,W,S,E.')
+    self.assertEqual(c, r"""1 ≦ | S | ≦ 1000
+S consists of the letters N, W, S, E.""")
 
 
 if __name__ == '__main__':

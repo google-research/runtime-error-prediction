@@ -1,5 +1,5 @@
-import re
 import bs4
+import re
 
 
 HEADER_TAGS = ['h2', 'h3']
@@ -26,11 +26,11 @@ def get_text_following_header(header):
     next_node = next_node.nextSibling
     if next_node is None:
       break
-    elif isinstance(next_node, bs4.Tag) and next_node.name == 'h2':
+    elif isinstance(next_node, bs4.Tag) and next_node.name in HEADER_TAGS:
       break
     elif isinstance(next_node, bs4.NavigableString):
       text = next_node.strip()
     else:
-      text = next_node.get_text(strip=True).strip()
+      text = next_node.get_text().strip()
     lines.append(text)
   return '\n'.join(lines)
