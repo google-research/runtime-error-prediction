@@ -354,3 +354,162 @@ On Day <var>i(1 ≦ i ≦ N)</var>, he will travel a positive distance in the fo
 </div>
 </span>
 """
+
+p00569 = r"""
+<h1>L番目のK番目の数 (LthKthNumber)</h1>
+
+
+<h2>問題文</h2>
+<p>
+横一列に並べられた <var>N</var> 枚のカードがある．左から <var>i</var> 枚目(<var>1 ≦ i ≦ N</var>)のカードには，整数 <var>a_i</var> が書かれている．</p>
+
+<p>
+JOI 君は，これらのカードを用いて次のようなゲームを行う．連続する <var>K</var> 枚以上のカードの列を選び，次の操作を行う．</p>
+
+
+<ul>
+<li>選んだカードを，書かれている整数が小さい順に左から並べる．</li>
+<li>並べたカードのうち，左から <var>K</var> 番目のカードに書かれた整数を紙に書き出す．</li>
+<li>選んだカードを，すべて元の位置に戻す．</li>
+</ul>
+
+<p>
+この操作を，連続する <var>K</var> 枚以上のカードの列すべてに対して行う．すなわち，<var>1 ≦ l ≦ r ≦ N</var> かつ <var>K ≦ r - l + 1</var> を満たすすべての <var>(l,r)</var> について，<var>a_l, a_{l+1}, ..., a_r</var> のうち <var>K</var> 番目に小さな整数を書き出す．</p>
+
+<p>
+こうして書き出された整数を，左から小さい順に並べる．並べた整数のうち，左から <var>L</var> 番目のものがこのゲームにおける JOI 君の得点である．JOI 君の得点を求めよ．</p>
+
+<h2>制約</h2>
+
+<ul>
+<li><var>1 \leq N \leq 200000</var></li>
+<li><var>1 \leq K \leq N</var></li>
+<li><var>1 \leq a_i \leq N</var></li>
+<li><var>1 \leq L</var></li>
+<li>JOI 君が書き出す整数は <var>L</var> 個以上である．</li>
+</ul>
+
+<h2>入力・出力</h2>
+
+<p>
+<b>入力</b><br>
+入力は以下の形式で標準入力から与えられる．<br>
+<var>N</var> <var>K</var> <var>L</var><br>
+<var>a_1</var> <var>a_2</var> <var>...</var> <var>a_N</var>
+</p>
+
+<p>
+<b>出力</b><br>
+JOI 君の得点を <var>1</var> 行で出力せよ．<br>
+
+<!--
+<h2>小課題</h2>
+
+<p>
+<b>小課題 1 [6点]</b>
+</p>
+
+<ul>
+<li><var>N ≦ 100</var></li>
+</ul>
+
+<p>
+<b>小課題 2 [33点]</b>
+</p>
+
+<ul>
+<li><var>N ≦ 4000</var></li>
+</ul>
+
+<p>
+<b>小課題 3 [61点]</b>
+</p>
+
+<ul>
+  <li>追加の制限はない．</li>
+</ul>
+-->
+
+<h2>入出力例</h2>
+
+
+<b>入力例 1</b><br>
+<pre>
+4 3 2
+4 3 1 2
+</pre>
+
+
+<b>出力例 1</b><br>
+<pre>
+3
+</pre>
+
+<p>
+<var>1 \leq l \leq r \leq N (= 4)</var> かつ <var>K (= 3) \leq r - l + 1</var> を満たす <var>(l,r)</var> は，<var>(1,3), (1,4), (2,4)</var> の <var>3</var> 通りある．</p>
+
+<p>
+これらの <var>(l,r)</var> に対し，<var>a_l, a_{l+1}, ..., a_r</var> で <var>3</var> 番目に小さな整数は，それぞれ <var>4, 3, 3</var> である．</p>
+
+<p>
+このうち <var>L (= 2)</var> 番目に小さい整数は <var>3</var> なので，JOI 君の得点は <var>3</var> である．同じ整数が複数あるときも，重複して数えることに注意せよ．</p>
+
+<hr>
+
+<b>入力例 2</b><br>
+<pre>
+5 3 3
+1 5 2 2 4
+</pre>
+
+
+<b>出力例 2</b><br>
+<pre>
+4
+</pre>
+
+<p>
+JOI 君が書き出す整数は，</p>
+
+<ul>
+<li><var>(l,r) = (1,3)</var> に対し <var>5</var></li>
+<li><var>(l,r) = (1,4)</var> に対し <var>2</var></li>
+<li><var>(l,r) = (1,5)</var> に対し <var>2</var></li>
+<li><var>(l,r) = (2,4)</var> に対し <var>5</var></li>
+<li><var>(l,r) = (2,5)</var> に対し <var>4</var></li>
+<li><var>(l,r) = (3,5)</var> に対し <var>4</var></li>
+</ul>
+
+<p>
+である．このうち <var>L (= 3)</var> 番目に小さい整数は <var>4</var> である．
+</p>
+
+<hr>
+
+
+<b>入力例 3</b><br>
+<pre>
+6 2 9
+1 5 3 4 2 4
+</pre>
+
+
+<b>出力例 3</b><br>
+<pre>
+4
+</pre>
+
+<hr>
+
+
+<b>入力例 4</b><br>
+<pre>
+6 2 8
+1 5 3 4 2 4
+</pre>
+
+<b>出力例 4</b><br>
+<pre>
+3
+</pre>
+"""

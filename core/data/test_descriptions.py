@@ -19,6 +19,12 @@ class ProcessTest(unittest.TestCase):
         c,
         r"""１行目に巡回記録の個数 n (n ≤ 50)、続く n 行に巡回記録 i を表す文字列 si (1024文字までの半角文字列) が与えられます。""")
 
+    # Known issues in p00569's input description:
+    # * No 'Input' section. In Japanese.
+    d = example_problem_descriptions.p00569
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(c, '')
+
     # Known issues in p01950's input description:
     # * N/A
     d = example_problem_descriptions.p01950
@@ -65,6 +71,12 @@ S""")
     c = descriptions.extract_input_constraints(d)
     self.assertEqual(c, '')
 
+    # Known issues in p00569's input constraints:
+    # * No 'Constraints' section. In Japanese.
+    d = example_problem_descriptions.p00569
+    c = descriptions.extract_input_constraints(d)
+    self.assertEqual(c, '')
+
     # Known issues in p01950's input constraints:
     # * N/A
     d = example_problem_descriptions.p01950
@@ -84,6 +96,21 @@ S""")
     c = descriptions.extract_input_constraints(d)
     self.assertEqual(c, r"""1 ≦ | S | ≦ 1000
 S consists of the letters N, W, S, E.""")
+
+  def test_extract_input_information(self):
+    self.maxDiff = None
+
+    # Known issues in p00569's input constraints:
+    # * N/A
+    d = example_problem_descriptions.p00569
+    c = descriptions.extract_input_information(d)
+    self.assertEqual(c, r"""制約:
+1 \leq N \leq 200000
+1 \leq K \leq N
+1 \leq a_i \leq N
+1 \leq L
+JOI 君が書き出す整数は L 個以上である．""")
+
 
 
 if __name__ == '__main__':
