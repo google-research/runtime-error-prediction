@@ -31,7 +31,9 @@ def extract_input_information(text, soup=None):
     text = get_text_following_header(header)
     if text:
       info.append((header_name, text))
-  return '\n\n'.join(f'{header}:\n{text}')
+  return '\n\n'.join(
+      f'{header_name}:\n{text}'
+      for header_name, text in info)
 
 
 def get_text_following_header(header):
