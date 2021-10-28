@@ -45,6 +45,8 @@ class LSTM(nn.Module):
 
   @nn.compact
   def __call__(self, x):
+    input_embedder_type = self.config.rnn_input_embedder_type
+
     tokens = x['tokens']
     # tokens.shape: batch_size, max_tokens
     tokens_mask = tokens > 0
@@ -66,7 +68,7 @@ class LSTM(nn.Module):
 
     get_last_state_batch = jax.vmap(get_last_state)
 
-    if input_embedder_type=="token":
+    if input_embedder_type == "token":
       x = get_last_state_batch(encoded_inputs, x['num_tokens'])
     else:
       x = get_last_state_batch(encoded_inputs, x['num_nodes'])
