@@ -34,3 +34,15 @@ def get_text_following_header(header):
       text = next_node.get_text().strip()
     lines.append(text)
   return '\n'.join(lines)
+
+
+def get_all_input_descriptions():
+  for i in range(4200):
+    path = f'/mnt/project-codenet-storage/Project_CodeNet/problem_descriptions/p{i:05d}.html'
+    with open(path, 'r') as f:
+      text = f.read()
+    input_description = extract_input_description(text)
+    input_constraints = extract_input_constraints(text)
+    print(i)
+    print(input_description)
+    print(input_constraints)
