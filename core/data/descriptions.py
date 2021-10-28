@@ -5,20 +5,18 @@ import bs4
 HEADER_TAGS = ['h2', 'h3']
 
 
-def extract_input_description(text):
-  soup = bs4.BeautifulSoup(text, 'html.parser')
+def extract_input_description(text, soup=None):
+  soup = soup or bs4.BeautifulSoup(text, 'html.parser')
   input_header = soup.find(HEADER_TAGS, text=re.compile('Input'))
   input_text = get_text_following_header(input_header)
-  return input_text
+  return input_text.strip()
 
 
-def extract_input_constraints(text):
-  soup = bs4.BeautifulSoup(text, 'html.parser')
-  input_header = soup.find(HEADER_TAGS, text=re.compile('Input'))
-  input_text = get_text_following_header(input_header)
+def extract_input_constraints(text, soup=None):
+  soup = soup or bs4.BeautifulSoup(text, 'html.parser')
   constraints_header = soup.find(HEADER_TAGS, text=re.compile('Constraints'))
   constraints_text = get_text_following_header(constraints_header)
-  return input_text + constraints_text
+  return constraints_text.strip()
 
 
 def get_text_following_header(header):
