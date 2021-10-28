@@ -47,7 +47,7 @@ def get_all_input_descriptions():
     print('Index:', i)
     print('Description:', input_description)
     print('Constraints:', input_constraints)
-
+    print()
 
 if __name__ == '__main__':
   fire.Fire()
