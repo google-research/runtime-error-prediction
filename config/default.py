@@ -25,7 +25,7 @@ def default_config():
   config.grad_clip_value: float = 0.0  # 0 means no clipping.
 
   # Model HParams
-  config.model_class: Text = 'IPAGNN'  # IPAGNN, Transformer
+  config.model_class: Text = 'IPAGNN'  # IPAGNN, Transformer, LSTM
   config.raise_in_ipagnn: bool = False
   config.rnn_layers = 2
   config.hidden_size: int = 16
