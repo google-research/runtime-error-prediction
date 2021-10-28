@@ -55,14 +55,30 @@ def get_text_following_header(header):
 
 
 def get_all_input_descriptions():
+  no_text = 0
+  no_info = 0
+  no_info_ids = []
+  good = 0
   for i in range(4200):
     path = f'/mnt/project-codenet-storage/Project_CodeNet/problem_descriptions/p{i:05d}.html'
+    if not os.path.exists(path):
+      no_text += 1
+      continue
     with open(path, 'r') as f:
       text = f.read()
     info = extract_input_information(text)
+    if not info:
+      no_info += 1
+      no_info_ids.append(i)
+    else:
+      good += 1
     print('Index:', i)
     print(info)
     print()
+  print(no_text)
+  print(no_info)
+  print(good)
+  print(no_info_ids)
 
 if __name__ == '__main__':
   fire.Fire()
