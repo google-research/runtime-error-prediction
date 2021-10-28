@@ -56,6 +56,7 @@ def get_text_following_header(header):
 
 def get_all_input_descriptions():
   no_text = 0
+  no_text_ids = []
   no_info = 0
   no_info_ids = []
   good = 0
@@ -63,6 +64,7 @@ def get_all_input_descriptions():
     path = f'/mnt/project-codenet-storage/Project_CodeNet/problem_descriptions/p{i:05d}.html'
     if not os.path.exists(path):
       no_text += 1
+      no_text_ids.append(i)
       continue
     with open(path, 'r') as f:
       text = f.read()
@@ -75,10 +77,11 @@ def get_all_input_descriptions():
     print('Index:', i)
     print(info)
     print()
-  print(no_text)
-  print(no_info)
-  print(good)
-  print(no_info_ids)
+  print('No text', no_text)
+  print('No info', no_info)
+  print('Good:', good)
+  print('No info ids', no_info_ids)
+  print('No text ids', no_text_ids)
 
 if __name__ == '__main__':
   fire.Fire()
