@@ -6,12 +6,13 @@ import re
 HEADER_TAGS = ['h2', 'h3']
 INPUT_HEADER_NAMES = ['Input', '入力']
 CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
+# 制約 = Constraint.
 # 入力形式 = Input format.
 
 
 def extract_section_content(header_name, text, soup=None):
   soup = soup or bs4.BeautifulSoup(text, 'html.parser')
-  input_header = soup.find(HEADER_TAGS, text=re.compile(f'^{header_name}$'))
+  input_header = soup.find(HEADER_TAGS, text=re.compile(rf'^\s*{header_name}\s*$'))
   input_text = get_text_following_header(input_header)
   return input_text.strip()
 
