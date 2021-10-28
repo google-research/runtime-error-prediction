@@ -2,6 +2,7 @@ import setuptools
 
 DEPENDENCIES = [
     'absl-py>=0.11.0',
+    'beautifulsoup4',
     'fire>=0.4.0',
     'flax',
     'gast',
