@@ -193,7 +193,7 @@ Transition of $current$ is $\{1\} \rightarrow \{2\} \rightarrow \{1,3\} \rightar
 </pre>
 """
 
-p3050 = r"""
+p03050 = r"""
 <span class="lang-en">
 <p>Score : <var>500</var> points</p>
 <div class="part">
