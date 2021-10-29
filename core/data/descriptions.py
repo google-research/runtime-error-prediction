@@ -1,9 +1,12 @@
-import bs4
-import fire
 import os
 import re
 
+import bs4
+import fire
+import tidy
 
+
+PARSER = 'html5lib'  # 'html.parser'
 HEADER_TAGS = ['h2', 'h3']
 INPUT_HEADER_NAMES = ['Input', '入力']
 CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
@@ -11,8 +14,49 @@ CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
 # 入力形式 = Input format.
 
 
+def as_soup(text, soup=None):
+  if soup is not None:
+    return soup
+  text = (
+      text
+      .replace('<nl>', '<ul>')
+      .replace('</nl>', '</ul>')
+      .replace('<bar>', '<var>')
+      .replace('</bar>', '</var>')
+      .replace('<p.', '<p>')
+      .replace('</p.', '</p>')
+      .replace('<i.', '<i>')
+      .replace('</i.', '</i>')
+      .replace('<t>', '<i>')
+      .replace('</t>', '</i>')
+      .replace('<sub.', '<sub>')
+      .replace('<sbu>', '<sub>')
+      .replace('<left>', '<center>')
+      .replace('</left>', '</center>')
+      .replace('<pan>', '<span>')
+      .replace('</pan>', '</span>')
+      .replace('<spna>', '<span>')
+      .replace('</spna>', '</span>')
+      .replace('<sapn>', '<span>')
+      .replace('</sapn>', '</span>')
+      .replace('<apna>', '<span>')
+      .replace('</apna>', '</span>')
+      .replace('<apan>', '<span>')
+      .replace('</apan>', '</span>')
+      .replace('<va>', '<var>')
+      .replace('</va>', '</var>')
+  )
+  doc = tidy.parseString(
+      text, add_xml_decl=0, tidy_mark=0, wrap=0, custom_tags='inline')
+  # If tidy encounters errors then str(doc) is ''.
+  # The errors are visible as doc.errors.
+  # There should be no errors. We add text replacements above to ensure this.
+  assert str(doc)
+  return bs4.BeautifulSoup(str(doc), PARSER)
+
+
 def extract_section_content(header_name, text, soup=None):
-  soup = soup or bs4.BeautifulSoup(text, 'html.parser')
+  soup = as_soup(text, soup=soup)
   input_header = soup.find(HEADER_TAGS, text=re.compile(rf'^\s*{header_name}\s*$'))
   input_text = get_text_following_header(input_header)
   return input_text.strip()
@@ -27,7 +71,7 @@ def extract_input_constraints(text, soup=None):
 
 
 def extract_input_information(text, soup=None):
-  soup = soup or bs4.BeautifulSoup(text, 'html.parser')
+  soup = as_soup(text, soup=soup)
   info = []
   for header_name in INPUT_HEADER_NAMES + CONSTRAINT_HEADER_NAMES:
     content = extract_section_content(header_name, text, soup=soup)
@@ -61,7 +105,7 @@ def get_all_input_descriptions():
   no_info = 0
   no_info_ids = []
   good = 0
-  for i in range(4200):
+  for i in range(4053):
     path = f'/mnt/project-codenet-storage/Project_CodeNet/problem_descriptions/p{i:05d}.html'
     if not os.path.exists(path):
       no_text += 1

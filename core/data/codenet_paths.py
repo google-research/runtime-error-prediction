@@ -22,6 +22,7 @@ RAW_CFP_RAISE_DATA_PATH = '/mnt/runtime-error-problems-experiments/datasets/cont
 DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs_raise/processed/decimal-large-state-L30/2021-10-19-001/'
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
@@ -43,15 +44,18 @@ elif HOSTNAME == 'code-executor-001':
   PYTHON3 = '/home/dbieber/_39/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
   EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
+  OUT_ROOT = '/mnt/disks/project-codenet-data/out'
 elif HOSTNAME == 'dev-000':
   PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
-  # DATA_ROOT = '/home/veetee/Project_CodeNet/'
-  # EVALS_ROOT = '/home/veetee/out/evals'
+  DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+  EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
+  OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
 elif HOSTNAME.startswith('t1v-'):  # TPU
   PYTHON3 = '/usr/bin/python3'
   FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-10-07-full'
   DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
   EVALS_ROOT = '/mnt/project-codenet-storage/out/evals'
+  OUT_ROOT = '/mnt/project-codenet-storage/out'
 
 # On TPUs, this we mount the GCS bucket "runtime-error-problems-experiments"
 # at /mnt/runtime-error-problems-experiments.
@@ -110,3 +114,11 @@ def make_metadata_path(run_dir):
 def get_personal_access_token():
   with open(PERSONAL_ACCESS_TOKEN_PATH, 'r') as f:
     return f.read().strip()
+
+
+def get_problem_description_path(problem_id):
+  return f'{DATA_ROOT}/problem_descriptions/{problem_id}.html'
+
+
+def get_problem_docstring_path(problem_id):
+  return f'{OUT_ROOT}/docstrings/{problem_id}.txt'

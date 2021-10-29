@@ -11,6 +11,31 @@ class ProcessTest(unittest.TestCase):
   def test_extract_input_description(self):
     self.maxDiff = None
 
+    d = example_problem_descriptions.p00022
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(
+        c,
+        r"""The input consists of multiple datasets. Each data set consists of:
+
+n
+a1
+a2
+.
+.
+an
+
+You can assume that 1 ≤ n ≤ 5000 and -100000 ≤ ai ≤ 100000.
+
+The input end with a line consisting of a single 0.""")
+
+    d = example_problem_descriptions.p00023
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(
+        c,
+        r"""The input consists of multiple datasets. The first line consists of an integer $N$ ($N \leq 50$), the number of datasets. There will be $N$ lines where each line represents each dataset. Each data set consists of real numbers:
+
+$x_a$ $y_a$ $r_a$ $x_b$ $y_b$ $r_b$""")
+
     # Known issues in p00130's input description:
     # * s_i is extracted as si. The `<sub>` tag is lost.
     d = example_problem_descriptions.p00130
@@ -19,10 +44,25 @@ class ProcessTest(unittest.TestCase):
         c,
         r"""１行目に巡回記録の個数 n (n ≤ 50)、続く n 行に巡回記録 i を表す文字列 si (1024文字までの半角文字列) が与えられます。""")
 
+    d = example_problem_descriptions.p00352
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(
+        c,
+        r"""The input is given in the following format.
+
+a b
+
+A line of data is given that contains two values of money: a (1000 ≤ a ≤ 50000) for Alice and b (1000 ≤ b ≤ 50000) for Brown.""")
+
     # * There's no 'Input' section. This task is in Japanese.
     d = example_problem_descriptions.p00569
     c = descriptions.extract_input_description(d)
     self.assertEqual(c, '')
+
+    d = example_problem_descriptions.p00729_abbr
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(c, r"""Example
+Unclosed item""")
 
     d = example_problem_descriptions.p01950
     c = descriptions.extract_input_description(d)

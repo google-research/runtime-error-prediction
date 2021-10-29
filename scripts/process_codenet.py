@@ -3,6 +3,7 @@
 import collections
 import json
 import itertools
+import os
 import random
 
 import fire
@@ -12,6 +13,7 @@ import tensorflow as tf
 from core.data import codenet
 from core.data import codenet_paths
 from core.data import data_io
+from core.data import descriptions
 from core.data import error_kinds
 from core.data import process
 from core.data import splits
@@ -21,6 +23,26 @@ from core.data import tokenization
 DEFAULT_DATASET_PATH = codenet_paths.DEFAULT_DATASET_PATH
 DEFAULT_SPLITS_PATH = codenet_paths.DEFAULT_SPLITS_PATH
 DEFAULT_TOKENIZER_PATH = codenet_paths.DEFAULT_TOKENIZER_PATH
+
+
+def generate_docstrings():
+  for index in range(4053):
+    problem_id = f'p{index:05d}'
+    problem_description_path = codenet_paths.get_problem_description_path(problem_id)
+
+    # Load the description.
+    if not os.path.exists(problem_description_path):
+      continue
+    with open(problem_description_path, 'r') as f:
+      text = f.read()
+    try:
+      info = descriptions.extract_input_information(text)
+    except:
+      print(problem_id)
+
+    docstring_path = codenet_paths.get_problem_docstring_path(problem_id)
+    with open(docstring_path, 'w') as f:
+      f.write(info)
 
 
 def generate_tokenizer(

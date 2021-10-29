@@ -7,6 +7,7 @@ DEPENDENCIES = [
     'flax',
     'gast',
     'google-cloud-storage',
+    'html5lib',
     'imageio',
     'ipython',
     'jax>=0.2.7',
@@ -18,6 +19,7 @@ DEPENDENCIES = [
     'tensorflow',
     'tensorflow_datasets',
     'transformers>=4.6.0',
+    'uTidylib',
 ]
 
 packages = [
