@@ -19,6 +19,7 @@ DEPENDENCIES = [
     'tensorflow',
     'tensorflow_datasets',
     'transformers>=4.6.0',
+    'uTidylib',
 ]
 
 packages = [

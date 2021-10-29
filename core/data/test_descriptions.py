@@ -51,7 +51,7 @@ $x_a$ $y_a$ $r_a$ $x_b$ $y_b$ $r_b$""")
 
     d = example_problem_descriptions.p00729_abbr
     c = descriptions.extract_input_description(d)
-    self.assertEqual(c, '')
+    self.assertEqual(c, 'Unclosed item')
 
     d = example_problem_descriptions.p01950
     c = descriptions.extract_input_description(d)

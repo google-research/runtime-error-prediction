@@ -17,8 +17,12 @@ CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
 def as_soup(text, soup=None):
   if soup is not None:
     return soup
-  text = str(tidy.parseString(text, add_xml_decl=0, tidy_mark=0, wrap=0))
-  return bs4.BeautifulSoup(text, PARSER)
+  text = text.replace('<nl>', '').replace('</nl>', '')
+  doc = tidy.parseString(
+      text, add_xml_decl=0, tidy_mark=0, wrap=0, custom_tags='inline')
+  assert str(doc)
+  tidy_text = str(doc) or text
+  return bs4.BeautifulSoup(str(doc), PARSER)
 
 
 def extract_section_content(header_name, text, soup=None):
