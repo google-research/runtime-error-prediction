@@ -26,6 +26,8 @@ def as_soup(text, soup=None):
   )
   doc = tidy.parseString(
       text, add_xml_decl=0, tidy_mark=0, wrap=0, custom_tags='inline')
+  if not str(doc):
+    print(doc.errors)
   assert str(doc), text
   tidy_text = str(doc) or text
   return bs4.BeautifulSoup(str(doc), PARSER)
