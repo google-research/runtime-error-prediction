@@ -48,10 +48,10 @@ def as_soup(text, soup=None):
   )
   doc = tidy.parseString(
       text, add_xml_decl=0, tidy_mark=0, wrap=0, custom_tags='inline')
-  if not str(doc):
-    print(doc.errors)
-  assert str(doc), text
-  tidy_text = str(doc) or text
+  # If tidy encounters errors then str(doc) is ''.
+  # The errors are visible as doc.errors.
+  # There should be no errors. We add text replacements above to ensure this.
+  assert str(doc)
   return bs4.BeautifulSoup(str(doc), PARSER)
 
 
