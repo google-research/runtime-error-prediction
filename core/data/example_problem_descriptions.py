@@ -1,3 +1,135 @@
+p00022 = r"""
+
+
+<H1>Maximum Sum Sequence</H1>
+
+<p>
+Given a sequence of numbers <var>a<sub>1</sub></var>, <var>a<sub>2</sub></var>, <var>a<sub>3</sub></var>, ..., <var>a<sub>n</sub></var>, find the maximum sum of a contiguous subsequence of those numbers. Note that, a subsequence of one element is also a <i>contiquous</i> subsequence.            
+</p>
+
+<H2>Input</H2>
+<p>
+The input consists of multiple datasets. Each data set consists of:
+
+<pre>
+<var>n</var>
+<var>a<sub>1</sub></var>
+<var>a<sub>2</sub></var>
+.
+.
+<var>a<sub>n</sub></var>
+</pre>
+
+<p>
+You can assume that 1 &le; <var>n</var> &le; 5000 and -100000 &le; <var>a<sub>i</sub></var> &le; 100000.
+</p>
+
+<p>
+The input end with a line consisting of a single 0.
+</p>
+
+<H2>Output</H2>
+
+<p>
+For each dataset, print the maximum sum in a line.
+</p>
+
+<H2>Sample Input</H2>
+<pre>
+7
+-5
+-1
+6
+4
+9
+-6
+-7
+13
+1
+2
+3
+2
+-2
+-1
+1
+2
+3
+2
+1
+-2
+1
+3
+1000
+-200
+201
+0
+</pre>
+
+<H2>Output for the Sample Input</H2>
+
+<pre>
+19
+14
+1001
+</pre>
+"""
+
+p00023 = r"""
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({ tex2jax: { inlineMath: [["$","$"], ["\\(","\\)"]], processEscapes: true }});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<H1>Circles Intersection</H1>
+
+<p>
+You are given circle $A$ with radius $r_a$ and with central coordinate $(x_a, y_a)$ and circle $B$ with radius $r_b$ and with central coordinate $(x_b, y_b)$.
+</p>
+<p>
+Write a program which prints:
+</p>
+<ul>
+<li>"2" if $B$ is in $A$,</li>
+<li>"-2" if $A$ is in $B$, </li>
+<li>"1" if circumference of $A$ and $B$ intersect, and</li>
+<li>"0" if $A$ and $B$ do not overlap.</li>
+</ul>
+
+<p>
+You may assume that $A$ and $B$ are not identical.
+</p>
+
+<H2>Input</H2>
+
+<p>
+The input consists of multiple datasets. The first line consists of an integer $N$ ($N \leq 50$), the number of datasets. There will be $N$ lines where each line represents each dataset. Each data set consists of real numbers:<br/>
+<br/>
+$x_a$ $y_a$ $r_a$ $x_b$ $y_b$ $r_b$<br/>
+</p>
+
+<H2>Output</H2>
+
+<p>
+For each dataset, print 2, -2, 1, or 0 in a line.
+</p>
+
+<H2>Sample Input</H2>
+
+<pre>
+2
+0.0 0.0 5.0 0.0 0.0 4.0
+0.0 0.0 2.0 4.1 0.0 2.0
+</pre>
+
+<H2>Output for the Sample Input</H2>
+
+<pre>
+2
+0
+</pre>
+"""
+
 p00130 = r"""
 <h1>列車</h1>
 

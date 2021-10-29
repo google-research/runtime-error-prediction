@@ -7,6 +7,7 @@ DEPENDENCIES = [
     'flax',
     'gast',
     'google-cloud-storage',
+    'html5lib',
     'imageio',
     'ipython',
     'jax>=0.2.7',

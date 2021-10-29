@@ -4,6 +4,7 @@ import os
 import re
 
 
+PARSER = 'html5lib'  # 'html.parser'
 HEADER_TAGS = ['h2', 'h3']
 INPUT_HEADER_NAMES = ['Input', '入力']
 CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
@@ -12,7 +13,7 @@ CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
 
 
 def extract_section_content(header_name, text, soup=None):
-  soup = soup or bs4.BeautifulSoup(text, 'html.parser')
+  soup = soup or bs4.BeautifulSoup(text, PARSER)
   input_header = soup.find(HEADER_TAGS, text=re.compile(rf'^\s*{header_name}\s*$'))
   input_text = get_text_following_header(input_header)
   return input_text.strip()
@@ -27,7 +28,7 @@ def extract_input_constraints(text, soup=None):
 
 
 def extract_input_information(text, soup=None):
-  soup = soup or bs4.BeautifulSoup(text, 'html.parser')
+  soup = soup or bs4.BeautifulSoup(text, PARSER)
   info = []
   for header_name in INPUT_HEADER_NAMES + CONSTRAINT_HEADER_NAMES:
     content = extract_section_content(header_name, text, soup=soup)

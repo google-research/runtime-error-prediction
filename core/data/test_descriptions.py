@@ -11,6 +11,30 @@ class ProcessTest(unittest.TestCase):
   def test_extract_input_description(self):
     self.maxDiff = None
 
+    d = example_problem_descriptions.p00022
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(
+        c,
+        r"""The input consists of multiple datasets. Each data set consists of:
+n
+a1
+a2
+.
+.
+an
+
+You can assume that 1 ≤ n ≤ 5000 and -100000 ≤ ai ≤ 100000.
+
+The input end with a line consisting of a single 0.""")
+
+    d = example_problem_descriptions.p00023
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(
+        c,
+        r"""The input consists of multiple datasets. The first line consists of an integer $N$ ($N \leq 50$), the number of datasets. There will be $N$ lines where each line represents each dataset. Each data set consists of real numbers:
+
+$x_a$ $y_a$ $r_a$ $x_b$ $y_b$ $r_b$""")
+
     # Known issues in p00130's input description:
     # * s_i is extracted as si. The `<sub>` tag is lost.
     d = example_problem_descriptions.p00130
