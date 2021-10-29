@@ -17,7 +17,13 @@ CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
 def as_soup(text, soup=None):
   if soup is not None:
     return soup
-  text = text.replace('<nl>', '').replace('</nl>', '')
+  text = (
+      text
+      .replace('<nl>', '<ul>')
+      .replace('</nl>', '</ul>')
+      .replace('<bar>', '<var>')
+      .replace('</bar>', '</var>')
+  )
   doc = tidy.parseString(
       text, add_xml_decl=0, tidy_mark=0, wrap=0, custom_tags='inline')
   assert str(doc), text

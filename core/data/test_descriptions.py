@@ -44,6 +44,16 @@ $x_a$ $y_a$ $r_a$ $x_b$ $y_b$ $r_b$""")
         c,
         r"""１行目に巡回記録の個数 n (n ≤ 50)、続く n 行に巡回記録 i を表す文字列 si (1024文字までの半角文字列) が与えられます。""")
 
+    d = example_problem_descriptions.p00352
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(
+        c,
+        r"""The input is given in the following format.
+
+a b
+
+A line of data is given that contains two values of money: a (1000 ≤ a ≤ 50000) for Alice and b (1000 ≤ b ≤ 50000) for Brown.""")
+
     # * There's no 'Input' section. This task is in Japanese.
     d = example_problem_descriptions.p00569
     c = descriptions.extract_input_description(d)
@@ -51,7 +61,8 @@ $x_a$ $y_a$ $r_a$ $x_b$ $y_b$ $r_b$""")
 
     d = example_problem_descriptions.p00729_abbr
     c = descriptions.extract_input_description(d)
-    self.assertEqual(c, 'Unclosed item')
+    self.assertEqual(c, r"""Example
+Unclosed item""")
 
     d = example_problem_descriptions.p01950
     c = descriptions.extract_input_description(d)

@@ -181,6 +181,50 @@ bcdae
 </pre>
 """
 
+p00352 = r"""
+<H1>Handsel</H1>
+<!-- New Year’s gift money -->
+
+<p>
+Alice and Brown are brothers in a family and each receives pocket money in celebration of the coming year. They are very close and share the total amount of the money fifty-fifty. The pocket money each receives is a multiple of 1,000 yen. 
+</p>
+
+<p>
+  Write a program to calculate each one’s share given the amount of money Alice and Brown received.
+</p>
+
+<h2>Input</h2>
+
+<p>
+  The input is given in the following format.
+</p>
+<pre>
+<var>a</var> <var>b</var>
+</pre>
+
+<p>
+A line of data is given that contains two values of money: <var>a</var> (1000 &le; <var>a</var> &le; 50000) for Alice and <bar>b</var> (1000 &le; <var>b</var> &le; 50000) for Brown.
+</p>
+
+
+<h2>Output</h2>
+
+<p>
+  Output the amount of money each of Alice and Brown receive in a line.
+</p>
+
+<h2>Sample Input 1</h2>
+
+<pre>
+1000 3000
+</pre>
+
+<h2>Sample Output 1</h2>
+<pre>
+2000
+</pre>
+"""
+
 p01950 = r"""
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({ tex2jax: { inlineMath: [["$","$"], ["\\(","\\)"]], skipTags: ["script","noscript","style","textarea","code"], processEscapes: true }});
