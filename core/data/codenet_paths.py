@@ -47,9 +47,9 @@ elif HOSTNAME == 'code-executor-001':
   OUT_ROOT = '/mnt/disks/project-codenet-data/out'
 elif HOSTNAME == 'dev-000':
   PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
-  DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
-  EVALS_ROOT = '/mnt/project-codenet-storage/out/evals'
-  OUT_ROOT = '/mnt/project-codenet-storage/out/'
+  DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
+  EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
+  OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
 elif HOSTNAME.startswith('t1v-'):  # TPU
   PYTHON3 = '/usr/bin/python3'
   FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-10-07-full'
