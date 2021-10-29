@@ -61,7 +61,7 @@ def get_all_input_descriptions():
   no_info = 0
   no_info_ids = []
   good = 0
-  for i in range(4200):
+  for i in range(4053):
     path = f'/mnt/project-codenet-storage/Project_CodeNet/problem_descriptions/p{i:05d}.html'
     if not os.path.exists(path):
       no_text += 1
