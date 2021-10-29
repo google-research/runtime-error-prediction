@@ -29,6 +29,7 @@ def as_soup(text, soup=None):
       .replace('</i.', '</i>')
       .replace('<t>', '<i>')
       .replace('</t>', '</i>')
+      .replace('<sub.', '<sub>')
       .replace('<sbu>', '<sub>')
       .replace('<left>', '<center>')
       .replace('</left>', '</center>')
