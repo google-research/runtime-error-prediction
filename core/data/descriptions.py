@@ -1,7 +1,9 @@
-import bs4
-import fire
 import os
 import re
+
+import bs4
+import fire
+import tidy
 
 
 PARSER = 'html5lib'  # 'html.parser'
@@ -12,8 +14,15 @@ CONSTRAINT_HEADER_NAMES = ['Constraints', '制約', '入力形式']
 # 入力形式 = Input format.
 
 
+def as_soup(text, soup=None):
+  if soup is not None:
+    return soup
+  text = str(tidy.parseString(text, add_xml_decl=0, tidy_mark=0, wrap=0))
+  return bs4.BeautifulSoup(text, PARSER)
+
+
 def extract_section_content(header_name, text, soup=None):
-  soup = soup or bs4.BeautifulSoup(text, PARSER)
+  soup = as_soup(text, soup=soup)
   input_header = soup.find(HEADER_TAGS, text=re.compile(rf'^\s*{header_name}\s*$'))
   input_text = get_text_following_header(input_header)
   return input_text.strip()
@@ -28,7 +37,7 @@ def extract_input_constraints(text, soup=None):
 
 
 def extract_input_information(text, soup=None):
-  soup = soup or bs4.BeautifulSoup(text, PARSER)
+  soup = as_soup(text, soup=soup)
   info = []
   for header_name in INPUT_HEADER_NAMES + CONSTRAINT_HEADER_NAMES:
     content = extract_section_content(header_name, text, soup=soup)

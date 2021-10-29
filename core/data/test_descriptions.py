@@ -16,6 +16,7 @@ class ProcessTest(unittest.TestCase):
     self.assertEqual(
         c,
         r"""The input consists of multiple datasets. Each data set consists of:
+
 n
 a1
 a2
@@ -45,6 +46,10 @@ $x_a$ $y_a$ $r_a$ $x_b$ $y_b$ $r_b$""")
 
     # * There's no 'Input' section. This task is in Japanese.
     d = example_problem_descriptions.p00569
+    c = descriptions.extract_input_description(d)
+    self.assertEqual(c, '')
+
+    d = example_problem_descriptions.p00729_abbr
     c = descriptions.extract_input_description(d)
     self.assertEqual(c, '')
 

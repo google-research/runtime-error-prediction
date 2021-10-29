@@ -325,6 +325,24 @@ Transition of $current$ is $\{1\} \rightarrow \{2\} \rightarrow \{1,3\} \rightar
 </pre>
 """
 
+p00729_abbr = r"""<h1><font color="#000">Problem B:</font> Analyzing Login/Logout Records</h1>
+
+This shouldn't be included.
+
+<h2>Input</h2>
+
+<p>
+<nl>
+  <li>Unclosed item
+</nl>
+</p>
+
+
+<h2>Output</h2>
+
+This shouldn't be included.
+"""
+
 p03050 = r"""
 <span class="lang-en">
 <p>Score : <var>500</var> points</p>
