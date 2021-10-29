@@ -20,7 +20,7 @@ def as_soup(text, soup=None):
   text = text.replace('<nl>', '').replace('</nl>', '')
   doc = tidy.parseString(
       text, add_xml_decl=0, tidy_mark=0, wrap=0, custom_tags='inline')
-  assert str(doc)
+  assert str(doc), text
   tidy_text = str(doc) or text
   return bs4.BeautifulSoup(str(doc), PARSER)
 

@@ -35,7 +35,10 @@ def generate_docstrings():
       continue
     with open(problem_description_path, 'r') as f:
       text = f.read()
-    info = descriptions.extract_input_information(text)
+    try:
+      info = descriptions.extract_input_information(text)
+    except:
+      print(problem_id)
 
     docstring_path = codenet_paths.get_problem_docstring_path(problem_id)
     with open(docstring_path, 'w') as f:
