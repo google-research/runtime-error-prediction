@@ -40,7 +40,7 @@ class LSTMEncoder(nn.Module):
     # Input Encoder
     for layer_num in range(self.num_layers):
       initial_state = lstm.SimpleLSTM.initialize_carry((batch_size,), self.hidden_dim)
-      _, x = lstm.SimpleLSTM(name=f"lstm_{layer_num}")(initial_state, x) # TODO(rgoel): Add layer norm to each layer
+      _, x = lstm.SimpleLSTM(name=f'lstm_{layer_num}')(initial_state, x)  # TODO(rgoel): Add layer norm to each layer
 
     encoded = nn.LayerNorm(dtype=self.dtype, name='encoder_norm')(x)
 

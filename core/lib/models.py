@@ -1,8 +1,8 @@
 """Models library."""
 
 from core.models import ipagnn
-from core.models import rnn
 from core.models import mlp
+from core.models import rnn
 from core.models import transformer
 from core.modules import transformer_config_lib
 

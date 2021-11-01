@@ -22,7 +22,7 @@ class LSTM(nn.Module):
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
     input_embedder_type = config.rnn_input_embedder_type
-    if input_embedder_type=="token":
+    if input_embedder_type == 'token':
       self.input_embedder = spans.NodeAwareTokenEmbedder(
           transformer_config=self.transformer_config,
           num_embeddings=vocab_size,
@@ -57,7 +57,8 @@ class LSTM(nn.Module):
     encoded_inputs = self.input_embedder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'],
         x['num_nodes'])
-    # encoded_inputs.shape: batch_size, max_tokens, hidden_size
+    # encoded_inputs.shape: batch_size, max_tokens, hidden_size if input_embedder_type==token
+    #                       batch_size, max_nodes, hidden_size if input_embedder_type==node
     encoded_inputs = self.encoder(encoded_inputs)
     # encoded_inputs.shape: batch_size, max_tokens, hidden_size
 
@@ -68,7 +69,7 @@ class LSTM(nn.Module):
 
     get_last_state_batch = jax.vmap(get_last_state)
 
-    if input_embedder_type == "token":
+    if input_embedder_type == 'token':
       x = get_last_state_batch(encoded_inputs, x['num_tokens'])
     else:
       x = get_last_state_batch(encoded_inputs, x['num_nodes'])
