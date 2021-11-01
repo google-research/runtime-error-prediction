@@ -1,8 +1,9 @@
 """Parsing, tokenizing, and generating datasets from the CodeNet data."""
 
 import collections
-import json
+import functools
 import itertools
+import json
 import os
 import random
 
@@ -49,12 +50,16 @@ def generate_tokenizer(
     path=DEFAULT_TOKENIZER_PATH,
     splits_path=DEFAULT_SPLITS_PATH,
     require_evals=True,
+    include_docstrings=True,
     max_files=None):
   """Generates a tokenizer for the CodeNet data using only the train split.
 
   Args:
     path: The location to write the tokenizer data to.
     splits_path: The path to the split data. Only train problems will be used.
+    require_evals: If True, only uses submissions for which the evals are available.
+    include_docstrings: If True, includes the files with the synthetic problem docstrings
+      when generating the vocab.
     max_files: (optional) The maximum number of submissions to use for
       generating the tokenizer.
   Returns:
@@ -82,6 +87,17 @@ def generate_tokenizer(
   random.shuffle(files)
   if max_files:
     files = files[:max_files]
+
+  if include_docstrings:
+    if splits_path:
+      problem_ids = train_problem_ids
+    else:
+      problem_ids = codenet.get_all_problem_ids()
+    for problem_id in problem_ids:
+      docstring_path = codenet_paths.get_problem_docstring_path(problem_id)
+      if os.path.exists(docstring_path):
+        files.append(docstring_path)
+
   return tokenization.generate_tokenizer(path=path, files=files)
 
 
@@ -96,6 +112,7 @@ def generate_codenet_dataset(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_DATASET_PATH,
     splits_path=DEFAULT_SPLITS_PATH,
+    include_docstrings=True,
     fraction=1.0,
     max_files=None):
   """Generates a TFRecord dataset from the CodeNet data.
@@ -104,6 +121,9 @@ def generate_codenet_dataset(
     tokenizer_path: The tokenizer data to use when generating the dataset.
     dataset_path: The path to write the dataset to.
     splits_path: The path to the split data.
+    include_docstrings: If True, adds a synthetic docstring at the start of
+      each submission, generated from the problem statement.
+    fraction: The fraction of submissions to include in the dataset.
     max_files: (optional) The maximum number of submissions to use for
       generating the tokenizer.
   """
@@ -116,15 +136,15 @@ def generate_codenet_dataset(
 
   train_problems_gen = process_codenet(
       tokenizer_path=tokenizer_path, problem_ids=splits_dict['train'],
-      fraction=fraction)
+      include_docstrings=include_docstrings, fraction=fraction)
   save_codenet_tfrecord(train_path, train_problems_gen, max_files=max_files)
   valid_problems_gen = process_codenet(
       tokenizer_path=tokenizer_path, problem_ids=splits_dict['valid'],
-      fraction=fraction)
+      include_docstrings=include_docstrings, fraction=fraction)
   save_codenet_tfrecord(valid_path, valid_problems_gen, max_files=max_files)
   test_problems_gen = process_codenet(
       tokenizer_path=tokenizer_path, problem_ids=splits_dict['test'],
-      fraction=fraction)
+      include_docstrings=include_docstrings, fraction=fraction)
   save_codenet_tfrecord(test_path, test_problems_gen, max_files=max_files)
 
 
@@ -141,9 +161,18 @@ def save_codenet_tfrecord(tfrecord_path, problems_gen, max_files=None):
     json.dump(ids, f, ensure_ascii=False, indent=2)
 
 
+@functools.lru_cache()
+def get_problem_docstring(problem_id):
+  docstring_path = codenet_paths.get_problem_docstring_path(problem_id)
+  if os.path.exists(docstring_path):
+    with open(docstring_path, 'r') as f:
+      return f.read()
+
+
 def process_codenet(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     problem_ids=None,
+    include_docstrings=True,
     fraction=1.0,
     start_at=0):
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
@@ -175,6 +204,15 @@ def process_codenet(
     python_path = codenet.get_python_path(problem_id, submission_id)
     with open(python_path, 'r') as f:
       source = f.read()
+
+    if include_docstrings:
+      docstring = get_problem_docstring(problem_id)
+
+      if docstring:
+        source = f'''"""{docstring}
+"""
+{source}'''
+
     error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
     if error_kind == error_kinds.NO_DATA:
       raise RuntimeError('No data available for python_path', python_path)
