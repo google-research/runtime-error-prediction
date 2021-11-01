@@ -94,7 +94,8 @@ def generate_tokenizer(
       problem_ids = codenet.get_all_problem_ids()
     for problem_id in problem_ids:
       docstring_path = codenet_paths.get_problem_docstring_path(problem_id)
-      files.append(docstring_path)
+      if os.path.exists(docstring_path):
+        files.append(docstring_path)
 
   return tokenization.generate_tokenizer(path=path, files=files)
 
