@@ -49,12 +49,16 @@ def generate_tokenizer(
     path=DEFAULT_TOKENIZER_PATH,
     splits_path=DEFAULT_SPLITS_PATH,
     require_evals=True,
+    include_docstrings=True,
     max_files=None):
   """Generates a tokenizer for the CodeNet data using only the train split.
 
   Args:
     path: The location to write the tokenizer data to.
     splits_path: The path to the split data. Only train problems will be used.
+    require_evals: If True, only uses submissions for which the evals are available.
+    include_docstrings: If True, includes the files with the synthetic problem docstrings
+      when generating the vocab.
     max_files: (optional) The maximum number of submissions to use for
       generating the tokenizer.
   Returns:
@@ -82,6 +86,16 @@ def generate_tokenizer(
   random.shuffle(files)
   if max_files:
     files = files[:max_files]
+
+  if include_docstrings:
+    if splits_path:
+      problem_ids = train_problem_ids
+    else:
+      problem_ids = codenet.get_all_problem_ids()
+    for problem_id in problem_ids:
+      docstring_path = codenet_paths.get_problem_docstring_path(problem_id)
+      files.append(docstring_path)
+
   return tokenization.generate_tokenizer(path=path, files=files)
 
 
