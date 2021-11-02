@@ -168,6 +168,8 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
 
   if dataset_path is None:
     dataset_path = codenet_paths.FULL_DATASET_PATH
+  elif dataset_path == 'FULL_DATASET_PATH_WITH_DOCSTRINGS':
+    dataset_path = codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS
   elif dataset_path == 'DEFAULT_CFP_DATASET_PATH':
     dataset_path = codenet_paths.DEFAULT_CFP_DATASET_PATH
   elif dataset_path == 'FULL_DATASET_PATH':
