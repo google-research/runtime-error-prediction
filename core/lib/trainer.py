@@ -293,6 +293,7 @@ class Trainer:
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
     print(f'Training on data: {dataset_path}')
+    print(f'Traning using model: {config.model_class}')
     dataset = self.load_dataset(dataset_path, split=split)
     num_classes = self.info.num_classes
     all_error_kinds = self.info.all_error_kinds

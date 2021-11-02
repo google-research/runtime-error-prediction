@@ -26,7 +26,7 @@ def default_config():
   config.grad_clip_value: float = 0.0  # 0 means no clipping.
 
   # Model HParams
-  config.model_class: Text = 'IPAGNN'  # IPAGNN, Transformer
+  config.model_class: Text = 'IPAGNN'  # IPAGNN, Transformer, LSTM
   config.raise_in_ipagnn: bool = False
   config.rnn_layers = 2
   config.hidden_size: int = 16
@@ -50,6 +50,9 @@ def default_config():
   config.transformer_mlp_dim: int = 2048
   config.transformer_dropout_rate: float = 0.1
   config.transformer_attention_dropout_rate: float = 0.1
+
+  # RNN baseline configs
+  config.rnn_input_embedder_type = "node"  # token, node
 
   # Runner configs
   config.eval_freq = 10000
