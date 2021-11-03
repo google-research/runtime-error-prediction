@@ -53,5 +53,5 @@ def get_test_info():
       num_classes=error_kinds.NUM_CLASSES,
       all_error_kinds=error_kinds.ALL_ERROR_KINDS,
       no_error_ids=[error_kinds.NO_ERROR_ID,],
-      error_ids=list(set(range(num_classes)) - set(no_error_ids)),
+      error_ids=list(set(range(error_kinds.NUM_CLASSES)) - {error_kinds.NO_ERROR_ID}),
   )
