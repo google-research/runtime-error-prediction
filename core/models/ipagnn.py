@@ -46,6 +46,7 @@ class IPAGNN(nn.Module):
   @nn.compact
   def __call__(self, x):
     config = self.config
+    info = self.info
     tokens = x['tokens']
     # tokens.shape: batch_size, max_tokens
     batch_size = tokens.shape[0]
@@ -79,20 +80,42 @@ class IPAGNN(nn.Module):
     raise_node_instruction_pointer = ipagnn_output['raise_node_instruction_pointer']
     # raise_node_instruction_pointer.shape: batch_size
 
-    num_classes = self.info.num_classes
+    num_classes = info.num_classes
     if config.raise_in_ipagnn:
-      logits = nn.Dense(
-          features=num_classes, name='output'
-      )(raise_node_embeddings)  # P(e | yes exception)
-      # logits.shape: batch_size, num_classes
-      logits = logits.at[:, error_kinds.NO_ERROR_ID].set(-jnp.inf)
+      if len(info.no_error_ids) == 1:
+        # Multiple error classes; only one No-Error class.
+        no_error_id = info.no_error_ids[0]
+        logits = nn.Dense(
+            features=num_classes, name='output'
+        )(raise_node_embeddings)  # P(e | yes exception)
+        # logits.shape: batch_size, num_classes
+        logits = logits.at[:, no_error_id].set(-jnp.inf)
 
-      no_error_logits = jax.vmap(logit_math.get_additional_logit)(
-          exit_node_instruction_pointer + 1e-9,
-          raise_node_instruction_pointer + 1e-9,
-          logits)
-      # no_error_logits.shape: batch_size
-      logits = logits.at[:, error_kinds.NO_ERROR_ID].set(no_error_logits)
+        no_error_logits = jax.vmap(logit_math.get_additional_logit)(
+            exit_node_instruction_pointer + 1e-9,
+            raise_node_instruction_pointer + 1e-9,
+            logits)
+        # no_error_logits.shape: batch_size
+        logits = logits.at[:, no_error_id].set(no_error_logits)
+      elif len(info.no_error_ids) > 1:
+        # Multiple No-Error classes; only one error class.
+        if len(info.error_ids) > 1:
+          raise NotImplementedError('Multiple error classes and multiple no-error classes.')
+        assert len(info.error_ids) == 1
+        error_id = info.error_ids[0]
+        logits = nn.Dense(
+            features=num_classes, name='output'
+        )(exit_node_embeddings)  # P(e | no exception)
+        # logits.shape: batch_size, num_classes
+        logits = logits.at[:, error_id].set(-jnp.inf)
+        error_logits = jax.vmap(logit_math.get_additional_logit)(
+            raise_node_instruction_pointer + 1e-9,
+            exit_node_instruction_pointer + 1e-9,
+            logits)
+        # error_logits.shape: batch_size
+        logits = logits.at[:, error_id].set(error_logits)
+      else:
+        raise ValueError('Tried using Exception IPA-GNN on data with no errors.')
     else:
       logits = nn.Dense(
           features=num_classes, name='output'
