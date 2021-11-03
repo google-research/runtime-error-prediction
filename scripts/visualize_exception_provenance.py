@@ -102,6 +102,13 @@ def set_config(config):
       'tdr=0.1,tadr=0,pe=False,T=default/checkpoints'
   )
   config.span_encoding_method = 'max'
+
+  config.restore_checkpoint_dir=(
+      '/mnt/runtime-error-problems-experiments/experiments/2021-10-25-cfp-raise-001/32/'
+      'I2292,o=sgd,bs=32,lr=0.3,gc=2,hs=256,span=sum,tdr=0,tadr=0,pe=False,T=tiny'
+      '/checkpoints'
+  )
+  config.span_encoding_method = 'sum'
   return config
 
 
