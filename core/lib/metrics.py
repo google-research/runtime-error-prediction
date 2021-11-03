@@ -40,13 +40,14 @@ def all_metric_names() -> Tuple[str]:
 
 def evaluate(targets, predictions, logits, num_classes,
              localization_targets, localization_num_targets, localization_predictions,
-             eval_metric_names):
+             eval_metric_names, info):
   # Diagnose unknown metrics.
   unknown_metric_names = set(eval_metric_names).difference(all_metric_names())
   if unknown_metric_names:
     raise ValueError(f'Unknown metric names: {unknown_metric_names}')
 
   # Compute metrics.
+  # logits.shape: num_eval_examples, num_classes
   results = {}
   if EvaluationMetric.ACCURACY.value in eval_metric_names:
     results[EvaluationMetric.ACCURACY.value] = (
@@ -59,7 +60,7 @@ def evaluate(targets, predictions, logits, num_classes,
         targets, predictions, average='weighted')
   if EvaluationMetric.BINARY_F1_SCORE.value in eval_metric_names:
     results[EvaluationMetric.BINARY_F1_SCORE.value] = compute_binary_f1_score(
-        targets, predictions)
+        targets, predictions, logits, info)
   if EvaluationMetric.BINARY_AUC.value in eval_metric_names:
     results[EvaluationMetric.BINARY_AUC.value] = compute_binary_auc(
         targets, logits)
@@ -220,7 +221,12 @@ def compute_localization_accuracy(
   return total_correct / total_examples
 
 
-def compute_binary_f1_score(targets, predictions):
+def compute_binary_f1_score(targets, predictions, logits, info):
+  no_error_ps = jax.scipy.special.logsumexp(logits[:, info.no_error_classes])
+  error_ps = jax.scipy.special.logsumexp(logits[:, info.error_classes])
+  print(no_error_ps.shape)
+  print(error_ps.shape)
+
   binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)
   binary_predictions = jnp.where(predictions != error_kinds.NO_ERROR_ID, 1, 0)
   metric = metrics.f1_score(binary_targets, binary_predictions, average='binary')

@@ -287,7 +287,8 @@ class Trainer:
         localization_targets,
         localization_num_targets,
         localization_predictions,
-        config.eval_metric_names)
+        config.eval_metric_names,
+        self.info)
     return eval_loss, eval_metrics, num_examples
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
@@ -425,7 +426,8 @@ class Trainer:
             train_localization_targets_np,
             train_localization_num_targets_np,
             train_localization_predictions_np,
-            config.eval_metric_names)
+            config.eval_metric_names,
+            self.info)
         train_accuracy = train_metrics.get(EvaluationMetric.ACCURACY.value)
         train_accuracy_str = (f'{100 * train_accuracy:02.1f}'
                               if train_accuracy is not None else None)
@@ -450,7 +452,8 @@ class Trainer:
             localization_targets,
             localization_num_targets,
             localization_predictions,
-            [EvaluationMetric.ACCURACY.value])
+            [EvaluationMetric.ACCURACY.value],
+            self.info)
         batch_accuracy = batch_metrics[EvaluationMetric.ACCURACY.value]
         print(f"""--- Step {step}
 Loss: {train_loss}

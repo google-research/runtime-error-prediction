@@ -6,7 +6,7 @@ from core.data import descriptions
 from core.data import example_problem_descriptions
 
 
-class ProcessTest(unittest.TestCase):
+class DescriptionsTest(unittest.TestCase):
 
   def test_extract_input_description(self):
     self.maxDiff = None
@@ -132,7 +132,6 @@ S consists of the letters N, W, S, E.""")
 1 \leq a_i \leq N
 1 \leq L
 JOI 君が書き出す整数は L 個以上である．""")
-
 
 
 if __name__ == '__main__':
