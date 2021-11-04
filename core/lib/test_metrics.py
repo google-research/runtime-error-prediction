@@ -103,5 +103,23 @@ class MetricsTest(unittest.TestCase):
     precision_at_090 = metrics.compute_precision_at_recall(targets, logits, info, target_recall=0.90)
     self.assertEqual(precision_at_090, 2/3)
 
+  def test_compute_weighted_f1_score_error_only(self):
+    info = info_lib.get_test_info()
+    info.error_ids = [0]
+    info.no_error_ids = [1, 2, 3]
+
+    targets = np.array([0, 3, 0, 1])
+    predictions = np.array([0, 2, 0, 0])
+    logits = jnp.array([
+        [5, 4, 4, 4],  # Multi-class prediction is correct.
+        [0, 1, 3, 2],  # Multi-class prediction is wrong.
+        [5, 1, 1, 1],  # Correct (error).
+        [5, 2, 1, 1],  # Wrong (predicts no-error).
+    ])
+    # logits.shape: num_eval_examples, num_classes
+
+    f1_score = metrics.compute_weighted_f1_score_error_only(targets, predictions, info)
+    self.assertEqual(f1_score, 0.8)
+
 if __name__ == '__main__':
   unittest.main()
