@@ -121,5 +121,35 @@ class MetricsTest(unittest.TestCase):
     f1_score = metrics.compute_weighted_f1_score_error_only(targets, predictions, info)
     self.assertEqual(f1_score, 0.8)
 
+  def test_compute_weighted_f1_score_error_only_omits_correct_examples(self):
+    info = info_lib.get_test_info()
+    info.error_ids = [1, 2, 3]
+    info.no_error_ids = [0]
+
+    targets = np.array([0, 3, 0, 1, 2])
+    predictions = np.array([0, 2, 0, 0, 2])
+    # Should omit examples 0 and 2, keeping 1, 3, and 4.
+    # f1 score for class 3 is 0.
+    # f1 score for class 1 is 0.
+    # f1 score for class 2 is 2/3.
+    # So weighted f1 score is 2/9.
+    f1_score = metrics.compute_weighted_f1_score_error_only(targets, predictions, info)
+    self.assertEqual(f1_score, 2/9)
+
+    # We verify this by manually removing 0 and 2, and we see the f1 is unchanged.
+    targets = np.array([3, 1, 2])
+    predictions = np.array([2, 0, 2])
+    f1_score = metrics.compute_weighted_f1_score_error_only(targets, predictions, info)
+    self.assertEqual(f1_score, 2/9)
+
+    # Removing an example with prediction 0 does change the f1 score.
+    targets = np.array([3, 2])
+    predictions = np.array([2, 2])
+    f1_score = metrics.compute_weighted_f1_score_error_only(targets, predictions, info)
+    # f1 score for class 3 is 0.
+    # f1 score for class 2 is 2/3.
+    # weighted average is 1/3.
+    self.assertEqual(f1_score, 1/3)
+
 if __name__ == '__main__':
   unittest.main()
