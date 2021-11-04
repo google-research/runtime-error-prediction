@@ -12,8 +12,6 @@ import numpy as np
 
 from sklearn import metrics
 
-from core.data import error_kinds
-
 
 class EvaluationMetric(enum.Enum):
   """Evaluation metric kinds."""
@@ -60,16 +58,16 @@ def evaluate(targets, predictions, logits, num_classes,
         targets, predictions, average='weighted')
   if EvaluationMetric.BINARY_F1_SCORE.value in eval_metric_names:
     results[EvaluationMetric.BINARY_F1_SCORE.value] = compute_binary_f1_score(
-        targets, predictions, logits, info)
+        targets, logits, info)
   if EvaluationMetric.BINARY_AUC.value in eval_metric_names:
     results[EvaluationMetric.BINARY_AUC.value] = compute_binary_auc(
-        targets, logits)
+        targets, logits, info)
   if EvaluationMetric.BINARY_RECALL_AT_90.value in eval_metric_names:
     results[EvaluationMetric.BINARY_RECALL_AT_90.value] = compute_recall_at_precision(
-        targets, logits, target_precision=0.90)
+        targets, logits, info, target_precision=0.90)
   if EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value in eval_metric_names:
     results[EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value] = compute_weighted_f1_score_error_only(
-        targets, predictions)
+        targets, predictions, info)
   if EvaluationMetric.CONFUSION_MATRIX.value in eval_metric_names and num_classes < 40:
     results[EvaluationMetric.CONFUSION_MATRIX.value] = metrics.confusion_matrix(
         targets,
@@ -221,32 +219,75 @@ def compute_localization_accuracy(
   return total_correct / total_examples
 
 
-def compute_binary_f1_score(targets, predictions, logits, info):
-  no_error_ps = jax.scipy.special.logsumexp(logits[:, info.no_error_classes])
-  error_ps = jax.scipy.special.logsumexp(logits[:, info.error_classes])
-  print(no_error_ps.shape)
-  print(error_ps.shape)
+def compute_binary_targets(targets, info):
+  targets = jnp.array(targets)
+  error_ids = jnp.array(info.error_ids)
+  def matches(t, idx):
+    return t == idx
+  def matches_any(t, indexes):
+    matches_each = jax.vmap(matches, in_axes=(None, 0))(t, indexes)
+    # matches_each.shape: batch_size, num_indexes
+    return jnp.max(matches_each, axis=-1)
+  # matches = jax.vmap(lambda t: jnp.equals(targets, t))(, out_axes=1)
+  binary_targets = jax.vmap(matches_any, in_axes=(0, None))(targets, error_ids)
+  # ms.shape: batch_size
+  # In binary_targets, True indicates the target is error and False no-error.
+  return binary_targets
 
-  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)
-  binary_predictions = jnp.where(predictions != error_kinds.NO_ERROR_ID, 1, 0)
+
+def compute_binary_predictions(logits, info):
+  logits = jnp.array(logits)
+  get_logits = jax.vmap(lambda index: logits[:, index], out_axes=1)
+  no_error_logits = get_logits(jnp.array(info.no_error_ids))
+  error_logits = get_logits(jnp.array(info.error_ids))
+  # no_error_logits.shape: batch_size, num_no_error_classes
+  # error_logits.shape: batch_size, num_error_classes
+
+  no_error_ps = jax.scipy.special.logsumexp(no_error_logits, axis=-1)
+  error_ps = jax.scipy.special.logsumexp(error_logits, axis=-1)
+  # no_error_ps.shape: batch_size
+  # error_ps.shape: batch_size
+  binary_predictions = error_ps >= no_error_ps
+  # binary_predictions.shape: batch_size
+  # True indicates the prediction is error, False indicates no-error.
+  return binary_predictions
+
+
+def compute_binary_probabilities(logits, info):
+  logits = jnp.array(logits)
+  get_logits = jax.vmap(lambda index: logits[:, index], out_axes=1)
+  no_error_logits = get_logits(jnp.array(info.no_error_ids))
+  error_logits = get_logits(jnp.array(info.error_ids))
+  # no_error_logits.shape: batch_size, num_no_error_classes
+  # error_logits.shape: batch_size, num_error_classes
+
+  no_error_ps = jax.scipy.special.logsumexp(no_error_logits, axis=-1)
+  error_ps = jax.scipy.special.logsumexp(error_logits, axis=-1)
+  # no_error_ps.shape: batch_size
+  # error_ps.shape: batch_size
+  binary_logits = jnp.stack([error_ps, no_error_ps], axis=-1)
+  # binary_logits.shape: batch_size, 2
+  return jax.nn.softmax(binary_logits)  # P(error), P(no-error)
+
+def compute_binary_f1_score(targets, logits, info):
+  binary_predictions = compute_binary_predictions(logits, info)
+  binary_targets = compute_binary_targets(targets, info)
   metric = metrics.f1_score(binary_targets, binary_predictions, average='binary')
   return metric
 
 
-def compute_binary_auc(targets, logits):
-  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
-  probabilities = jax.nn.softmax(logits, axis=-1)
-  binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
-  fpr, tpr, thresholds = metrics.roc_curve(binary_targets, binary_predictions, pos_label=1)
-  metric = metrics.auc(fpr, tpr)
-  return metric
+def compute_binary_auc(targets, logits, info):
+  binary_targets = jnp.int32(compute_binary_targets(targets, info))
+  binary_probabilities = compute_binary_probabilities(logits, info)
+  error_probabilities = binary_probabilities[:, 0]  # P(error)
+  return metrics.roc_auc_score(binary_targets, error_probabilities)
 
 
-def compute_recall_at_precision(targets, logits, target_precision):
-  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
-  probabilities = jax.nn.softmax(logits, axis=-1)
-  binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
-  precisions, recalls, thresholds = metrics.precision_recall_curve(binary_targets, binary_predictions, pos_label=1)
+def compute_recall_at_precision(targets, logits, info, target_precision):
+  binary_targets = jnp.int32(compute_binary_targets(targets, info))
+  binary_probabilities = compute_binary_probabilities(logits, info)
+  error_probabilities = binary_probabilities[:, 0]  # P(error)
+  precisions, recalls, thresholds = metrics.precision_recall_curve(binary_targets, error_probabilities, pos_label=1)
   for precision, recall in zip(precisions, recalls):
     # The last precision value is 1, starts from ~0.
     # The last recall value is 0, starts from ~1.
@@ -255,11 +296,11 @@ def compute_recall_at_precision(targets, logits, target_precision):
   return 0
 
 
-def compute_precision_at_recall(targets, logits, target_recall):
-  binary_targets = jnp.where(targets != error_kinds.NO_ERROR_ID, 1, 0)  # 1 == error, 0 == no error
-  probabilities = jax.nn.softmax(logits, axis=-1)
-  binary_predictions = 1 - probabilities[:, error_kinds.NO_ERROR_ID]  # P(error)
-  precisions, recalls, thresholds = metrics.precision_recall_curve(binary_targets, binary_predictions, pos_label=1)
+def compute_precision_at_recall(targets, logits, info, target_recall):
+  binary_targets = jnp.int32(compute_binary_targets(targets, info))
+  binary_probabilities = compute_binary_probabilities(logits, info)
+  error_probabilities = binary_probabilities[:, 0]  # P(error)
+  precisions, recalls, thresholds = metrics.precision_recall_curve(binary_targets, error_probabilities, pos_label=1)
   for precision, recall in reversed(list(zip(precisions, recalls))):
     # The first precision value is 1, tends toward 0.
     # The first recall value is 0, tends toward 1.
@@ -268,10 +309,7 @@ def compute_precision_at_recall(targets, logits, target_recall):
   return 0
 
 
-def compute_weighted_f1_score_error_only(targets, predictions):
-  labels = [
-      error_kinds.to_index(kind) for kind in error_kinds.ALL_ERROR_KINDS
-  ]
-  labels.remove(error_kinds.NO_ERROR_ID)
+def compute_weighted_f1_score_error_only(targets, predictions, info):
+  labels = info.error_ids
   metric = metrics.f1_score(targets, predictions, labels=labels, average='weighted')
   return metric
