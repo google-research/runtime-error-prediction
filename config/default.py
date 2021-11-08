@@ -1,9 +1,10 @@
 from typing import List, Optional, Text, Tuple
 
 import ml_collections
-from core.lib.metrics import all_metric_names
+from core.lib import metrics
 
 Config = ml_collections.ConfigDict
+EvaluationMetric = metrics.EvaluationMetric
 
 
 def default_config():
@@ -57,7 +58,9 @@ def default_config():
   # Runner configs
   config.eval_freq = 10000
   config.save_freq = 5000
-  config.eval_metric_names: Tuple[str] = all_metric_names()
+  config.eval_primary_metric_scale: int = 1  # 1 or -1
+  config.eval_primary_metric_name: str = EvaluationMetric.ACCURACY.value
+  config.eval_metric_names: Tuple[str] = metrics.all_metric_names()
   config.eval_subsample = 1.0
   config.eval_max_batches = 30
 

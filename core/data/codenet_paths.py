@@ -100,6 +100,10 @@ def make_checkpoints_path(run_dir):
   return os.path.join(run_dir, 'checkpoints')
 
 
+def make_top_checkpoints_path(run_dir):
+  return os.path.join(run_dir, 'top-checkpoints')
+
+
 def make_log_dir(run_dir, split='train'):
   return os.path.join(run_dir, split)
 
