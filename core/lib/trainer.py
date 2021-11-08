@@ -311,6 +311,7 @@ class Trainer:
     metadata.write_metadata(metadata_path)
 
     checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
+    top_checkpoint_dir = codenet_paths.make_top_checkpoints_path(run_dir)
     train_dir = codenet_paths.make_log_dir(run_dir, 'train')
     valid_dir = codenet_paths.make_log_dir(run_dir, 'valid')
     print(f'Checkpoints: {checkpoint_dir}')
@@ -535,7 +536,14 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
             EvaluationMetric.LOCALIZATION_ACCURACY.value,
             valid_metrics, valid_writer.scalar, step)
 
-        did_improve, es = es.update(-1 * valid_loss)
+        primary_metric_value = valid_metrics[config.eval_primary_metric_name]
+        # Higher is better for primary_metric_value_pos.
+        primary_metric_value_pos = config.eval_primary_metric_scale * primary_metric_value
+
+        did_improve, es = es.update(-1 * primary_metric_value_pos)
+        if did_improve:
+          checkpoints.save_checkpoint(top_checkpoint_dir, state, state.step, keep=3)
+
         if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')
           break
