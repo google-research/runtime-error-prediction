@@ -7,6 +7,7 @@ a new dataset suitable for testing the vanilla IPA-GNN and Exception IPA-GNN.
 import collections
 import dataclasses
 import os
+import random
 from typing import Optional, Sequence, Text, Tuple
 
 from absl import app
@@ -21,7 +22,8 @@ from core.data.generation import python_interpreter
 
 TFRECORD_PATH = codenet_paths.RAW_CFP_RAISE_DATA_PATH
 TFRECORD_PATH = 'tmp.tfrecord'
-
+ASSERTION_ERROR_PROB = 0.5
+ADD_ASSERTION_ERRO = True
 
 DEFAULT_OPS = ("+=", "-=", "*=")
 
@@ -145,6 +147,18 @@ def generate_example_from_python_source(executor, base, python_source, mod, outp
   }
 
 
+def add_assert_error(source, example):
+  is_error = random.choices([0,1], [1-ASSERTION_ERROR_PROB, ASSERTION_ERROR_PROB])
+  add_val = random.randint(1,10)
+  current_val = int(example['human_readable_target_output'])
+  if is_error:
+    source = f"{source}\nassert v0=={abs(current_val+add_val)%1000}"
+    example['error_type'] = "AssertionError"
+  else:
+    source = f"{source}\nassert v0=={current_val}"
+  return source, example
+
+
 def main(argv: Sequence[str]) -> None:
   del argv  # Unused.
 
@@ -164,6 +178,7 @@ def main(argv: Sequence[str]) -> None:
           30, program_generator_config)
       print(source)
       print()
+
       example = (
           generate_example_from_python_source(
               executor, program_generator_config.base, source,
@@ -172,12 +187,13 @@ def main(argv: Sequence[str]) -> None:
           )
       )
       print(example)
+      source, example = add_assert_error(source, example)
       target = example['human_readable_target_output']
       error_type = example['error_type']
       lines = source.split('\n')
       steps = process.get_step_limit(lines)
       counts[target] += 1
-
+      import pdb;pdb.set_trace()
       if error_type != 'NoError':
         target = error_type
       record_bytes = to_tf_example(source, target, steps).SerializeToString()
