@@ -148,7 +148,7 @@ def generate_example_from_python_source(executor, base, python_source, mod, outp
 
 
 def add_assert_error(source, example):
-  is_error = random.choices([0,1], [1-ASSERTION_ERROR_PROB, ASSERTION_ERROR_PROB])
+  is_error = random.choices([0,1], [1-ASSERTION_ERROR_PROB, ASSERTION_ERROR_PROB])[0]
   add_val = random.randint(1,10)
   current_val = int(example['human_readable_target_output'])
   if is_error:
