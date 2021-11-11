@@ -201,6 +201,8 @@ def compute_localization_accuracy(
     return None
 
   def is_correct(targets, num_targets, prediction):
+    # targets.shape: max_num_targets
+    # num_targets.shape: scalar.
     is_example = num_targets > 0
     mask = jnp.arange(targets.shape[0]) < num_targets
     # mask.shape: max_num_nodes
