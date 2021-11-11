@@ -258,7 +258,7 @@ class IPAGNNLayer(nn.Module):
         raise_node_indexes, true_indexes, false_indexes, raise_indexes)
     # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
 
-    attribution = raise_contributions_lib.get_raise_contribution_step(
+    attribution = raise_contributions_lib.get_raise_contribution_step_batch(
         attribution,
         instruction_pointer,
         branch_decisions,
