@@ -449,6 +449,8 @@ class IPAGNNModule(nn.Module):
       # branch_decisions.shape: steps, batch_size, num_nodes, 2
       branch_decisions = jnp.transpose(branch_decisions, [1, 0, 2, 3])
       # branch_decisions.shape: batch_size, steps, num_nodes, 2
+      print('instruction_pointer')
+      print(instruction_pointer.shape)
       localization_logits = raise_contributions_lib.get_raise_contribution_batch(
           instruction_pointer,
           branch_decisions,
