@@ -174,7 +174,7 @@ def get_raise_contributions(
   raise_contributions = raise_contributions[raise_index, :]
   # raise_contributions.shape: num_nodes (m)
   return raise_contributions
-get_raise_contribution_batch = jax.vmap(get_raise_contributions, static_argnames=('config',))
+get_raise_contribution_batch = jax.vmap(get_raise_contributions, in_axes=(0,) * 7)
 
 
 def get_raise_contribution_from_batch_and_aux(batch, aux, config):
