@@ -112,11 +112,13 @@ Source: {source}""")
       # Recall, spans are inclusive.
       submission_id = example['submission_id'][0].decode('utf-8')
       problem_id = example['problem_id'][0].decode('utf-8')
+      if example['num_target_nodes'][0] == 0:
+        continue
       print(f"""Submission ID: {submission_id} {problem_id}""")
-      print(example['target'])
-      print(example['target_lineno'])
+      print(example['target'][0])
+      print(example['target_lineno'][0])
       print(example['target_node_indexes'])
-      print(example['num_target_nodes'])
+      print(example['num_target_nodes'][0])
 
   def run_counter(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
