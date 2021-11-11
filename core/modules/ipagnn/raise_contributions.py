@@ -133,11 +133,12 @@ def get_raise_contribution_step(
       attribution.at[raise_indexes, jnp.arange(num_nodes)]
       .add(values_contributed)
   )
-  # print('(5) attribution')
-  # print(attribution)
+  print('(5) attribution')
+  print(attribution)
 
   return attribution
-get_raise_contribution_step_batch = jax.vmap(get_raise_contribution_step,
+get_raise_contribution_step_batch = jax.vmap(
+    get_raise_contribution_step,
     in_axes=(0,) * 7 + (None,))
 
 
