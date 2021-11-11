@@ -6,6 +6,7 @@ import jax.numpy as jnp
 
 from core.lib.metrics import EvaluationMetric
 from core.modules.ipagnn import rnn
+from core.modules.ipagnn import raise_contributions as raise_contributions_lib
 
 
 def _rnn_state_to_embedding(hidden_state):
@@ -439,7 +440,7 @@ class IPAGNNModule(nn.Module):
     # raise_node_instruction_pointer.shape: batch_size
 
     if config.raise_in_ipagnn:  # TODO(dbieber): Only compute this if requested.
-      localization_logits = raise_contributions.get_raise_contribution_batch(
+      localization_logits = raise_contributions_lib.get_raise_contribution_batch(
           instruction_pointer,
           branch_decisions,
           raise_decisions,
