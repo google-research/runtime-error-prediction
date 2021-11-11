@@ -117,13 +117,6 @@ def get_raise_contribution_step(
     )
   get_attribution_all_m = jax.vmap(get_attribution, in_axes=1, out_axes=1)
 
-  def get_unattributed_raise_contributions_to_n_from_m():
-    attribution.at[jnp.arange(num_nodes), raise_indexes].set(amount)
-    n = raise_indexes[m]
-    amount = 1 - jnp.sum(prev_raise_attributions_to_m)
-    result[n, m] = amount
-
-
   # prev_raise_attributions.shape: num_nodes (n), num_nodes (m)
   # print('prev_raise_attributions')
   # print(prev_raise_attributions)
@@ -198,7 +191,7 @@ def get_raise_contribution_from_batch_and_aux(batch, aux):
   branch_decisions = aux['branch_decisions']
   print('branch_decisions.shape')
   print(branch_decisions.shape)
-  true_indexes = batch['true_branch_nodes']
+  true_indexes = batch['f']
   false_indexes = batch['false_branch_nodes']
   raise_indexes = batch['raise_indexes']
   print('true_indexes.shape')
@@ -239,7 +232,7 @@ def get_raise_contribution_old(instruction_pointer, raise_decisions, raise_index
   # raise_decisions.shape: steps, num_nodes, 2
   # raise_index.shape: scalar.
   # step_limit.shape: scalar.
-  raise_contributions = get_raise_contribution_at_steps(
+  raise_contributions = get_raise_contribution_at_steps_old(
       instruction_pointer, raise_decisions, raise_index)
   # raise_contributions.shape: steps, num_nodes
   mask = jnp.arange(instruction_pointer.shape[0]) < step_limit
