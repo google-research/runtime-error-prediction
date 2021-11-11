@@ -230,6 +230,8 @@ class IPAGNNLayer(nn.Module):
       # raise_decision.shape: batch_size, num_nodes, 2
       # Make sure you cannot raise from the exit node.
       raise_decisions = batch_set(raise_decisions, jnp.array([0, 1]), exit_node_indexes)
+      # Make sure you cannot raise from the raise node.
+      raise_decisions = batch_set(raise_decisions, jnp.array([0, 1]), raise_node_indexes)
       # raise_decision.shape: batch_size, num_nodes, 2
     else:
       raise_decisions = jnp.concatenate([
