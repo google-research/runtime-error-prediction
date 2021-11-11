@@ -268,6 +268,7 @@ class IPAGNNLayer(nn.Module):
         raise_indexes,
         num_nodes,
     )
+    # attribution.shape: batch_size, num_nodes, num_nodes
 
     # current_step.shape: batch_size
     # step_limits.shape: batch_size
