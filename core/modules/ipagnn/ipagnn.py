@@ -412,6 +412,8 @@ class IPAGNNModule(nn.Module):
     instruction_pointer = jax.vmap(make_instruction_pointer)(start_node_indexes)
     # instruction_pointer.shape: batch_size, num_nodes
 
+    attribution = jnp.zeros((batch_size, num_nodes, num_nodes))
+
     # Run self.max_steps steps of IPAGNNLayer.
     (hidden_states, instruction_pointer, attribution, current_step), aux = self.ipagnn_layer_scan(
         # State:
