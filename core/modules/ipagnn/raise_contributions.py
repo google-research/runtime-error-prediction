@@ -59,15 +59,9 @@ def get_raise_contribution_step(
     Returns:
       For each n, now how much to attribute to m.
     """
-
     # prev_raise_attributions_to_m.shape: num_nodes
-    # print('prev_raise_attributions_to_m.shape')
-    # print(prev_raise_attributions_to_m.shape)
-    # print('instruction_pointer')
-    # print(instruction_pointer)
 
     # (1) sum v from branch decisions
-    # Goal: By 4pm, calculate (1).
     denom = (
         jax.ops.segment_sum(
             p_true * instruction_pointer, true_indexes,
@@ -75,7 +69,7 @@ def get_raise_contribution_step(
         + jax.ops.segment_sum(
             p_false * instruction_pointer, false_indexes,
             num_segments=num_nodes)
-    )
+    ) + 1e-12
     no_raise_contributions = (
         jax.ops.segment_sum(
             prev_raise_attributions_to_m * p_true * instruction_pointer, true_indexes,
@@ -83,7 +77,7 @@ def get_raise_contribution_step(
         + jax.ops.segment_sum(
             prev_raise_attributions_to_m * p_false * instruction_pointer, false_indexes,
             num_segments=num_nodes)
-    ) / (denom + 1e-12)
+    ) / denom
     # no_raise_contributions.shape: num_nodes
     # print('(1) no_raise_contributions')
     # print(no_raise_contributions)
@@ -133,8 +127,6 @@ def get_raise_contribution_step(
       attribution.at[raise_indexes, jnp.arange(num_nodes)]
       .add(values_contributed)
   )
-  print('(5) attribution')
-  print(attribution)
 
   return attribution
 get_raise_contribution_step_batch = jax.vmap(
@@ -172,8 +164,6 @@ def get_raise_contributions(
   # raise_contributions.shape:
   #   num_nodes (n = current node), 
   #   num_nodes (m = node raise is attributed to)
-  print('raise_contributions')
-  print(raise_contributions)
   raise_contributions = raise_contributions[raise_index, :]
   # raise_contributions.shape: num_nodes (m)
   return raise_contributions
@@ -197,13 +187,9 @@ def get_raise_contribution_from_batch_and_aux(batch, aux, config):
   # branch_decisions.shape: steps, batch_size, num_nodes, 2
   branch_decisions = jnp.transpose(branch_decisions, [1, 0, 2, 3])
   # branch_decisions.shape: batch_size, steps, num_nodes, 2
-  print('branch_decisions.shape')
-  print(branch_decisions.shape)
   true_indexes = batch['true_branch_nodes']
   false_indexes = batch['false_branch_nodes']
   raise_indexes = batch['raise_nodes']
-  print('true_indexes.shape')
-  print(true_indexes.shape)
   step_limit = batch['step_limit']
 
   contributions = get_raise_contribution_batch(
