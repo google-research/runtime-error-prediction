@@ -103,6 +103,7 @@ Source: {source}""")
       split='train', steps=None):
     tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
     dataset = self.load_dataset(dataset_path, split=split)
+    ok, nok = 0, 0
     for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       span_starts = example['node_token_span_starts']
       span_ends = example['node_token_span_ends']
@@ -118,7 +119,12 @@ Source: {source}""")
       print(example['target'][0])
       print(example['target_lineno'][0])
       print(example['target_node_indexes'])
+      if 0 in example['target_node_indexes']:
+        ok += 1
+      else:
+        nok += 1
       print(example['num_target_nodes'][0])
+      print(ok, nok, ok/(ok + nok) * 100)
 
   def run_counter(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
