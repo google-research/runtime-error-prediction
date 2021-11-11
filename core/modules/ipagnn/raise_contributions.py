@@ -193,7 +193,7 @@ def get_raise_contribution_from_batch_and_aux(batch, aux):
   print(branch_decisions.shape)
   true_indexes = batch['f']
   false_indexes = batch['false_branch_nodes']
-  raise_indexes = batch['raise_indexes']
+  raise_indexes = batch['raise_nodes']
   print('true_indexes.shape')
   print(true_indexes.shape)
   step_limit = batch['step_limit']
