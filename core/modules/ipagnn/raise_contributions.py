@@ -137,7 +137,8 @@ def get_raise_contribution_step(
   # print(attribution)
 
   return attribution
-get_raise_contribution_step_batch = jax.vmap(get_raise_contribution_step)
+get_raise_contribution_step_batch = jax.vmap(get_raise_contribution_step,
+    in_axes=(0,) * 7 + (None,))
 
 
 def get_raise_contributions(
