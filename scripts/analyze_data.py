@@ -98,6 +98,26 @@ Source: {source}""")
       for i, (span_start, span_end, true_node, false_node, raise_node) in enumerate(zip(span_starts, span_ends, true_branch_nodes, false_branch_nodes, raise_nodes)):
         print(f"""Span {i} (--> {true_node},{false_node},{raise_node}): {' '.join(tokens[span_start:span_end + 1])}""")
 
+  def inspect_targets(
+      self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
+      split='train', steps=None):
+    tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
+    dataset = self.load_dataset(dataset_path, split=split)
+    for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      span_starts = example['node_token_span_starts']
+      span_ends = example['node_token_span_ends']
+      true_branch_nodes = example['true_branch_nodes']
+      false_branch_nodes = example['false_branch_nodes']
+      raise_nodes = example['raise_nodes']
+      # Recall, spans are inclusive.
+      submission_id = example['submission_id'][0].decode('utf-8')
+      problem_id = example['problem_id'][0].decode('utf-8')
+      print(f"""Submission ID: {submission_id} {problem_id}""")
+      print(example['target'])
+      print(example['target_lineno'])
+      print(example['target_node_indexes'])
+      print(example['num_target_nodes'])
+
   def run_counter(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     print(f'Analyzing data: {dataset_path}')
     dataset = self.load_dataset(dataset_path, split=split)
