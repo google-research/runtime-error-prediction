@@ -440,6 +440,15 @@ class IPAGNNModule(nn.Module):
     # raise_node_instruction_pointer.shape: batch_size
 
     if config.raise_in_ipagnn:  # TODO(dbieber): Only compute this if requested.
+      raise_decisions = aux['raise_decisions']
+      # raise_decisions.shape: steps, batch_size, num_nodes, 2
+      raise_decisions = jnp.transpose(raise_decisions, [1, 0, 2, 3])
+      # raise_decisions.shape: batch_size, steps, num_nodes, 2
+
+      branch_decisions = aux['branch_decisions']
+      # branch_decisions.shape: steps, batch_size, num_nodes, 2
+      branch_decisions = jnp.transpose(branch_decisions, [1, 0, 2, 3])
+      # branch_decisions.shape: batch_size, steps, num_nodes, 2
       localization_logits = raise_contributions_lib.get_raise_contribution_batch(
           instruction_pointer,
           branch_decisions,
@@ -447,7 +456,7 @@ class IPAGNNModule(nn.Module):
           true_indexes,
           false_indexes,
           raise_indexes,
-          raise_index,
+          raise_node_indexes,
           config   
       )
       aux['localization_logits'] = localization_logits
