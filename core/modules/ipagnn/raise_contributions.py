@@ -146,15 +146,15 @@ def get_raise_contributions(
     true_indexes,
     false_indexes,
     raise_indexes,
-    raise_index,
-    step_limit):
+    raise_index):
   # instruction_pointer.shape: steps, num_nodes
   # branch_decisions.shape: steps, num_nodes, 2
   # raise_decisions.shape: steps, num_nodes, 2
   # true_indexes.shape: num_nodes
   _, num_nodes = instruction_pointer.shape
   raise_contributions = jnp.zeros((num_nodes, num_nodes))
-  for t in range(step_limit):
+  for t in range(174):  # TODO(dbieber): Use config.
+    # TODO(dbieber): Use step_limit
     raise_contributions = get_raise_contribution_step(
         raise_contributions,
         instruction_pointer[t],  # per-step
