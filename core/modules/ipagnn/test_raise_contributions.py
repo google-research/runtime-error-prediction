@@ -46,8 +46,8 @@ class RaiseContributionTest(unittest.TestCase):
         raise_index,
         step_limit
     )
-    np.testing.assert_array_equal(contributions,
-        jnp.array([.1, 0, .2, 0, 0]))
+    np.testing.assert_allclose(contributions,
+        jnp.array([.2, 0, .4, 0, 0]))
 
 
 

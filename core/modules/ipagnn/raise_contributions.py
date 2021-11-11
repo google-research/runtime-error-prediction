@@ -51,11 +51,31 @@ def get_raise_contribution_step(
   # p_false.shape: num_nodes
 
   def get_attribution(prev_raise_attributions_to_m):
+    """Returns for each n how much to attribute to the passed in m.
+
+    Args:
+      prev_raise_attributions_to_m: For each n, how much to attribute to m as of
+        the previous step.
+    Returns:
+      For each n, now how much to attribute to m.
+    """
+
     # prev_raise_attributions_to_m.shape: num_nodes
-    print('prev_raise_attributions_to_m.shape')
-    print(prev_raise_attributions_to_m.shape)
+    # print('prev_raise_attributions_to_m.shape')
+    # print(prev_raise_attributions_to_m.shape)
+    # print('instruction_pointer')
+    # print(instruction_pointer)
 
     # (1) sum v from branch decisions
+    # Goal: By 4pm, calculate (1).
+    denom = (
+        jax.ops.segment_sum(
+            p_true * instruction_pointer, true_indexes,
+            num_segments=num_nodes)
+        + jax.ops.segment_sum(
+            p_false * instruction_pointer, false_indexes,
+            num_segments=num_nodes)
+    )
     no_raise_contributions = (
         jax.ops.segment_sum(
             prev_raise_attributions_to_m * p_true * instruction_pointer, true_indexes,
@@ -63,47 +83,66 @@ def get_raise_contribution_step(
         + jax.ops.segment_sum(
             prev_raise_attributions_to_m * p_false * instruction_pointer, false_indexes,
             num_segments=num_nodes)
-    )
+    ) / (denom + 1e-12)
     # no_raise_contributions.shape: num_nodes
-    print('no_raise_contributions')
-    print(no_raise_contributions)
+    # print('(1) no_raise_contributions')
+    # print(no_raise_contributions)
 
-    # (2) sum v from raise decisions with attribution
-    attributed_raise_contributions = jax.ops.segment_sum(
-        prev_raise_attributions_to_m * p_raise * instruction_pointer, raise_indexes,
-        num_segments=num_nodes)
-    # attributed_raise_contributions.shape: num_nodes
+    # # (2) sum v from raise decisions with attribution
+    # attributed_raise_contributions = jax.ops.segment_sum(
+    #     prev_raise_attributions_to_m * p_raise * instruction_pointer, raise_indexes,
+    #     num_segments=num_nodes)
+    # # attributed_raise_contributions.shape: num_nodes
 
-    print('attributed_raise_contributions')
-    print(attributed_raise_contributions)
+    # print('(2) attributed_raise_contributions')
+    # print(attributed_raise_contributions)
 
-    # (3) sum v from raise decisions without attribution
-    unattributed_value = 1 - jnp.sum(prev_raise_attributions_to_m)
-    print('unattributed_value')
-    print(unattributed_value)
-    # unattributed_value.shape: scalar.
-    unattributed_raise_contributions = jax.ops.segment_sum(
-        unattributed_value * p_raise * instruction_pointer, raise_indexes,
-        num_segments=num_nodes)
-    # unattributed_raise_contributions.shape: num_nodes
+    # # (3) sum v from raise decisions without attribution
+    # unattributed_value = 1 - jnp.sum(prev_raise_attributions_to_m)
+    # print('(3) unattributed_value')
+    # print(unattributed_value)
+    # # unattributed_value.shape: scalar.
+    # unattributed_raise_contributions = jax.ops.segment_sum(
+    #     unattributed_value * p_raise * instruction_pointer, raise_indexes,
+    #     num_segments=num_nodes)
+    # # unattributed_raise_contributions.shape: num_nodes
 
-    print('unattributed_raise_contributions')
-    print(unattributed_raise_contributions)
+    # print('(3) unattributed_raise_contributions')
+    # print(unattributed_raise_contributions)
 
     return (
-        attributed_raise_contributions
-        + unattributed_raise_contributions
-        + no_raise_contributions
+        no_raise_contributions
+        # + attributed_raise_contributions
+        # + unattributed_raise_contributions
     )
   get_attribution_all_m = jax.vmap(get_attribution, in_axes=1, out_axes=1)
 
+  def get_unattributed_raise_contributions_to_n_from_m():
+    attribution.at[jnp.arange(num_nodes), raise_indexes].set(amount)
+    n = raise_indexes[m]
+    amount = 1 - jnp.sum(prev_raise_attributions_to_m)
+    result[n, m] = amount
+
+
   # prev_raise_attributions.shape: num_nodes (n), num_nodes (m)
-  print('prev_raise_attributions')
-  print(prev_raise_attributions)
+  # print('prev_raise_attributions')
+  # print(prev_raise_attributions)
   attribution = get_attribution_all_m(prev_raise_attributions)
   # attribution.shape:
   #   num_nodes (n = current node), 
   #   num_nodes (m = node raise is attributed to)
+
+  # instruction_pointer[m] is total p from m
+  # p_raise[m] indicates amount raising from m to n=raise_index[m]
+  unattributed_amounts = 1  # 1 - jnp.sum(prev_raise_attributions, axis=1)
+  values_contributed = unattributed_amounts * instruction_pointer * p_raise
+  attribution = (
+      attribution.at[raise_indexes, jnp.arange(num_nodes)]
+      .add(values_contributed)
+  )
+  # print('(5) attribution')
+  # print(attribution)
+
   return attribution
 
 
@@ -155,7 +194,27 @@ def get_raise_contribution_from_batch_and_aux(batch, aux):
   # raise_decisions.shape: steps, batch_size, num_nodes, 2
   raise_decisions = jnp.transpose(raise_decisions, [1, 0, 2, 3])
   # raise_decisions.shape: batch_size, steps, num_nodes, 2
-  contributions = get_raise_contribution_batch(instruction_pointer, raise_decisions, raise_index, batch['step_limit'])
+
+  branch_decisions = aux['branch_decisions']
+  print('branch_decisions.shape')
+  print(branch_decisions.shape)
+  true_indexes = batch['true_indexes']
+  false_indexes = batch['false_indexes']
+  raise_indexes = batch['raise_indexes']
+  print('true_indexes.shape')
+  print(true_indexes.shape)
+  step_limit = batch['step_limit']
+
+  contributions = get_raise_contribution_batch(
+      instruction_pointer,
+      branch_decisions,
+      raise_decisions,
+      true_indexes,
+      false_indexes,
+      raise_indexes,
+      raise_index,
+      step_limit)
+
   # contributions.shape: batch_size, num_nodes
   return contributions
 
