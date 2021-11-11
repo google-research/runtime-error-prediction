@@ -62,7 +62,7 @@ class IPAGNNLayer(nn.Module):
     config = self.config
 
     # State. Varies from step to step.
-    hidden_states, instruction_pointer, current_step = carry
+    hidden_states, instruction_pointer, attribution, current_step = carry
 
     # Inputs.
     vocab_size = info.vocab_size
@@ -258,6 +258,17 @@ class IPAGNNLayer(nn.Module):
         raise_node_indexes, true_indexes, false_indexes, raise_indexes)
     # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
 
+    attribution = raise_contributions_lib.get_raise_contribution_step(
+        attribution,
+        instruction_pointer,
+        branch_decisions,
+        raise_decisions,
+        true_indexes,
+        false_indexes,
+        raise_indexes,
+        num_nodes,
+    )
+
     # current_step.shape: batch_size
     # step_limits.shape: batch_size
     instruction_pointer_orig = instruction_pointer
@@ -282,7 +293,7 @@ class IPAGNNLayer(nn.Module):
         'hidden_state_contributions': hidden_state_contributions,
     }
     aux.update(aux_ip)
-    return (hidden_states, instruction_pointer, current_step), aux
+    return (hidden_states, instruction_pointer, attribution, current_step), aux
 
 
 class IPAGNNModule(nn.Module):
@@ -402,9 +413,9 @@ class IPAGNNModule(nn.Module):
     # instruction_pointer.shape: batch_size, num_nodes
 
     # Run self.max_steps steps of IPAGNNLayer.
-    (hidden_states, instruction_pointer, current_step), aux = self.ipagnn_layer_scan(
+    (hidden_states, instruction_pointer, attribution, current_step), aux = self.ipagnn_layer_scan(
         # State:
-        (hidden_states, instruction_pointer, current_step),
+        (hidden_states, instruction_pointer, attribution, current_step),
         # Inputs:
         node_embeddings,
         edge_sources,
@@ -440,32 +451,33 @@ class IPAGNNModule(nn.Module):
     # raise_node_instruction_pointer.shape: batch_size
 
     if config.raise_in_ipagnn:  # TODO(dbieber): Only compute this if requested.
-      raise_decisions = aux['raise_decisions']
-      # raise_decisions.shape: steps, batch_size, num_nodes, 2
-      raise_decisions = jnp.transpose(raise_decisions, [1, 0, 2, 3])
-      # raise_decisions.shape: batch_size, steps, num_nodes, 2
+      aux['localization_logits'] = attribution
+      # raise_decisions = aux['raise_decisions']
+      # # raise_decisions.shape: steps, batch_size, num_nodes, 2
+      # raise_decisions = jnp.transpose(raise_decisions, [1, 0, 2, 3])
+      # # raise_decisions.shape: batch_size, steps, num_nodes, 2
 
-      branch_decisions = aux['branch_decisions']
-      # branch_decisions.shape: steps, batch_size, num_nodes, 2
-      branch_decisions = jnp.transpose(branch_decisions, [1, 0, 2, 3])
-      # branch_decisions.shape: batch_size, steps, num_nodes, 2
-      instruction_pointer_orig = aux['instruction_pointer_orig']
-      # instruction_pointer_orig.shape: steps, batch_size, num_nodes
-      instruction_pointer_orig = jnp.transpose(instruction_pointer_orig, [1, 0, 2])
-      # instruction_pointer_orig.shape: batch_size, steps, num_nodes
-      localization_logits = raise_contributions_lib.get_raise_contribution_batch(
-          instruction_pointer_orig,
-          branch_decisions,
-          raise_decisions,
-          true_indexes,
-          false_indexes,
-          raise_indexes,
-          raise_node_indexes,
-          config   
-      )
-      aux['localization_logits'] = localization_logits
-      print('localization_logits')
-      print(localization_logits)
+      # branch_decisions = aux['branch_decisions']
+      # # branch_decisions.shape: steps, batch_size, num_nodes, 2
+      # branch_decisions = jnp.transpose(branch_decisions, [1, 0, 2, 3])
+      # # branch_decisions.shape: batch_size, steps, num_nodes, 2
+      # instruction_pointer_orig = aux['instruction_pointer_orig']
+      # # instruction_pointer_orig.shape: steps, batch_size, num_nodes
+      # instruction_pointer_orig = jnp.transpose(instruction_pointer_orig, [1, 0, 2])
+      # # instruction_pointer_orig.shape: batch_size, steps, num_nodes
+      # localization_logits = raise_contributions_lib.get_raise_contribution_batch(
+      #     instruction_pointer_orig,
+      #     branch_decisions,
+      #     raise_decisions,
+      #     true_indexes,
+      #     false_indexes,
+      #     raise_indexes,
+      #     raise_node_indexes,
+      #     config   
+      # )
+      # aux['localization_logits'] = localization_logits
+      # print('localization_logits')
+      # print(localization_logits)
 
     aux.update({
         'exit_node_instruction_pointer': exit_node_instruction_pointer,
