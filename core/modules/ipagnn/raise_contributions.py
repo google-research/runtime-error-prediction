@@ -189,6 +189,9 @@ def get_raise_contribution_from_batch_and_aux(batch, aux):
   # raise_decisions.shape: batch_size, steps, num_nodes, 2
 
   branch_decisions = aux['branch_decisions']
+  # branch_decisions.shape: steps, batch_size, num_nodes, 2
+  branch_decisions = jnp.transpose(branch_decisions, [1, 0, 2, 3])
+  # branch_decisions.shape: batch_size, steps, num_nodes, 2
   print('branch_decisions.shape')
   print(branch_decisions.shape)
   true_indexes = batch['true_branch_nodes']
