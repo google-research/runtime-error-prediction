@@ -146,14 +146,15 @@ def get_raise_contributions(
     true_indexes,
     false_indexes,
     raise_indexes,
-    raise_index):
+    raise_index,
+    config):
   # instruction_pointer.shape: steps, num_nodes
   # branch_decisions.shape: steps, num_nodes, 2
   # raise_decisions.shape: steps, num_nodes, 2
   # true_indexes.shape: num_nodes
   _, num_nodes = instruction_pointer.shape
   raise_contributions = jnp.zeros((num_nodes, num_nodes))
-  for t in range(174):  # TODO(dbieber): Use config.
+  for t in range(config.max_steps):
     # TODO(dbieber): Use step_limit
     raise_contributions = get_raise_contribution_step(
         raise_contributions,
@@ -173,10 +174,10 @@ def get_raise_contributions(
   raise_contributions = raise_contributions[raise_index, :]
   # raise_contributions.shape: num_nodes (m)
   return raise_contributions
-get_raise_contribution_batch = jax.vmap(get_raise_contributions)
+get_raise_contribution_batch = jax.vmap(get_raise_contributions, static_argnames=('config',))
 
 
-def get_raise_contribution_from_batch_and_aux(batch, aux):
+def get_raise_contribution_from_batch_and_aux(batch, aux, config):
   instruction_pointer = aux['instruction_pointer_orig']
   # instruction_pointer.shape: steps, batch_size, num_nodes
   instruction_pointer = jnp.transpose(instruction_pointer, [1, 0, 2])
@@ -209,7 +210,7 @@ def get_raise_contribution_from_batch_and_aux(batch, aux):
       false_indexes,
       raise_indexes,
       raise_index,
-      step_limit)
+      config)
 
   # contributions.shape: batch_size, num_nodes
   return contributions
