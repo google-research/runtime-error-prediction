@@ -438,6 +438,21 @@ class IPAGNNModule(nn.Module):
     raise_node_instruction_pointer = get_instruction_pointer_value(instruction_pointer, raise_node_indexes)
     # raise_node_instruction_pointer.shape: batch_size
 
+    if config.raise_in_ipagnn:  # TODO(dbieber): Only compute this if requested.
+      localization_logits = raise_contributions.get_raise_contribution_batch(
+          instruction_pointer,
+          branch_decisions,
+          raise_decisions,
+          true_indexes,
+          false_indexes,
+          raise_indexes,
+          raise_index,
+          config   
+      )
+      aux['localization_logits'] = localization_logits
+      print('localization_logits')
+      print(localization_logits)
+
     aux.update({
         'exit_node_instruction_pointer': exit_node_instruction_pointer,
         'exit_node_embeddings': exit_node_embeddings,
