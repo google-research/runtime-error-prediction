@@ -449,10 +449,12 @@ class IPAGNNModule(nn.Module):
       # branch_decisions.shape: steps, batch_size, num_nodes, 2
       branch_decisions = jnp.transpose(branch_decisions, [1, 0, 2, 3])
       # branch_decisions.shape: batch_size, steps, num_nodes, 2
-      print('instruction_pointer')
-      print(instruction_pointer.shape)
+      instruction_pointer_orig = aux['instruction_pointer_orig']
+      # instruction_pointer_orig.shape: steps, batch_size, num_nodes
+      instruction_pointer_orig = jnp.transpose(instruction_pointer_orig, [1, 0, 2])
+      # instruction_pointer_orig.shape: batch_size, steps, num_nodes
       localization_logits = raise_contributions_lib.get_raise_contribution_batch(
-          instruction_pointer,
+          instruction_pointer_orig,
           branch_decisions,
           raise_decisions,
           true_indexes,
