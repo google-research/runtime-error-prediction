@@ -218,6 +218,9 @@ def process_codenet(
       raise RuntimeError('No data available for python_path', python_path)
     target = error_kinds.to_index(error_kind)
     target_lineno = codenet.get_error_lineno(problem_id, submission_id)
+    # target_lineno doesn't account for the docstring lines, so we add those in:
+    if docstring:
+      target_lineno += len(docstring.split('\n')) + 1
 
     try:
       problem = process.make_runtimeerrorproblem(
