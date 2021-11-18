@@ -220,7 +220,8 @@ def process_codenet(
     target_lineno = codenet.get_error_lineno(problem_id, submission_id)
     # target_lineno doesn't account for the docstring lines, so we add those in:
     if include_docstrings and docstring:
-      target_lineno += len(docstring.split('\n')) + 1
+      if target_lineno:  # 0 indicates no error, and should remain 0.
+        target_lineno += len(docstring.split('\n')) + 1
 
     try:
       problem = process.make_runtimeerrorproblem(
