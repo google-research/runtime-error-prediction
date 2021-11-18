@@ -116,14 +116,14 @@ Source: {source}""")
       if example['num_target_nodes'][0] == 0:
         continue
       print(f"""Submission ID: {submission_id} {problem_id}""")
-      print(example['target'][0])
-      print(example['target_lineno'][0])
-      print(example['target_node_indexes'])
+      print(f"Target:  {example['target'][0]}")
+      print(f"Lineno:  {example['target_lineno'][0]}")
+      print(f"Indices: {example['target_node_indexes']}")
       if 0 in example['target_node_indexes']:
         ok += 1
       else:
         nok += 1
-      print(example['num_target_nodes'][0])
+      print(f"#Index:  {example['num_target_nodes'][0]}")
       print(ok, nok, ok/(ok + nok) * 100)
 
   def run_counter(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
