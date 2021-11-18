@@ -314,6 +314,88 @@ after0
     # a finally inside the try.
     # Can only get into "raising" territory via a finally block's true branch or via a raise edge.
 
+  def test_get_nodes_at_lineno_no_error(self):
+    lineno = 0
+    target = '1'
+    source = """x = 1
+while x < 2:
+  y = 3
+  while y < 4:
+    y += 5
+  x += 6
+"""
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [])
+
+  def test_get_nodes_at_lineno_1(self):
+    lineno = 1  # x = 1
+    target = '1'
+    source = """x = 1
+while x < 2:
+  y = 3
+  while y < 4:
+    y += 5
+  x += 6
+"""
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [0])
+
+  def test_get_nodes_at_lineno_2(self):
+    lineno = 2  # while x < 2:
+    target = '1'
+    source = """x = 1
+while x < 2:
+  y = 3
+  while y < 4:
+    y += 5
+  x += 6
+"""
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    print(raw)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [1])
+
+  def test_get_nodes_at_lineno_docstring(self):
+    lineno = 5  # while x < 2:
+    target = '1'
+    source = '''"""Example
+docstring
+"""
+x = 1
+while x < 2:
+  y = 3
+  while y < 4:
+    y += 5
+  x += 6
+'''
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    print(raw)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [2])
+
+  def test_get_nodes_at_lineno_for(self):
+    lineno = 5  # for y in range(100):
+    target = '1'
+    source = '''"""Example
+docstring
+"""
+x = 1
+for y in range(100):
+  while y < 4:
+    y += 5
+  x += 6
+'''
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    print(raw)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [2, 3])
 
 if __name__ == '__main__':
   unittest.main()
