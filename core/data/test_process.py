@@ -397,5 +397,65 @@ for y in range(100):
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [2, 3])
 
+  def test_get_nodes_at_lineno_multiline(self):
+    lineno = 6  # 100/0
+    target = '1'
+    source = '''"""Example
+docstring
+"""
+x = 1
+for y in range(
+  100/0
+):
+  while y < 4:
+    y += 5
+  x += 6
+'''
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    print(raw)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [2])  # range(100/0)
+
+  def test_get_nodes_at_lineno_multiline_unpack(self):
+    lineno = 6  # for x,y in range(
+    target = '1'
+    source = r'''"""Example
+docstring
+"""
+x = 1
+for \
+x,y\
+ in range(100):
+  while y < 4:
+    y += 5
+  x += 6
+'''
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    print(raw)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [3])
+
+  def test_get_nodes_at_lineno_multiline_ambiguous(self):
+    lineno = 5  # for x,y in range(
+    target = '1'
+    source = '''"""Example
+docstring
+"""
+x = 1
+for x,y in range(
+  100
+):
+  while y < 4:
+    y += 5
+  x += 6
+'''
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    print(raw)
+    nodes = process.get_nodes_at_lineno(raw, lineno)
+    self.assertEqual(nodes, [2, 3])
+
 if __name__ == '__main__':
   unittest.main()
