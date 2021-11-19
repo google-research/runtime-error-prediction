@@ -12,31 +12,24 @@ def get_raise_contribution_step(
     raise_indexes,
     num_nodes):
   r"""
-  Define $v_{t,n,m}$
-  = Amount of "exception mass"
-  at n attributable to
-  an exception starting at m at time step t.
+  Define $v_{t,n,m}$ = Amount of "exception probability mass" at time step t
+  at n attributable to an exception starting at m.
 
   We are interested in computing $v_{T,n_{raise},m}$
   for all m, where T is the final time step.
 
   (0) v_{t,n,m} =
-    sum v from branch decisions
-    + sum v from raise decisions with attribution
-    + sum v from raise decisions without attribution
+    sum v from branch decisions + sum v from raise decisions
 
   (1) sum v from branch decisions
     = \sum_{n' \in \Nin(n)} v_{t,n',m} * b_{t, n', n} * p_{t, n'}
 
   b_{t, n', n} is the amount of branch decision from n' to n at step t.
 
-  (2) sum v from raise decisions with attribution
-    = \sum_{n' \in \Nin(n)} v_{t,n',m} * r_{t, n', n} * p{t, n'}
+  (2) sum v from raise decisions
+    = (1 - \sum v_{t,m,:}) * r_{t, n', n} * p{t, n'}
 
   r_{t, n', n} is the amount of prob mass raised from n' to n at step t.
-
-  (3) sum v from raise decisions without attribution
-    = (1 - \sum v_{t,m,:}) * r_{t, n', n} * p{t, n'}
   """
   # instruction_pointer.shape: num_nodes
   # raise_decisions.shape: num_nodes, 2
@@ -79,30 +72,6 @@ def get_raise_contribution_step(
             num_segments=num_nodes)
     ) / denom
     # no_raise_contributions.shape: num_nodes
-    # print('(1) no_raise_contributions')
-    # print(no_raise_contributions)
-
-    # # (2) sum v from raise decisions with attribution
-    # attributed_raise_contributions = jax.ops.segment_sum(
-    #     prev_raise_attributions_to_m * p_raise * instruction_pointer, raise_indexes,
-    #     num_segments=num_nodes)
-    # # attributed_raise_contributions.shape: num_nodes
-
-    # print('(2) attributed_raise_contributions')
-    # print(attributed_raise_contributions)
-
-    # # (3) sum v from raise decisions without attribution
-    # unattributed_value = 1 - jnp.sum(prev_raise_attributions_to_m)
-    # print('(3) unattributed_value')
-    # print(unattributed_value)
-    # # unattributed_value.shape: scalar.
-    # unattributed_raise_contributions = jax.ops.segment_sum(
-    #     unattributed_value * p_raise * instruction_pointer, raise_indexes,
-    #     num_segments=num_nodes)
-    # # unattributed_raise_contributions.shape: num_nodes
-
-    # print('(3) unattributed_raise_contributions')
-    # print(unattributed_raise_contributions)
 
     return (
         no_raise_contributions
@@ -112,22 +81,19 @@ def get_raise_contribution_step(
   get_attribution_all_m = jax.vmap(get_attribution, in_axes=1, out_axes=1)
 
   # prev_raise_attributions.shape: num_nodes (n), num_nodes (m)
-  # print('prev_raise_attributions')
-  # print(prev_raise_attributions)
   attribution = get_attribution_all_m(prev_raise_attributions)
   # attribution.shape:
   #   num_nodes (n = current node), 
   #   num_nodes (m = node raise is attributed to)
 
+  # (2) sum v from raise decisions
   # instruction_pointer[m] is total p from m
   # p_raise[m] indicates amount raising from m to n=raise_index[m]
-  unattributed_amounts = 1  # 1 - jnp.sum(prev_raise_attributions, axis=1)
-  values_contributed = unattributed_amounts * instruction_pointer * p_raise
+  values_contributed = instruction_pointer * p_raise
   attribution = (
       attribution.at[raise_indexes, jnp.arange(num_nodes)]
       .add(values_contributed)
   )
-
   return attribution
 get_raise_contribution_step_batch = jax.vmap(
     get_raise_contribution_step,

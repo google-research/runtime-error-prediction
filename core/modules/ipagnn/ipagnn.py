@@ -455,7 +455,7 @@ class IPAGNNModule(nn.Module):
     raise_node_instruction_pointer = get_instruction_pointer_value(instruction_pointer, raise_node_indexes)
     # raise_node_instruction_pointer.shape: batch_size
 
-    if config.raise_in_ipagnn:  # TODO(dbieber): Only compute this if requested.
+    if config.raise_in_ipagnn and config.unsupervised_localization:
       localization_logits = attribution[jnp.arange(batch_size), raise_node_indexes]
       aux['localization_logits'] = localization_logits
 
