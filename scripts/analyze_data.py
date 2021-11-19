@@ -5,6 +5,7 @@ import itertools
 from typing import List, Optional
 
 import fire
+import numpy as np
 import tensorflow_datasets as tfds
 
 from core.data import codenet_paths
