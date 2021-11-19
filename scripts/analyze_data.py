@@ -27,6 +27,7 @@ def pairwise(iterable):
 @dataclasses.dataclass
 class Analyzer:
 
+  filter_data: bool = True
   max_tokens: int = 512
   max_num_nodes: int = 128
   max_num_edges: int = 128
@@ -37,9 +38,12 @@ class Analyzer:
     allowlist = self.allowlist
     if allowlist == 'TIER1_ERROR_IDS':
       allowlist = error_kinds.TIER1_ERROR_IDS
-    filter_fn = data_io.make_filter(
-        self.max_tokens, self.max_num_nodes, self.max_num_edges,
-        self.max_steps, allowlist=allowlist)
+    if self.filter_data:
+      filter_fn = data_io.make_filter(
+          self.max_tokens, self.max_num_nodes, self.max_num_edges,
+          self.max_steps, allowlist=allowlist)
+    else:
+      filter_fn = lambda example: True
 
     # Return the requested dataset.
     return (
