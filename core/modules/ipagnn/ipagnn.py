@@ -6,6 +6,7 @@ import jax.numpy as jnp
 
 from core.lib.metrics import EvaluationMetric
 from core.modules.ipagnn import rnn
+from core.modules.ipagnn import raise_contributions as raise_contributions_lib
 
 
 def _rnn_state_to_embedding(hidden_state):
@@ -61,7 +62,7 @@ class IPAGNNLayer(nn.Module):
     config = self.config
 
     # State. Varies from step to step.
-    hidden_states, instruction_pointer, current_step = carry
+    hidden_states, instruction_pointer, attribution, current_step = carry
 
     # Inputs.
     vocab_size = info.vocab_size
@@ -229,6 +230,8 @@ class IPAGNNLayer(nn.Module):
       # raise_decision.shape: batch_size, num_nodes, 2
       # Make sure you cannot raise from the exit node.
       raise_decisions = batch_set(raise_decisions, jnp.array([0, 1]), exit_node_indexes)
+      # Make sure you cannot raise from the raise node.
+      raise_decisions = batch_set(raise_decisions, jnp.array([0, 1]), raise_node_indexes)
       # raise_decision.shape: batch_size, num_nodes, 2
     else:
       raise_decisions = jnp.concatenate([
@@ -257,6 +260,18 @@ class IPAGNNLayer(nn.Module):
         raise_node_indexes, true_indexes, false_indexes, raise_indexes)
     # leaves(hidden_states_new).shape: batch_size, num_nodes, hidden_size
 
+    attribution = raise_contributions_lib.get_raise_contribution_step_batch(
+        attribution,
+        instruction_pointer,
+        branch_decisions,
+        raise_decisions,
+        true_indexes,
+        false_indexes,
+        raise_indexes,
+        num_nodes,
+    )
+    # attribution.shape: batch_size, num_nodes, num_nodes
+
     # current_step.shape: batch_size
     # step_limits.shape: batch_size
     instruction_pointer_orig = instruction_pointer
@@ -281,7 +296,7 @@ class IPAGNNLayer(nn.Module):
         'hidden_state_contributions': hidden_state_contributions,
     }
     aux.update(aux_ip)
-    return (hidden_states, instruction_pointer, current_step), aux
+    return (hidden_states, instruction_pointer, attribution, current_step), aux
 
 
 class IPAGNNModule(nn.Module):
@@ -400,10 +415,12 @@ class IPAGNNModule(nn.Module):
     instruction_pointer = jax.vmap(make_instruction_pointer)(start_node_indexes)
     # instruction_pointer.shape: batch_size, num_nodes
 
+    attribution = jnp.zeros((batch_size, num_nodes, num_nodes))
+
     # Run self.max_steps steps of IPAGNNLayer.
-    (hidden_states, instruction_pointer, current_step), aux = self.ipagnn_layer_scan(
+    (hidden_states, instruction_pointer, attribution, current_step), aux = self.ipagnn_layer_scan(
         # State:
-        (hidden_states, instruction_pointer, current_step),
+        (hidden_states, instruction_pointer, attribution, current_step),
         # Inputs:
         node_embeddings,
         edge_sources,
@@ -437,6 +454,10 @@ class IPAGNNModule(nn.Module):
     # exit_node_instruction_pointer.shape: batch_size
     raise_node_instruction_pointer = get_instruction_pointer_value(instruction_pointer, raise_node_indexes)
     # raise_node_instruction_pointer.shape: batch_size
+
+    if config.raise_in_ipagnn and config.unsupervised_localization:
+      localization_logits = attribution[jnp.arange(batch_size), raise_node_indexes]
+      aux['localization_logits'] = localization_logits
 
     aux.update({
         'exit_node_instruction_pointer': exit_node_instruction_pointer,

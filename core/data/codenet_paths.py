@@ -8,12 +8,13 @@ DEFAULT_CONFIG_PATH = 'config/default.py'
 DEFAULT_DATASET_PATH = 'datasets/codenet/2021-11-01-f=0.01'
 TEST_DATASET_PATH = 'datasets/codenet/2021-11-01-f=0.01'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
+DOCSTRING_TOKENIZER_PATH = 'out/tokenizers/train-docstrings-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
 FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-10-07-full'
-FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-11-01'
+FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-11-17'
 # Raw control_flow_programs data pattern:
 DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
 # Processed control_flow_programs dataset path:

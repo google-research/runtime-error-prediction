@@ -63,6 +63,7 @@ def default_config():
   config.eval_metric_names: Tuple[str] = metrics.all_metric_names()
   config.eval_subsample = 1.0
   config.eval_max_batches = 30
+  config.unsupervised_localization: bool = True  # Must be set to True to compute localization logits.
 
   # Logging
   config.printoptions_threshold = 256

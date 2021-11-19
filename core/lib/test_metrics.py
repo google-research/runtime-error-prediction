@@ -151,5 +151,26 @@ class MetricsTest(unittest.TestCase):
     # weighted average is 1/3.
     self.assertEqual(f1_score, 1/3)
 
+  def test_compute_localization_accuracy(self):
+    localization_targets = jnp.array([
+        [0, 1, 2, 0, 0, 0, 0],  # correct
+        [1, 2, 0, 0, 0, 0, 0],  # correct
+        [0, 0, 0, 0, 0, 0, 0],  # is_example == False
+        [0, 0, 0, 0, 0, 0, 0],  # correct
+        [0, 1, 2, 0, 0, 0, 0],  # incorrect
+        [1, 2, 0, 0, 0, 0, 0],  # incorrect
+        [0, 0, 0, 0, 0, 0, 0],  # is_example == False
+        [0, 0, 0, 0, 0, 0, 0],  # incorrect
+        [4, 5, 6, 0, 0, 0, 0],  # correct
+    ])
+    localization_num_targets = jnp.array([3, 2, 0, 1, 3, 2, 0, 1, 3])
+    localization_predictions = jnp.array([0, 2, 0, 0, 3, 0, 1, 1, 4])
+    acc = metrics.compute_localization_accuracy(
+        localization_targets,
+        localization_num_targets,
+        localization_predictions)
+    self.assertEqual(acc, 4/7)
+
+
 if __name__ == '__main__':
   unittest.main()
