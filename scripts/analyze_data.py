@@ -150,7 +150,8 @@ Source: {source}""")
       num_target_nodes.append(example['num_target_nodes'][0])
       if step % 1000 == 0:
         print(step)
-        print(num_tokens)
+        token_nums = np.array(num_tokens)
+        print(np.sum(token_nums > 512), np.sum(token_nums <= 512), len(num_tokens))
 
     return (targets, num_tokens, num_edges, num_nodes, step_limits, target_lineno, num_target_nodes)
 
