@@ -356,7 +356,6 @@ while x < 2:
 """
     raw = process.make_rawruntimeerrorproblem(
         source, target, lineno)
-    print(raw)
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [1])
 
@@ -375,7 +374,6 @@ while x < 2:
 '''
     raw = process.make_rawruntimeerrorproblem(
         source, target, lineno)
-    print(raw)
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [2])
 
@@ -393,7 +391,6 @@ for y in range(100):
 '''
     raw = process.make_rawruntimeerrorproblem(
         source, target, lineno)
-    print(raw)
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [2, 3])
 
@@ -413,7 +410,6 @@ for y in range(
 '''
     raw = process.make_rawruntimeerrorproblem(
         source, target, lineno)
-    print(raw)
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [2])  # range(100/0)
 
@@ -433,7 +429,6 @@ x,y\
 '''
     raw = process.make_rawruntimeerrorproblem(
         source, target, lineno)
-    print(raw)
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [3])
 
@@ -453,7 +448,6 @@ for x,y in range(
 '''
     raw = process.make_rawruntimeerrorproblem(
         source, target, lineno)
-    print(raw)
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [2, 3])
 
