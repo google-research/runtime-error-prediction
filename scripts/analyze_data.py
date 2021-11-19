@@ -144,6 +144,9 @@ Source: {source}""")
       step_limits.append(example['step_limit'][0])
       target_lineno.append(example['target_lineno'][0])
       num_target_nodes.append(example['num_target_nodes'][0])
+      if step % 1000 == 0:
+        print(step)
+        print(num_tokens)
 
     return (targets, num_tokens, num_edges, num_nodes, step_limits, target_lineno, num_target_nodes)
 
