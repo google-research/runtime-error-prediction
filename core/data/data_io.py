@@ -39,6 +39,7 @@ def to_tf_example(problem):
       'problem_id': _bytes_feature([problem.problem_id]),
       'submission_id': _bytes_feature([problem.submission_id]),
 
+      'in_dataset': _int64_feature([problem.in_dataset]),
       'num_tokens': _int64_feature([len(problem.tokens)]),
       'num_nodes': _int64_feature([len(problem.true_branch_nodes)]),
       'num_edges': _int64_feature([len(problem.edge_sources)]),
@@ -65,6 +66,7 @@ def decode_fn(record_bytes, include_strings=False):
       'target_node_indexes': _int64_sequence_feature(),
       'num_target_nodes': _int64_scalar_feature(),
 
+      'in_dataset': _int64_scalar_feature(),
       'num_tokens': _int64_scalar_feature(),
       'num_nodes': _int64_scalar_feature(),
       'num_edges': _int64_scalar_feature(),
@@ -101,6 +103,7 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       # 'problem_id': jnp.full((batch_size,), 'p12345', dtype=jnp.string),
       # 'submission_id': jnp.full((batch_size,), 's123456789', dtype=jnp.string),
 
+      'in_dataset': jnp.ones((batch_size, 1), dtype=jnp.int32),
       'num_tokens': jnp.full((batch_size, 1), max_tokens, dtype=jnp.int32),
       'num_nodes': jnp.full((batch_size, 1), max_num_nodes, dtype=jnp.int32),
       'num_edges': jnp.full((batch_size, 1), max_num_edges, dtype=jnp.int32),
@@ -130,6 +133,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
       'target_node_indexes': [max_target_nodes],
       'num_target_nodes': [1],
 
+      'in_dataset': [1],
       'num_tokens': [1],
       'num_nodes': [1],
       'num_edges': [1],
@@ -146,6 +150,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
 def make_filter(
     max_tokens, max_num_nodes, max_num_edges, max_steps, allowlist=None,
     class_subsample_values=None,
+    use_in_dataset_field=True,
 ):
   """Makes a tf.Dataset filter function.
 
@@ -178,6 +183,9 @@ def make_filter(
       for index in allowlist:
         class_ok |= (target == index)
       allowed = allowed & class_ok
+
+    if use_in_dataset_field:
+      allowed &= example['in_dataset'] == 1
 
     # Filter x% of examples with target == 1 (the most common class).
     if class_subsample_values is not None:
