@@ -58,6 +58,7 @@ class RuntimeErrorProblem:
   target: int
   target_lineno: Optional[int]
   target_node_indexes: List[int]
+  in_dataset: bool
 
 
 def get_character_index(source, lineno, col_offset):
@@ -380,8 +381,10 @@ def get_nodes_at_lineno(raw, lineno):
   return overlapping_nodes
 
 
-def make_runtimeerrorproblem(source, target, target_lineno=0, tokenizer=None,
-                             problem_id=None, submission_id=None):
+def make_runtimeerrorproblem(
+    source, target, extended_source=None,
+    target_lineno=0, tokenizer=None,
+    problem_id=None, submission_id=None):
   raw = make_rawruntimeerrorproblem(
         source, target, target_lineno=target_lineno,
         problem_id=problem_id, submission_id=submission_id)
@@ -408,6 +411,7 @@ def make_runtimeerrorproblem(source, target, target_lineno=0, tokenizer=None,
       target=raw.target,
       target_lineno=raw.target_lineno,
       target_node_indexes=target_node_indexes,
+      in_dataset=in_dataset,
   )
 
 

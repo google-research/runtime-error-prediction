@@ -205,13 +205,16 @@ def process_codenet(
     with open(python_path, 'r') as f:
       source = f.read()
 
-    if include_docstrings:
-      docstring = get_problem_docstring(problem_id)
-
-      if docstring:
-        source = f'''"""{docstring}
+    docstring = get_problem_docstring(problem_id)
+    if docstring:
+      extended_source = f'''"""{docstring}
 """
 {source}'''
+    else:
+      extended_source = source
+
+    if include_docstrings:
+      source = extended_source
 
     error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
     if error_kind == error_kinds.NO_DATA:
@@ -225,8 +228,12 @@ def process_codenet(
 
     try:
       problem = process.make_runtimeerrorproblem(
-          source, target, target_lineno=target_lineno, tokenizer=tokenizer,
-          problem_id=problem_id, submission_id=submission_id)
+          source, target,
+          target_lineno=target_lineno,
+          extended_source=extended_source,
+          tokenizer=tokenizer,
+          problem_id=problem_id,
+          submission_id=submission_id)
       yield problem
     except ValueError as e:
       if str(e) == 'UDF not currently supported.':

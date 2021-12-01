@@ -65,7 +65,8 @@ class Trainer:
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
         config.max_tokens, config.max_num_nodes, config.max_num_edges,
-        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0660801055})
+        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0660801055},
+        use_in_dataset_field=config.use_in_dataset_field)
 
     if config.binary_targets:
       map_fn = functools.partial(data_io.binarize_targets, dataset_path=dataset_path)
