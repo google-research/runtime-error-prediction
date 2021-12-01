@@ -34,6 +34,7 @@ class Analyzer:
   max_num_edges: int = 128
   max_steps: int = 174
   allowlist: Optional[List[int]] = None
+  use_in_dataset_field: bool = True
 
   def load_dataset(self, dataset_path=DEFAULT_DATASET_PATH, split='train'):
     allowlist = self.allowlist
@@ -42,7 +43,8 @@ class Analyzer:
     if self.filter_data:
       filter_fn = data_io.make_filter(
           self.max_tokens, self.max_num_nodes, self.max_num_edges,
-          self.max_steps, allowlist=allowlist)
+          self.max_steps, allowlist=allowlist,
+          use_in_dataset_field=self.use_in_dataset_field)
     else:
       filter_fn = lambda example: True
 
