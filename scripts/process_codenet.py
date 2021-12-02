@@ -268,7 +268,7 @@ def process_codenet(
       print(f'AssertionError: {python_path} - {e}')
     except:
       print(f'Unexpected error: {python_path}')
-      raise
+      # raise
 
   print(f'Syntax Error Count: {syntax_error_count}')
 
