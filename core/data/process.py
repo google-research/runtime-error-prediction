@@ -41,7 +41,6 @@ class RawRuntimeErrorProblem:
 class RuntimeErrorProblem:
   """RuntimeErrorProblem for use on an accelerator."""
   tokens: List[int]
-  tokens_extended: List[int]
   docstring_tokens: List[int]
   problem_id: Text
   submission_id: Text
