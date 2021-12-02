@@ -144,6 +144,9 @@ Source: {source}""")
     target_lineno = []
     num_target_nodes = []
     for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      if step % 1000 == 0:
+        token_nums = np.array(num_tokens)
+        print(step, np.sum(token_nums > 512), np.sum(token_nums <= 512), len(num_tokens))
       targets.append(example['target'][0])
       num_tokens.append(example['num_tokens'][0])
       num_edges.append(example['num_edges'][0])
@@ -151,10 +154,6 @@ Source: {source}""")
       step_limits.append(example['step_limit'][0])
       target_lineno.append(example['target_lineno'][0])
       num_target_nodes.append(example['num_target_nodes'][0])
-      if step % 1000 == 0:
-        print(step)
-        token_nums = np.array(num_tokens)
-        print(np.sum(token_nums > 512), np.sum(token_nums <= 512), len(num_tokens))
 
     return (targets, num_tokens, num_edges, num_nodes, step_limits, target_lineno, num_target_nodes)
 

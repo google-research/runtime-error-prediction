@@ -230,6 +230,7 @@ def process_codenet(
       problem = process.make_runtimeerrorproblem(
           source, target,
           target_lineno=target_lineno,
+          docstring=docstring,
           extended_source=extended_source,
           tokenizer=tokenizer,
           problem_id=problem_id,

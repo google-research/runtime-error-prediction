@@ -19,6 +19,7 @@ def to_tf_example(problem):
   """Constructs a tf.train.Example for the process.RuntimeErrorProblem."""
   return tf.train.Example(features=tf.train.Features(feature={
       'tokens': _int64_feature(problem.tokens),
+      'docstring_tokens': _int64_feature(problem.docstring_tokens),
       'edge_sources': _int64_feature(problem.edge_sources),
       'edge_dests': _int64_feature(problem.edge_dests),
       'edge_types': _int64_feature(problem.edge_types),
@@ -49,6 +50,7 @@ def to_tf_example(problem):
 def decode_fn(record_bytes, include_strings=False):
   features = {
       'tokens': _int64_sequence_feature(),
+      'docstring_tokens': _int64_sequence_feature(),
       'edge_sources': _int64_sequence_feature(),
       'edge_dests': _int64_sequence_feature(),
       'edge_types': _int64_sequence_feature(),
@@ -82,6 +84,7 @@ def decode_fn(record_bytes, include_strings=False):
 def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
   return {
       'tokens': jnp.ones((batch_size, max_tokens), dtype=jnp.int32),
+      'docstring_tokens': jnp.ones((batch_size, max_tokens), dtype=jnp.int32),
       'edge_sources': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
       'edge_dests': jnp.ones((batch_size, max_num_edges), dtype=jnp.int32),
       'edge_types': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
@@ -116,6 +119,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
   max_target_nodes = 20
   shapes = {
       'tokens': [max_tokens],
+      'docstring_tokens': [max_tokens],
       'edge_sources': [max_num_edges],
       'edge_dests': [max_num_edges],
       'edge_types': [max_num_edges],
