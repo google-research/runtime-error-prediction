@@ -186,6 +186,7 @@ def process_codenet(
     problem_and_submission_ids = codenet.get_all_problem_and_submission_ids_with_evals()
 
   count = 0
+  syntax_error_count = 0
   for problem_id, submission_id in problem_and_submission_ids:
     if random.random() > fraction:
       # Only use a random `fraction` of the submissions.
@@ -243,7 +244,9 @@ def process_codenet(
       raise
     except SyntaxError:
       # print(f'SyntaxError: {python_path}')
-      pass
+      syntax_error_count += 1
+      if syntax_error_count % 1000 == 0:
+        print(f'Syntax Error Count: {syntax_error_count}')
     except IndexError:
       print(f'IndexError: {python_path}')
       raise
@@ -267,6 +270,7 @@ def process_codenet(
       print(f'Unexpected error: {python_path}')
       # raise
 
+  print(f'Syntax Error Count: {syntax_error_count}')
 
 def investigate_udf_usage(problem_ids=None, start_at=0):
   if problem_ids:
