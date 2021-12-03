@@ -277,10 +277,15 @@ def process_codenet(
       print(f'Unexpected error: {python_path}')
       # raise
 
-  print(f'Syntax Error Count: {syntax_error_count}')
-  print(f'UDF Count: {udf_count}')
-  print(f'Runtime Error Count: {runtime_error_count}')
-  print(f'Count: {count}')
+    if runtime_error_count % 1000 == 0:
+      print(f'Runtime Error Count: {runtime_error_count}')
+    if udf_count % 1000 == 0:
+      print(f'udf_count: {udf_count}')
+
+  print(f'Final Syntax Error Count: {syntax_error_count}')
+  print(f'Final UDF Count: {udf_count}')
+  print(f'Final Runtime Error Count: {runtime_error_count}')
+  print(f'Final Count: {count}')
 
 def investigate_udf_usage(problem_ids=None, start_at=0):
   if problem_ids:
