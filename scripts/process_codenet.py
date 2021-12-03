@@ -277,9 +277,9 @@ def process_codenet(
       print(f'Unexpected error: {python_path}')
       # raise
 
-    if runtime_error_count % 1000 == 0:
+    if runtime_error_count % 1000 == 5:
       print(f'Runtime Error Count: {runtime_error_count}')
-    if udf_count % 1000 == 0:
+    if udf_count % 1000 == 5:
       print(f'udf_count: {udf_count}')
 
   print(f'Final Syntax Error Count: {syntax_error_count}')
