@@ -186,6 +186,8 @@ def process_codenet(
     problem_and_submission_ids = codenet.get_all_problem_and_submission_ids_with_evals()
 
   count = 0
+  runtime_error_count = 0
+  udf_count = 0
   syntax_error_count = 0
   for problem_id, submission_id in problem_and_submission_ids:
     if random.random() > fraction:
@@ -239,6 +241,7 @@ def process_codenet(
       yield problem
     except ValueError as e:
       if str(e) == 'UDF not currently supported.':
+        udf_count += 1
         continue
       print(f'ValueError: {python_path}')
       raise
@@ -252,12 +255,16 @@ def process_codenet(
       raise
     except RuntimeError as e:
       if str(e).startswith('maximum recursion depth exceeded while calling a Python object'):  # e.g. p03107/Python/s405509758.py
+        runtime_error_count += 1
         continue
       if str(e) == 'return occurs outside of a function frame.':
+        runtime_error_count += 1
         continue
       if str(e) == 'break occurs outside of a loop frame.':
+        runtime_error_count += 1
         continue
       if str(e) == 'continue occurs outside of a loop frame.':
+        runtime_error_count += 1
         continue
       print(f'RuntimeError: {python_path} - {e}')
       raise
@@ -271,6 +278,9 @@ def process_codenet(
       # raise
 
   print(f'Syntax Error Count: {syntax_error_count}')
+  print(f'UDF Count: {udf_count}')
+  print(f'Runtime Error Count: {runtime_error_count}')
+  print(f'Count: {count}')
 
 def investigate_udf_usage(problem_ids=None, start_at=0):
   if problem_ids:
