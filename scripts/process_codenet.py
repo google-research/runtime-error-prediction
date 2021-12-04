@@ -186,9 +186,11 @@ def process_codenet(
     problem_and_submission_ids = codenet.get_all_problem_and_submission_ids_with_evals()
 
   count = 0
+  yielded = 0
   runtime_error_count = 0
   udf_count = 0
   syntax_error_count = 0
+  py2_skip = 0
   for problem_id, submission_id in problem_and_submission_ids:
     if random.random() > fraction:
       # Only use a random `fraction` of the submissions.
@@ -202,6 +204,7 @@ def process_codenet(
     python_major_version = codenet.get_python_major_version(
         problem_id, submission_id)
     if python_major_version != 3:
+      py2_skip += 1
       continue
 
     python_path = codenet.get_python_path(problem_id, submission_id)
@@ -238,6 +241,7 @@ def process_codenet(
           tokenizer=tokenizer,
           problem_id=problem_id,
           submission_id=submission_id)
+      yielded += 1
       yield problem
     except ValueError as e:
       if str(e) == 'UDF not currently supported.':
@@ -277,15 +281,16 @@ def process_codenet(
       print(f'Unexpected error: {python_path}')
       # raise
 
-    if runtime_error_count % 1000 == 5:
-      print(f'Runtime Error Count: {runtime_error_count}')
-    if udf_count % 1000 == 5:
-      print(f'udf_count: {udf_count}')
+    # if runtime_error_count % 1000 == 5:
+    #   print(f'Runtime Error Count: {runtime_error_count}')
+    # if udf_count % 1000 == 5:
+    #   print(f'udf_count: {udf_count}')
 
   print(f'Final Syntax Error Count: {syntax_error_count}')
   print(f'Final UDF Count: {udf_count}')
   print(f'Final Runtime Error Count: {runtime_error_count}')
   print(f'Final Count: {count}')
+  print(f'Yielded: {yielded}')
 
 def investigate_udf_usage(problem_ids=None, start_at=0):
   if problem_ids:
