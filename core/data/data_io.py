@@ -189,7 +189,7 @@ def make_filter(
       allowed = allowed & class_ok
 
     if use_in_dataset_field:
-      allowed &= example['in_dataset'] == 1
+      allowed &= tf.squeeze(example['in_dataset'] == 1, axis=-1)
 
     # Filter x% of examples with target == 1 (the most common class).
     if class_subsample_values is not None:
