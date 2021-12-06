@@ -151,7 +151,7 @@ def get_python_major_version(problem_id, submission_id):
       'Python3',
       'Python (3.4.2)',
       'Python (3.4.3)',
-      'Python (3.8.2)'
+      'Python (3.8.2)',
       'PyPy3 (2.4.0)',
       'PyPy3 (7.3.0)',
   ]:
