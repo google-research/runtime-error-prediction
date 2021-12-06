@@ -191,6 +191,8 @@ def process_codenet(
   udf_count = 0
   syntax_error_count = 0
   py2_skip = 0
+  assertion_error_count = 0
+  unexpected_error_count = 0
   for problem_id, submission_id in problem_and_submission_ids:
     if random.random() > fraction:
       # Only use a random `fraction` of the submissions.
@@ -277,8 +279,10 @@ def process_codenet(
       raise
     except AssertionError as e:
       print(f'AssertionError: {python_path} - {e}')
+      assertion_error_count += 1
     except:
       print(f'Unexpected error: {python_path}')
+      unexpected_error_count += 1
       # raise
 
     # if runtime_error_count % 1000 == 5:
@@ -290,6 +294,9 @@ def process_codenet(
   print(f'Final UDF Count: {udf_count}')
   print(f'Final Runtime Error Count: {runtime_error_count}')
   print(f'Final Count: {count}')
+  print(f'Final PY2 count: {py2_skip}')
+  print(f'Final assertion_error_count: {assertion_error_count}')
+  print(f'Final unexpected_error_count: {unexpected_error_count}')
   print(f'Yielded: {yielded}')
 
 def investigate_udf_usage(problem_ids=None, start_at=0):
