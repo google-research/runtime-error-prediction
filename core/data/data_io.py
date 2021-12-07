@@ -246,6 +246,9 @@ def load_dataset(dataset_path=codenet_paths.DEFAULT_DATASET_PATH, split='train',
         for i in split_ranges[split]
     ]
     return load_tfrecords_dataset(tfrecord_paths, include_strings=include_strings)
+  elif 'errors-only' in dataset_path or 'errors-L2E' in dataset_path:
+    tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
+    return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)
   else:
     tfrecord_path = codenet_paths.make_tfrecord_path(dataset_path, split)
     return load_tfrecord_dataset(tfrecord_path, include_strings=include_strings)
