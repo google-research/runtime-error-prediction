@@ -41,6 +41,7 @@ class RawRuntimeErrorProblem:
 class RuntimeErrorProblem:
   """RuntimeErrorProblem for use on an accelerator."""
   tokens: List[int]
+  docstring_tokens: List[int]
   problem_id: Text
   submission_id: Text
   edge_sources: List[int]
@@ -58,6 +59,7 @@ class RuntimeErrorProblem:
   target: int
   target_lineno: Optional[int]
   target_node_indexes: List[int]
+  in_dataset: bool
 
 
 def get_character_index(source, lineno, col_offset):
@@ -380,17 +382,38 @@ def get_nodes_at_lineno(raw, lineno):
   return overlapping_nodes
 
 
-def make_runtimeerrorproblem(source, target, target_lineno=0, tokenizer=None,
-                             problem_id=None, submission_id=None):
+def hardcoded_filter(tokens_extended):
+  return len(tokens_extended) <= 512
+
+
+def make_runtimeerrorproblem(
+    source, target, docstring=None, extended_source=None,
+    target_lineno=0, tokenizer=None,
+    problem_id=None, submission_id=None):
   raw = make_rawruntimeerrorproblem(
         source, target, target_lineno=target_lineno,
         problem_id=problem_id, submission_id=submission_id)
   tokenizer = tokenizer or tokenization.load_tokenizer()
   token_data = tokenize_raw_with_spans(tokenizer, raw)
+
+  if extended_source is not None and extended_source != source:
+    extended_tokenized = tokenizer(extended_source)
+    tokens_extended = extended_tokenized['input_ids']
+  else:
+    tokens_extended = token_data['tokens']
+  if docstring is not None:
+    docstring_tokenized = tokenizer(docstring)
+    docstring_tokens = docstring_tokenized['input_ids']
+  else:
+    docstring_tokens = []
+
+  in_dataset = hardcoded_filter(tokens_extended)
+
   branch_list = np.array(raw.branch_list)
   target_node_indexes = get_nodes_at_lineno(raw, target_lineno)
   return RuntimeErrorProblem(
       tokens=token_data['tokens'],
+      docstring_tokens=docstring_tokens,
       problem_id=raw.problem_id,
       submission_id=raw.submission_id,
       edge_sources=raw.edge_sources,
@@ -408,6 +431,7 @@ def make_runtimeerrorproblem(source, target, target_lineno=0, tokenizer=None,
       target=raw.target,
       target_lineno=raw.target_lineno,
       target_node_indexes=target_node_indexes,
+      in_dataset=in_dataset,
   )
 
 

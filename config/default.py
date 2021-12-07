@@ -20,6 +20,7 @@ def default_config():
   config.experiment_id: Optional[Text] = ''  # An experiment is launched by a single command, may have multiple runs.
   config.run_id: Optional[Text] = ''  # A run is a single trainer run with a single set of hparams. run_id should identify hparams.
   config.notes: Optional[Text] = ''  # Any notes to record about the run.
+  config.use_in_dataset_field = True
 
   # Training configs
   config.optimizer = 'adam'  # sgd, adam
