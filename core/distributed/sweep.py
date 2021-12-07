@@ -180,18 +180,19 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 20  # Machines per model
+  n = 12  # Machines per model
 
   # Exception IPAGNN
-  offset = 20
+  offset = 0
   run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
   # IPAGNN
-  offset = 40
+  offset = 12
   run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
+  n = 6
   # Transformer
-  offset = 0  # The machine index to start with.
+  offset = 23  # The machine index to start with.
   run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
 
