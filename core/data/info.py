@@ -33,6 +33,16 @@ def get_dataset_info(dataset_path, config):
     all_error_kinds = list(range(1000))
     no_error_ids = all_error_kinds
     error_ids = []
+  elif 'errors-only' in dataset_path:
+    num_classes = 3
+    all_error_kinds = list(range(3))
+    no_error_ids = [0]
+    error_ids = [1, 2]
+  elif 'errors-L2E' in dataset_path:
+    num_classes = 1002
+    all_error_kinds = list(range(1002))
+    no_error_ids = list(range(1000))
+    error_ids = [1000, 1001]
   else:  # Runtime Error Prediction
     num_classes = error_kinds.NUM_CLASSES
     all_error_kinds = error_kinds.ALL_ERROR_KINDS
