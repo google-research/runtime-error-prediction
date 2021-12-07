@@ -24,6 +24,8 @@ DEFAULT_CFP_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/con
 
 RAW_CFP_RAISE_DATA_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-11-19-001.tfrecord'
 DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-11-19-001/'
+RAW_CFP_SYNTH_FULL_DATASET_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-11-19-001/errors-only'
+
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
@@ -63,6 +65,7 @@ elif HOSTNAME.startswith('t1v-'):  # TPU
 elif HOSTNAME== 'Rishabs-MacBook-Air.local':
   RAW_CFP_RAISE_DATA_PATH = 'tmp.tfrecord'
   DEFAULT_CFP_RAISE_DATASET_PATH = './tmp/'
+  PERSONAL_ACCESS_TOKEN_PATH = '/Users/rishabgoel/Documents/pt.txt'
 
 # On TPUs, this we mount the GCS bucket "runtime-error-problems-experiments"
 # at /mnt/runtime-error-problems-experiments.
