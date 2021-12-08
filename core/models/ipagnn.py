@@ -71,16 +71,12 @@ class IPAGNN(nn.Module):
       docstring_mask = docstring_tokens > 0
       docstring_encoder_mask = nn.make_attention_mask(
           docstring_mask, docstring_mask, dtype=jnp.float32)
-      print('docstring_token_embeddings.shape')
-      print(docstring_token_embeddings.shape)
       # docstring_token_embeddings.shape: batch_size, max_tokens, hidden_size
       docstring_embeddings = self.docstring_encoder(
           docstring_token_embeddings,
           encoder_mask=docstring_encoder_mask)
     else:
       docstring_embeddings = None
-    print('docstring_embeddings')
-    print(docstring_embeddings)
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
         docstring_embeddings=docstring_embeddings,

@@ -233,7 +233,6 @@ class IPAGNNLayer(nn.Module):
     film_modulate = jax.vmap(film_modulate_all_nodes)
 
     # Take a full step of IPAGNN
-    # TODO(dbieber): Pipe docstring embeddings through as a new input.
     if config.use_film:
       node_embeddings = film_modulate(node_embeddings, hidden_states, docstring_embeddings)
       # node_embeddings.shape: batch_size, num_nodes, hidden_size
