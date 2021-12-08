@@ -39,6 +39,16 @@ class IPAGNNLayer(nn.Module):
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
 
+    if config.use_film:
+      self.film_f = nn.Dense(
+          features=config.hidden_size,
+          kernel_init=nn.initializers.xavier_uniform(),
+          bias_init=nn.initializers.normal(stddev=1e-6))
+      self.film_g = nn.Dense(
+          features=config.hidden_size,
+          kernel_init=nn.initializers.xavier_uniform(),
+          bias_init=nn.initializers.normal(stddev=1e-6))
+
     cells = rnn.create_lstm_cells(config.rnn_layers)
     self.lstm = rnn.StackedRNNCell(cells)
 
@@ -48,6 +58,7 @@ class IPAGNNLayer(nn.Module):
       carry,
       # Inputs. Shared across all steps.
       node_embeddings,
+      docstring_embeddings,
       edge_sources,
       edge_dests,
       edge_types,
@@ -200,7 +211,32 @@ class IPAGNNLayer(nn.Module):
           new, old)
     keep_old_if_done = jax.vmap(keep_old_if_done_single_example)
 
+    def film_modulate_single(node_embedding, hidden_state, docstring_embeddings):
+      # node_embedding.shape: hidden_size
+      # docstring_embeddings: length, hidden_size
+      # leaves(hidden_state).shape: hidden_size
+      hidden_state_embedding = _rnn_state_to_embedding(hidden_state)
+      # hidden_state_embedding.shape: hidden_size
+      beta = self.film_f(jnp.concatenate([hidden_state_embedding, node_embedding]))
+      # beta.shape: hidden_size
+      gamma = self.film_g(jnp.concatenate([hidden_state_embedding, node_embedding]))
+      # gamma.shape: hidden_size
+      modulated_docstring_embedding = (
+          beta * docstring_embeddings + gamma)
+      # modulated_docstring_embedding.shape: length, hidden_size
+      docstring_pooled = jnp.max(modulated_docstring_embedding, axis=0)
+      # docstring_pooled.shape: hidden_size
+      modulated_node_embedding = node_embedding + docstring_pooled
+      # modulated_node_embedding.shape: hidden_size
+      return modulated_node_embedding
+    film_modulate_all_nodes = jax.vmap(film_modulate_single, in_axes=(0, 0, None))
+    film_modulate = jax.vmap(film_modulate_all_nodes)
+
     # Take a full step of IPAGNN
+    # TODO(dbieber): Pipe docstring embeddings through as a new input.
+    if config.use_film:
+      node_embeddings = film_modulate(node_embeddings, hidden_states, docstring_embeddings)
+      # node_embeddings.shape: batch_size, num_nodes, hidden_size
     hidden_state_contributions = execute(hidden_states, node_embeddings)
     # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
@@ -324,6 +360,7 @@ class IPAGNNModule(nn.Module):
   def __call__(
       self,
       node_embeddings,
+      docstring_embeddings,
       edge_sources,
       edge_dests,
       edge_types,
@@ -423,6 +460,7 @@ class IPAGNNModule(nn.Module):
         (hidden_states, instruction_pointer, attribution, current_step),
         # Inputs:
         node_embeddings,
+        docstring_embeddings,
         edge_sources,
         edge_dests,
         edge_types,
