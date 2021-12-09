@@ -35,8 +35,11 @@ def default_config():
   config.span_encoding_method = 'first'  # first, mean, max, sum
   config.permissive_node_embeddings = True
 
+  # TODO(dbieber): Switch to "use_conditioning" or similar.
   config.use_film: bool = False
+  config.use_cross_attention: bool = False
   config.docstring_transformer_num_layers: int = 6
+  config.cross_attention_num_heads = 1
 
   # Dataset filtering and configs
   config.epochs: Optional[int] = 0

@@ -45,36 +45,44 @@ def validate_forward_pass(config, info):
 
 class ModelsTest(unittest.TestCase):
 
-  def test_ipagnn(self):
+  # def test_ipagnn(self):
+  #   info = info_lib.get_test_info()
+  #   config = config_lib.get_test_config()
+  #   config.model_class = 'IPAGNN'
+  #   config.raise_in_ipagnn = False
+  #   validate_forward_pass(config, info)
+
+  # def test_film_ipagnn(self):
+  #   info = info_lib.get_test_info()
+  #   config = config_lib.get_test_config()
+  #   config.model_class = 'IPAGNN'
+  #   config.use_film = True
+  #   config.raise_in_ipagnn = False
+  #   validate_forward_pass(config, info)
+
+  def test_cross_attention_ipagnn(self):
     info = info_lib.get_test_info()
     config = config_lib.get_test_config()
     config.model_class = 'IPAGNN'
+    config.use_cross_attention = True
     config.raise_in_ipagnn = False
     validate_forward_pass(config, info)
 
-  def test_film_ipagnn(self):
-    info = info_lib.get_test_info()
-    config = config_lib.get_test_config()
-    config.model_class = 'IPAGNN'
-    config.use_film = True
-    config.raise_in_ipagnn = False
-    validate_forward_pass(config, info)
+  # def test_exception_ipagnn(self):
+  #   info = info_lib.get_test_info()
+  #   config = config_lib.get_test_config()
+  #   config.model_class = 'IPAGNN'
+  #   config.raise_in_ipagnn = True
+  #   validate_forward_pass(config, info)
 
-  def test_exception_ipagnn(self):
-    info = info_lib.get_test_info()
-    config = config_lib.get_test_config()
-    config.model_class = 'IPAGNN'
-    config.raise_in_ipagnn = True
-    validate_forward_pass(config, info)
+  # def test_transformer(self):
+  #   info = info_lib.get_test_info()
+  #   config = config_lib.get_test_config()
+  #   config.model_class = 'Transformer'
+  #   validate_forward_pass(config, info)
 
-  def test_transformer(self):
-    info = info_lib.get_test_info()
-    config = config_lib.get_test_config()
-    config.model_class = 'Transformer'
-    validate_forward_pass(config, info)
-
-  def test_lstm(self):
-    info = info_lib.get_test_info()
-    config = config_lib.get_test_config()
-    config.model_class = 'LSTM'
-    validate_forward_pass(config, info)
+  # def test_lstm(self):
+  #   info = info_lib.get_test_info()
+  #   config = config_lib.get_test_config()
+  #   config.model_class = 'LSTM'
+  #   validate_forward_pass(config, info)
