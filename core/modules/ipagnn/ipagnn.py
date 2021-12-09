@@ -40,14 +40,16 @@ class IPAGNNLayer(nn.Module):
         bias_init=nn.initializers.normal(stddev=1e-6))
 
     if config.use_film:
-      self.film_f = nn.Dense(
+      film_f_layer = nn.Dense(
           features=config.hidden_size,
           kernel_init=nn.initializers.xavier_uniform(),
           bias_init=nn.initializers.normal(stddev=1e-6))
-      self.film_g = nn.Dense(
+      self.film_f = lambda x: nn.relu(film_f_layer(x))
+      film_g_layer = nn.Dense(
           features=config.hidden_size,
           kernel_init=nn.initializers.xavier_uniform(),
           bias_init=nn.initializers.normal(stddev=1e-6))
+      self.film_g = lambda x: nn.relu(film_g_layer(x))
 
     cells = rnn.create_lstm_cells(config.rnn_layers)
     self.lstm = rnn.StackedRNNCell(cells)
