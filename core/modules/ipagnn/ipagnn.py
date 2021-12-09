@@ -258,19 +258,12 @@ class IPAGNNLayer(nn.Module):
           docstring_mask):
         # hidden_state_embedding.shape: n * hidden_size
         # docstring_embeddings.shape: length, hidden_size
+        # docstring_mask: length.
         # node_embedding.shape: hidden_size
         q = jnp.concatenate([hidden_state_embedding, node_embedding], axis=0)
         # q.shape: (n+1) * hidden_size
         inputs_q = jnp.expand_dims(q, axis=0)
-        print('hidden_state_embedding.shape')
-        print(hidden_state_embedding.shape)
-        print('docstring_embeddings.shape')
-        print(docstring_embeddings.shape)
-        print('docstring_mask.shape')
-        print(docstring_mask.shape)
-        print('inputs_q.shape')
-        print(inputs_q.shape)
-        # inputs_q.shape: 1, 2 * hidden_size
+        # inputs_q.shape: 1, (n+1) * hidden_size
 
         num_heads = config.cross_attention_num_heads
         
@@ -286,8 +279,7 @@ class IPAGNNLayer(nn.Module):
         )
         # y.shape: 1, hidden_size
         y = jnp.squeeze(y, axis=0)
-        print('y.shape')
-        print(y.shape)
+        # y.shape: hidden_size
         return y
 
       docstring_summary_embedding = attend_to_docstring(
@@ -296,10 +288,7 @@ class IPAGNNLayer(nn.Module):
           node_embedding,
           docstring_mask)
       # docstring_summary_embedding.shape: hidden_size
-      print('during node_embedding.shape')
-      print(node_embedding.shape)
-      print('docstring_summary_embedding.shape')
-      print(docstring_summary_embedding.shape)
+      # node_embedding: hidden_size
       new_node_embeddings = jnp.concatenate(
           [node_embedding, docstring_summary_embedding],
           axis=0)
@@ -313,12 +302,9 @@ class IPAGNNLayer(nn.Module):
       node_embeddings = film_modulate(node_embeddings, hidden_states, docstring_embeddings, docstring_mask)
       # node_embeddings.shape: batch_size, num_nodes, hidden_size
     elif config.use_cross_attention:
-      print('before node_embeddings.shape')
-      print(node_embeddings.shape)
-      node_embeddings = cross_attention(node_embeddings, hidden_states, docstring_embeddings, docstring_mask)
-      print('after node_embeddings.shape')
-      print(node_embeddings.shape)
       # node_embeddings.shape: batch_size, num_nodes, hidden_size
+      node_embeddings = cross_attention(node_embeddings, hidden_states, docstring_embeddings, docstring_mask)
+      # node_embeddings.shape: batch_size, num_nodes, 2 * hidden_size
     hidden_state_contributions = execute(hidden_states, node_embeddings)
     # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
