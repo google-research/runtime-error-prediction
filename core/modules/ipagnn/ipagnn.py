@@ -40,16 +40,14 @@ class IPAGNNLayer(nn.Module):
         bias_init=nn.initializers.normal(stddev=1e-6))
 
     if config.use_film:
-      film_f_layer = nn.Dense(
+      self.film_f_layer = nn.Dense(
           features=config.hidden_size,
           kernel_init=nn.initializers.xavier_uniform(),
           bias_init=nn.initializers.normal(stddev=1e-6))
-      self.film_f = lambda x: nn.relu(film_f_layer(x))
-      film_g_layer = nn.Dense(
+      self.film_g_layer = nn.Dense(
           features=config.hidden_size,
           kernel_init=nn.initializers.xavier_uniform(),
           bias_init=nn.initializers.normal(stddev=1e-6))
-      self.film_g = lambda x: nn.relu(film_g_layer(x))
 
     if config.use_cross_attention:
       num_heads = config.cross_attention_num_heads
@@ -61,6 +59,12 @@ class IPAGNNLayer(nn.Module):
 
     cells = rnn.create_lstm_cells(config.rnn_layers)
     self.lstm = rnn.StackedRNNCell(cells)
+
+  def film_f(self, x):
+    return nn.relu(self.film_f_layer(x))
+
+  def film_g(self, x):
+    return nn.relu(self.film_g_layer(x))
 
   def __call__(
       self,
