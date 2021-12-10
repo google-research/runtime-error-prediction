@@ -25,6 +25,12 @@ def make_model(config, info, deterministic):
         info=info,
         transformer_config=transformer_config,
     )
+  elif model_class == 'MILTransformer':
+    return transformer.MILTransformer(
+        config=config,
+        info=info,
+        transformer_config=transformer_config,
+    )
   elif model_class == 'IPAGNN':
     return ipagnn.IPAGNN(
         config=config,
