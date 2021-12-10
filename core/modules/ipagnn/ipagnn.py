@@ -228,6 +228,7 @@ class IPAGNNLayer(nn.Module):
 
     def film_modulate_single(node_embedding, hidden_state, docstring_embeddings, docstring_mask):
       # node_embedding.shape: hidden_size
+      # docstring_mask: length
       # docstring_embeddings: length, hidden_size
       # leaves(hidden_state).shape: hidden_size
       hidden_state_embedding = _rnn_state_to_embedding(hidden_state)
@@ -236,9 +237,11 @@ class IPAGNNLayer(nn.Module):
       # beta.shape: hidden_size
       gamma = self.film_g(jnp.concatenate([hidden_state_embedding, node_embedding]))
       # gamma.shape: hidden_size
-      # TODO(dbieber): Add docstring mask.
       modulated_docstring_embedding = (
           beta * docstring_embeddings + gamma)
+      # modulated_docstring_embedding.shape: length, hidden_size
+      modulated_docstring_embedding = jnp.where(
+          docstring_mask[:, None], modulated_docstring_embedding, -jnp.inf)
       # modulated_docstring_embedding.shape: length, hidden_size
       docstring_pooled = jnp.max(modulated_docstring_embedding, axis=0)
       # docstring_pooled.shape: hidden_size
