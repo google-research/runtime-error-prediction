@@ -52,6 +52,7 @@ def default_config():
   config.transformer_mlp_dim: int = 2048
   config.transformer_dropout_rate: float = 0.1
   config.transformer_attention_dropout_rate: float = 0.1
+  config.mil_pool = 'max'
 
   # RNN baseline configs
   config.rnn_input_embedder_type = "node"  # token, node

@@ -65,10 +65,18 @@ class ModelsTest(unittest.TestCase):
   #   config.model_class = 'Transformer'
   #   validate_forward_pass(config, info)
 
-  def test_transformer_mil(self):
+  # def test_transformer_mil_max(self):
+  #   info = info_lib.get_test_info()
+  #   config = config_lib.get_test_config()
+  #   config.model_class = 'MILTransformer'
+  #   config.mil_pool = 'max'
+  #   validate_forward_pass(config, info)
+
+  def test_transformer_mil_mean(self):
     info = info_lib.get_test_info()
     config = config_lib.get_test_config()
     config.model_class = 'MILTransformer'
+    config.mil_pool = 'mean'
     validate_forward_pass(config, info)
 
   # def test_lstm(self):
