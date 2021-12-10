@@ -77,6 +77,7 @@ class IPAGNN(nn.Module):
           encoder_mask=docstring_encoder_mask)
     else:
       docstring_embeddings = None
+      docstring_mask = None
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
         docstring_embeddings=docstring_embeddings,
