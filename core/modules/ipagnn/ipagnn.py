@@ -268,7 +268,7 @@ class IPAGNNLayer(nn.Module):
         num_heads = config.cross_attention_num_heads
         
         # docstring_mask.shape: length
-        mask = docstring_mask[None, None, :]  # adds three leading dims.
+        mask = docstring_mask[None, None, :]  # adds leading dims.
         # mask.shape: 1, 1, length
         mask = jnp.tile(mask, (num_heads, 1, 1))
         # mask.shape: num_heads, 1, length
