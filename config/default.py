@@ -35,6 +35,9 @@ def default_config():
   config.span_encoding_method = 'first'  # first, mean, max, sum
   config.permissive_node_embeddings = True
 
+  config.use_film: bool = False
+  config.docstring_transformer_num_layers: int = 6
+
   # Dataset filtering and configs
   config.epochs: Optional[int] = 0
   config.batch_size: int = 128
