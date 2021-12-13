@@ -38,7 +38,7 @@ class IPAGNN(nn.Module):
         use_span_index_encoder=False,
         use_span_start_indicators=False,
     )
-    if config.use_film:
+    if config.use_film or config.use_cross_attention:
       self.docstring_token_encoder = encoder.TokenEncoder(
           transformer_config=self.docstring_transformer_config,
           num_embeddings=vocab_size,
@@ -65,7 +65,7 @@ class IPAGNN(nn.Module):
         tokens, x['node_token_span_starts'], x['node_token_span_ends'],
         x['num_nodes'])
     # encoded_inputs.shape: batch_size, max_num_nodes, hidden_size
-    if config.use_film:
+    if config.use_film or config.use_cross_attention:
       docstring_token_embeddings = self.docstring_token_encoder(
           docstring_tokens)
       docstring_mask = docstring_tokens > 0
@@ -77,9 +77,11 @@ class IPAGNN(nn.Module):
           encoder_mask=docstring_encoder_mask)
     else:
       docstring_embeddings = None
+      docstring_mask = None
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
         docstring_embeddings=docstring_embeddings,
+        docstring_mask=docstring_mask,
         edge_sources=x['edge_sources'],
         edge_dests=x['edge_dests'],
         edge_types=x['edge_types'],

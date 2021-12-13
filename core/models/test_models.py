@@ -60,6 +60,14 @@ class ModelsTest(unittest.TestCase):
     config.raise_in_ipagnn = False
     validate_forward_pass(config, info)
 
+  def test_cross_attention_ipagnn(self):
+    info = info_lib.get_test_info()
+    config = config_lib.get_test_config()
+    config.model_class = 'IPAGNN'
+    config.use_cross_attention = True
+    config.raise_in_ipagnn = False
+    validate_forward_pass(config, info)
+
   def test_exception_ipagnn(self):
     info = info_lib.get_test_info()
     config = config_lib.get_test_config()
