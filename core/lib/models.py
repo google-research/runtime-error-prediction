@@ -32,10 +32,17 @@ def make_model(config, info, deterministic):
         transformer_config=transformer_config,
     )
   elif model_class == 'IPAGNN':
+    docstring_transformer_config = transformer_config_lib.make_transformer_config_num_layers(
+        config.docstring_transformer_num_layers,
+        config,
+        vocab_size,
+        deterministic,
+    )
     return ipagnn.IPAGNN(
         config=config,
         info=info,
         transformer_config=transformer_config,
+        docstring_transformer_config=docstring_transformer_config,
     )
   elif model_class == 'LSTM':
     return rnn.LSTM(

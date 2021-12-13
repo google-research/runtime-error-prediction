@@ -39,8 +39,32 @@ class IPAGNNLayer(nn.Module):
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
 
+    if config.use_film:
+      self.film_f_layer = nn.Dense(
+          features=config.hidden_size,
+          kernel_init=nn.initializers.xavier_uniform(),
+          bias_init=nn.initializers.normal(stddev=1e-6))
+      self.film_g_layer = nn.Dense(
+          features=config.hidden_size,
+          kernel_init=nn.initializers.xavier_uniform(),
+          bias_init=nn.initializers.normal(stddev=1e-6))
+
+    if config.use_cross_attention:
+      num_heads = config.cross_attention_num_heads
+      self.attention = nn.MultiHeadDotProductAttention(
+          num_heads=num_heads,
+          out_features=config.hidden_size,
+          # ...
+      )
+
     cells = rnn.create_lstm_cells(config.rnn_layers)
     self.lstm = rnn.StackedRNNCell(cells)
+
+  def film_f(self, x):
+    return nn.relu(self.film_f_layer(x))
+
+  def film_g(self, x):
+    return nn.relu(self.film_g_layer(x))
 
   def __call__(
       self,
@@ -48,6 +72,8 @@ class IPAGNNLayer(nn.Module):
       carry,
       # Inputs. Shared across all steps.
       node_embeddings,
+      docstring_embeddings,
+      docstring_mask,
       edge_sources,
       edge_dests,
       edge_types,
@@ -200,7 +226,92 @@ class IPAGNNLayer(nn.Module):
           new, old)
     keep_old_if_done = jax.vmap(keep_old_if_done_single_example)
 
+    def film_modulate_single(node_embedding, hidden_state, docstring_embeddings, docstring_mask):
+      # node_embedding.shape: hidden_size
+      # docstring_mask: length
+      # docstring_embeddings: length, hidden_size
+      # leaves(hidden_state).shape: hidden_size
+      hidden_state_embedding = _rnn_state_to_embedding(hidden_state)
+      # hidden_state_embedding.shape: hidden_size
+      beta = self.film_f(jnp.concatenate([hidden_state_embedding, node_embedding]))
+      # beta.shape: hidden_size
+      gamma = self.film_g(jnp.concatenate([hidden_state_embedding, node_embedding]))
+      # gamma.shape: hidden_size
+      modulated_docstring_embedding = (
+          beta * docstring_embeddings + gamma)
+      # modulated_docstring_embedding.shape: length, hidden_size
+      modulated_docstring_embedding = jnp.where(
+          docstring_mask[:, None], modulated_docstring_embedding, -jnp.inf)
+      # modulated_docstring_embedding.shape: length, hidden_size
+      docstring_pooled = jnp.max(modulated_docstring_embedding, axis=0)
+      # docstring_pooled.shape: hidden_size
+      modulated_node_embedding = node_embedding + docstring_pooled
+      # modulated_node_embedding.shape: hidden_size
+      return modulated_node_embedding
+    film_modulate_all_nodes = jax.vmap(film_modulate_single, in_axes=(0, 0, None, None))
+    film_modulate = jax.vmap(film_modulate_all_nodes)
+
+    def cross_attention_single(node_embedding, hidden_state, docstring_embeddings, docstring_mask):
+      # node_embedding.shape: hidden_size
+      # docstring_embeddings.shape: length, hidden_size
+      # leaves(hidden_state).shape: hidden_size
+      hidden_state_embedding = _rnn_state_to_embedding(hidden_state)
+      # hidden_state_embedding.shape: hidden_size
+
+      def attend_to_docstring(
+          hidden_state_embedding,
+          docstring_embeddings,
+          node_embedding,
+          docstring_mask):
+        # hidden_state_embedding.shape: n * hidden_size
+        # docstring_embeddings.shape: length, hidden_size
+        # docstring_mask: length.
+        # node_embedding.shape: hidden_size
+        q = jnp.concatenate([hidden_state_embedding, node_embedding], axis=0)
+        # q.shape: (n+1) * hidden_size
+        inputs_q = jnp.expand_dims(q, axis=0)
+        # inputs_q.shape: 1, (n+1) * hidden_size
+
+        num_heads = config.cross_attention_num_heads
+        
+        # docstring_mask.shape: length
+        mask = docstring_mask[None, None, :]  # adds leading dims.
+        # mask.shape: 1, 1, length
+        mask = jnp.tile(mask, (num_heads, 1, 1))
+        # mask.shape: num_heads, 1, length
+        y = self.attention(
+            inputs_q=inputs_q,
+            inputs_kv=docstring_embeddings,
+            mask=mask,
+        )
+        # y.shape: 1, hidden_size
+        y = jnp.squeeze(y, axis=0)
+        # y.shape: hidden_size
+        return y
+
+      docstring_summary_embedding = attend_to_docstring(
+          hidden_state_embedding,
+          docstring_embeddings,
+          node_embedding,
+          docstring_mask)
+      # docstring_summary_embedding.shape: hidden_size
+      # node_embedding: hidden_size
+      new_node_embeddings = jnp.concatenate(
+          [node_embedding, docstring_summary_embedding],
+          axis=0)
+      # new_node_embeddings.shape: 2 * hidden_size
+      return new_node_embeddings
+    cross_attention_all_nodes = jax.vmap(cross_attention_single, in_axes=(0, 0, None, None))
+    cross_attention = jax.vmap(cross_attention_all_nodes)
+
     # Take a full step of IPAGNN
+    if config.use_film:
+      node_embeddings = film_modulate(node_embeddings, hidden_states, docstring_embeddings, docstring_mask)
+      # node_embeddings.shape: batch_size, num_nodes, hidden_size
+    elif config.use_cross_attention:
+      # node_embeddings.shape: batch_size, num_nodes, hidden_size
+      node_embeddings = cross_attention(node_embeddings, hidden_states, docstring_embeddings, docstring_mask)
+      # node_embeddings.shape: batch_size, num_nodes, 2 * hidden_size
     hidden_state_contributions = execute(hidden_states, node_embeddings)
     # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
@@ -324,6 +435,8 @@ class IPAGNNModule(nn.Module):
   def __call__(
       self,
       node_embeddings,
+      docstring_embeddings,
+      docstring_mask,
       edge_sources,
       edge_dests,
       edge_types,
@@ -423,6 +536,8 @@ class IPAGNNModule(nn.Module):
         (hidden_states, instruction_pointer, attribution, current_step),
         # Inputs:
         node_embeddings,
+        docstring_embeddings,
+        docstring_mask,
         edge_sources,
         edge_dests,
         edge_types,
@@ -438,6 +553,8 @@ class IPAGNNModule(nn.Module):
       # leaves(hidden_states).shape: num_nodes, hidden_size
       # exit_index.shape: scalar.
       return jax.tree_map(lambda hs: hs[node_index], hidden_states)
+
+    # TODO(dbieber): Use only final LSTM layer's hidden state here, not full hidden states.
     get_hidden_state = jax.vmap(get_hidden_state_single_example)
     # exit_node_indexes.shape: batch_size
     exit_node_hidden_states = get_hidden_state(hidden_states, exit_node_indexes)

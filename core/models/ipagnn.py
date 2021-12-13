@@ -7,6 +7,7 @@ import jax
 import jax.numpy as jnp
 
 from core.data import error_kinds
+from core.modules.ipagnn import encoder
 from core.modules.ipagnn import ipagnn
 from core.modules.ipagnn import logit_math
 from core.modules.ipagnn import spans
@@ -19,6 +20,7 @@ class IPAGNN(nn.Module):
   config: Any
   info: Any
   transformer_config: transformer_modules.TransformerConfig
+  docstring_transformer_config: transformer_modules.TransformerConfig
 
   def setup(self):
     config = self.config
@@ -36,6 +38,14 @@ class IPAGNN(nn.Module):
         use_span_index_encoder=False,
         use_span_start_indicators=False,
     )
+    if config.use_film or config.use_cross_attention:
+      self.docstring_token_encoder = encoder.TokenEncoder(
+          transformer_config=self.docstring_transformer_config,
+          num_embeddings=vocab_size,
+          features=config.hidden_size,
+      )
+      self.docstring_encoder = encoder.TransformerEncoder(
+          config=self.docstring_transformer_config)
 
     self.ipagnn = ipagnn.IPAGNNModule(
         info=self.info,
@@ -48,14 +58,30 @@ class IPAGNN(nn.Module):
     config = self.config
     info = self.info
     tokens = x['tokens']
+    docstring_tokens = x['docstring_tokens']
     # tokens.shape: batch_size, max_tokens
     batch_size = tokens.shape[0]
     encoded_inputs = self.node_span_encoder(
         tokens, x['node_token_span_starts'], x['node_token_span_ends'],
         x['num_nodes'])
     # encoded_inputs.shape: batch_size, max_num_nodes, hidden_size
+    if config.use_film or config.use_cross_attention:
+      docstring_token_embeddings = self.docstring_token_encoder(
+          docstring_tokens)
+      docstring_mask = docstring_tokens > 0
+      docstring_encoder_mask = nn.make_attention_mask(
+          docstring_mask, docstring_mask, dtype=jnp.float32)
+      # docstring_token_embeddings.shape: batch_size, max_tokens, hidden_size
+      docstring_embeddings = self.docstring_encoder(
+          docstring_token_embeddings,
+          encoder_mask=docstring_encoder_mask)
+    else:
+      docstring_embeddings = None
+      docstring_mask = None
     ipagnn_output = self.ipagnn(
         node_embeddings=encoded_inputs,
+        docstring_embeddings=docstring_embeddings,
+        docstring_mask=docstring_mask,
         edge_sources=x['edge_sources'],
         edge_dests=x['edge_dests'],
         edge_types=x['edge_types'],
