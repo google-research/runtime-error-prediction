@@ -191,7 +191,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
       'config.raise_in_ipagnn': False,
       'config.use_film': True,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'F', 'Transformer', overrides, dataset_path, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'F', 'IPAGNN', overrides, dataset_path, skip_create)
 
   # Cross-attention Transformer
   offset = 40
@@ -199,14 +199,14 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
       'config.raise_in_ipagnn': False,
       'config.use_cross_attention': True,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'C', 'Transformer', overrides, dataset_path, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create)
 
   # MIL Transformer
   offset = 50
   overrides = {
       'config.raise_in_ipagnn': False,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'M', 'TransformerMIL', overrides, dataset_path, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, dataset_path, skip_create)
 
 
 # # To kill the runner processes:
