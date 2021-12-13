@@ -38,7 +38,7 @@ def default_config():
   # TODO(dbieber): Switch to "use_conditioning" or similar.
   config.use_film: bool = False
   config.use_cross_attention: bool = False
-  config.docstring_transformer_num_layers: int = 6
+  config.docstring_transformer_num_layers: int = 2
   config.cross_attention_num_heads = 1
 
   # Dataset filtering and configs
