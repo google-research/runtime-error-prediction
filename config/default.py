@@ -91,6 +91,8 @@ def get_config():
 
 def get_test_config():
   config = default_config()
+  config.multidevice = False
+  config.eval_max_batches = 2
   config.hidden_size = 10
   config.span_encoding_method = 'first'
   config.max_tokens = 64

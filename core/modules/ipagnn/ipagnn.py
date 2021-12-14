@@ -242,8 +242,15 @@ class IPAGNNLayer(nn.Module):
       # modulated_docstring_embedding.shape: length, hidden_size
       modulated_docstring_embedding = jnp.where(
           docstring_mask[:, None], modulated_docstring_embedding, -jnp.inf)
+
+      # If the docstring_mask is False everywhere (because no docstring is available),
+      # then the modulated_docstring_embedding is -inf everywhere.
+      # In this case, the node_embedding should remain unchanged.
+
       # modulated_docstring_embedding.shape: length, hidden_size
       docstring_pooled = jnp.max(modulated_docstring_embedding, axis=0)
+      # docstring_pooled.shape: hidden_size
+      docstring_pooled = jnp.maximum(docstring_pooled, 0)
       # docstring_pooled.shape: hidden_size
       modulated_node_embedding = node_embedding + docstring_pooled
       # modulated_node_embedding.shape: hidden_size
