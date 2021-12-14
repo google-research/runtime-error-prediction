@@ -256,27 +256,17 @@ def compute_binary_predictions(logits, info):
 
 
 def compute_binary_probabilities(logits, info):
-  print('compute_binary_probabilities logits')
-  print(logits)
   logits = jnp.array(logits)
   get_logits = jax.vmap(lambda index: logits[:, index], out_axes=1)
   no_error_logits = get_logits(jnp.array(info.no_error_ids))
   error_logits = get_logits(jnp.array(info.error_ids))
   # no_error_logits.shape: batch_size, num_no_error_classes
   # error_logits.shape: batch_size, num_error_classes
-  print('compute_binary_probabilities no_error_logits')
-  print(no_error_logits)  # has a nan
-  print(no_error_logits.shape)
-  print('compute_binary_probabilities error_logits')
-  print(error_logits)
-  print(error_logits.shape)
   no_error_ps = jax.scipy.special.logsumexp(no_error_logits, axis=-1)
   error_ps = jax.scipy.special.logsumexp(error_logits, axis=-1)
   # no_error_ps.shape: batch_size
   # error_ps.shape: batch_size
   binary_logits = jnp.stack([error_ps, no_error_ps], axis=-1)
-  print('compute_binary_probabilities binary_logits')
-  print(binary_logits)
   # binary_logits.shape: batch_size, 2
   return jax.nn.softmax(binary_logits)  # P(error), P(no-error)
 
