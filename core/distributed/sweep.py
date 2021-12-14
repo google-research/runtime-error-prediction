@@ -201,6 +201,14 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   }
   run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, dataset_path, skip_create)
 
+  # Cross-attention IPA-GNN
+  offset = 20
+  overrides = {
+      'config.raise_in_ipagnn': False,
+      'config.use_cross_attention': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, dataset_path, skip_create)
+
   # FiLM IPA-GNN
   offset = 30  # The machine index to start with.
   overrides = {
