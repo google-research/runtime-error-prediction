@@ -164,7 +164,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
         'problem_id': [1],
         'submission_id': [1],
     })
-    
+
   return shapes
 
 
