@@ -106,16 +106,30 @@ class MILTransformer(nn.Module):
 
     aux = {}
     if config.mil_pool == 'logsumexp':
-      # phi(c) = logsumexp_{l} phi(l, c)
-      logits = jax.scipy.special.logsumexp(
-          per_line_logits, axis=1)
-      # per_class_logits.shape: batch_size, num_classes
-      # p(c) \propto 1   if c == 'no-error'
-      # p(c) \propto exp(phi(c))
+      # logits = phi(c) = logsumexp_{l} phi(l, c)
+      logits = jax.scipy.special.logsumexp(per_line_logits, axis=1)
+      # logits.shape: batch_size, num_classes
+      # probs = p(c) \propto exp(phi(c))
 
-      # phi(l) = logsumexp_{c} phi(l, c)
-      aux['localization_logits'] = jax.scipy.special.logsumexp(
-          per_line_logits, axis=2)
+      # phi(l) = logsumexp_{c \in errors} phi(l, c)
+      if len(info.no_error_ids) == 1:
+        no_error_id = info.no_error_ids[0]
+        per_line_error_logits = per_line_logits.at[:, :, no_error_id].set(-jnp.inf)
+        # per_line_error_logits.shape: batch_size, max_num_nodes, num_classes
+        aux['localization_logits'] = jax.scipy.special.logsumexp(
+            per_line_error_logits, axis=2)
+        # aux['localization_logits'].shape: batch_size, max_num_nodes
+      elif len(info.no_error_ids) > 1:
+        if len(info.error_ids) > 1:
+          raise NotImplementedError('Multiple error classes and multiple no-error classes.')
+        assert len(info.error_ids) == 1
+        error_id = info.error_ids[0]
+        per_line_error_logits = per_line_logits.at[:, :, error_id]
+        # per_line_error_logits.shape: batch_size, max_num_nodes
+        aux['localization_logits'] = per_line_error_logits
+        # aux['localization_logits'].shape: batch_size, max_num_nodes
+      else:
+        raise ValueError('Tried using MILTransformer on data with no errors.')
     else:
       per_line_probs = jax.nn.softmax(per_line_logits, axis=-1)
       # per_line_probs.shape: batch_size, max_num_nodes, num_classes
