@@ -38,7 +38,7 @@ def default_config():
   # TODO(dbieber): Switch to "use_conditioning" or similar.
   config.use_film: bool = False
   config.use_cross_attention: bool = False
-  config.docstring_transformer_num_layers: int = 6
+  config.docstring_transformer_num_layers: int = 2
   config.cross_attention_num_heads = 1
 
   # Dataset filtering and configs
@@ -91,6 +91,8 @@ def get_config():
 
 def get_test_config():
   config = default_config()
+  config.multidevice = False
+  config.eval_max_batches = 2
   config.hidden_size = 10
   config.span_encoding_method = 'first'
   config.max_tokens = 64

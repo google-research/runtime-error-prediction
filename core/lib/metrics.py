@@ -262,7 +262,6 @@ def compute_binary_probabilities(logits, info):
   error_logits = get_logits(jnp.array(info.error_ids))
   # no_error_logits.shape: batch_size, num_no_error_classes
   # error_logits.shape: batch_size, num_error_classes
-
   no_error_ps = jax.scipy.special.logsumexp(no_error_logits, axis=-1)
   error_ps = jax.scipy.special.logsumexp(error_logits, axis=-1)
   # no_error_ps.shape: batch_size

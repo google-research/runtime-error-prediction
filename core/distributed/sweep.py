@@ -19,6 +19,8 @@ hparams = {
     'config.transformer_dropout_rate': [0, 0.1],
     'config.transformer_attention_dropout_rate': [0, 0.1],
     'config.permissive_node_embeddings': [False],
+    'config.cross_attention_num_heads': [1, 2],
+    'config.mil_pool': ['max', 'mean', 'logsumexp'],
     'transformer_size': ['tiny', 'small', 'default'],
 }
 
@@ -78,13 +80,15 @@ def make_run_id(name, index, params):
   return f'{name}{index:03d},{",".join(parts)}'
 
 
-def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path):
+def choose_commands(n, experiment_id, study_id, name, model_class, overrides, dataset_path):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
     run_id = make_run_id(name, index, params)
     if 'transformer_size' in params:
       transformer_size = params.pop('transformer_size')
       params.update(transformer_configs[transformer_size])
+
+    params.update(overrides)
 
     flags = []
     for key, value in params.items():
@@ -93,7 +97,6 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
         'cd compressive-ipagnn && '
         'python3 -m scripts.runner '
         f'--config.model_class={model_class} '
-        f'--config.raise_in_ipagnn={raise_in_ipagnn} '
         f'--dataset_path={dataset_path} '
         '--config.eval_freq=15000 '
         '--config.eval_subsample=1 '
@@ -114,8 +117,8 @@ def choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipag
   return commands
 
 
-def run_sweep(n, offset, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path, skip_create):
-  commands = choose_commands(n, experiment_id, study_id, name, model_class, raise_in_ipagnn, dataset_path)
+def run_sweep(n, offset, experiment_id, study_id, name, model_class, overrides, dataset_path, skip_create):
+  commands = choose_commands(n, experiment_id, study_id, name, model_class, overrides, dataset_path)
 
   def make_run_command(index):
     return commands[index - offset]
@@ -180,19 +183,54 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 20  # Machines per model
+  n = 10  # Machines per model
 
-  # Exception IPAGNN
-  offset = 20
-  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
-
-  # IPAGNN
-  offset = 40
-  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
-
-  # Transformer
+  # Cross-attention Exception IPA-GNN
   offset = 0  # The machine index to start with.
-  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
+  overrides = {
+      'config.raise_in_ipagnn': True,
+      'config.use_cross_attention': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, dataset_path, skip_create)
+
+  # FiLM Exception IPA-GNN
+  offset = 10  # The machine index to start with.
+  overrides = {
+      'config.raise_in_ipagnn': True,
+      'config.use_film': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, dataset_path, skip_create)
+
+  # Cross-attention IPA-GNN
+  offset = 20
+  overrides = {
+      'config.raise_in_ipagnn': False,
+      'config.use_cross_attention': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, dataset_path, skip_create)
+
+  # FiLM IPA-GNN
+  offset = 30  # The machine index to start with.
+  overrides = {
+      'config.raise_in_ipagnn': False,
+      'config.use_film': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, dataset_path, skip_create)
+
+  # # Cross-attention IPA-GNN
+  # offset = 40
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_cross_attention': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create)
+
+  # # MIL Transformer
+  # offset = 50
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, dataset_path, skip_create)
 
 
 # # To kill the runner processes:
