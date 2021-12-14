@@ -185,28 +185,44 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
 
   n = 10  # Machines per model
 
-  # FiLM Transformer
+  # Cross-attention Exception IPA-GNN
+  offset = 0  # The machine index to start with.
+  overrides = {
+      'config.raise_in_ipagnn': True,
+      'config.use_cross_attention': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, dataset_path, skip_create)
+
+  # FiLM Exception IPA-GNN
+  offset = 10  # The machine index to start with.
+  overrides = {
+      'config.raise_in_ipagnn': True,
+      'config.use_film': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, dataset_path, skip_create)
+
+  # FiLM IPA-GNN
   offset = 30  # The machine index to start with.
   overrides = {
       'config.raise_in_ipagnn': False,
       'config.use_film': True,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'F', 'IPAGNN', overrides, dataset_path, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # Cross-attention Transformer
-  offset = 40
-  overrides = {
-      'config.raise_in_ipagnn': False,
-      'config.use_cross_attention': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create)
+  # # Cross-attention IPA-GNN
+  # offset = 40
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_cross_attention': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # MIL Transformer
-  offset = 50
-  overrides = {
-      'config.raise_in_ipagnn': False,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, dataset_path, skip_create)
+  # # MIL Transformer
+  # offset = 50
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, dataset_path, skip_create)
 
 
 # # To kill the runner processes:

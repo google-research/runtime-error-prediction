@@ -100,3 +100,7 @@ class ModelsTest(unittest.TestCase):
     config = config_lib.get_test_config()
     config.model_class = 'LSTM'
     validate_forward_pass(config, info)
+
+
+if __name__ == '__main__':
+  unittest.main()
