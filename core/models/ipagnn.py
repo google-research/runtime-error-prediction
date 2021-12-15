@@ -7,6 +7,7 @@ import jax
 import jax.numpy as jnp
 
 from core.data import error_kinds
+from core.models import compressive_ipagnn
 from core.modules.ipagnn import encoder
 from core.modules.ipagnn import ipagnn
 from core.modules.ipagnn import logit_math
@@ -47,11 +48,19 @@ class IPAGNN(nn.Module):
       self.docstring_encoder = encoder.TransformerEncoder(
           config=self.docstring_transformer_config)
 
-    self.ipagnn = ipagnn.IPAGNNModule(
-        info=self.info,
-        config=config,
-        max_steps=max_steps,
-    )
+    if config.use_compressive_ipagnn:
+      self.ipagnn = compressive_ipagnn.SkipEncoderModel(
+          # self.ipagnn = compressive_ipagnn.CompressiveIPAGNNModule(
+          config=config,
+          info=self.info,
+          # max_steps=max_steps,  # TODO(dbieber): Accept max_steps.
+      )
+    else:
+      self.ipagnn = ipagnn.IPAGNNModule(
+          info=self.info,
+          config=config,
+          max_steps=max_steps,
+      )
 
   @nn.compact
   def __call__(self, x):

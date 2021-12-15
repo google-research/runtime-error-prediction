@@ -75,6 +75,13 @@ class ModelsTest(unittest.TestCase):
     config.raise_in_ipagnn = True
     validate_forward_pass(config, info)
 
+  def test_compressive_ipagnn(self):
+    info = info_lib.get_test_info()
+    config = config_lib.get_test_config()
+    config.model_class = 'IPAGNN'
+    config.use_compressive_ipagnn = True
+    validate_forward_pass(config, info)
+
   def test_transformer(self):
     info = info_lib.get_test_info()
     config = config_lib.get_test_config()
