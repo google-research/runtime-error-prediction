@@ -788,15 +788,17 @@ class SkipIPAGNNSingle(nn.Module):
     final_hidden_states = final_interpreter_state.hidden_states
     # leaves(final_hidden_states): num_nodes, hidden_size
 
-    # Decode
     exit_index = exit_node_indexes
     exit_hidden_states = jax.tree_map(lambda h: h[exit_index], final_hidden_states)
     exit_concat = jnp.concatenate(jax.tree_leaves(exit_hidden_states), axis=-1)
+    # exit_concat.shape: 1, n * hidden_size
+    exit_node_embeddings = jnp.squeeze(exit_concat, axis=0)
+    # exit_node_embeddings.shape: n * hidden_size
     exit_node_instruction_pointer = (
         final_interpreter_state.instruction_pointer[exit_index]
     )
     return {
-        'exit_node_embeddings': exit_concat,
+        'exit_node_embeddings': exit_node_embeddings,
         'exit_node_instruction_pointer': exit_node_instruction_pointer,
     }
 
