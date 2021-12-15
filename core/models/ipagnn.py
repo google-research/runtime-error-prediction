@@ -108,15 +108,15 @@ class IPAGNN(nn.Module):
 
     exit_node_embeddings = ipagnn_output['exit_node_embeddings']
     # exit_node_embeddings.shape: batch_size, hidden_size
-    raise_node_embeddings = ipagnn_output['raise_node_embeddings']
-    # raise_node_embeddings.shape: batch_size, hidden_size
     exit_node_instruction_pointer = ipagnn_output['exit_node_instruction_pointer']
     # exit_node_instruction_pointer.shape: batch_size
-    raise_node_instruction_pointer = ipagnn_output['raise_node_instruction_pointer']
-    # raise_node_instruction_pointer.shape: batch_size
-
+  
     num_classes = info.num_classes
     if config.raise_in_ipagnn:
+      raise_node_embeddings = ipagnn_output['raise_node_embeddings']
+      # raise_node_embeddings.shape: batch_size, hidden_size
+      raise_node_instruction_pointer = ipagnn_output['raise_node_instruction_pointer']
+      # raise_node_instruction_pointer.shape: batch_size
       if len(info.no_error_ids) == 1:
         # Multiple error classes; only one No-Error class.
         no_error_id = info.no_error_ids[0]

@@ -675,23 +675,6 @@ class Aggregator(nn.Module):
     )
 
 
-class Decoder(nn.Module):
-  """Decodes final hidden states into logits."""
-
-  @nn.compact
-  def __call__(self, hidden_states, exit_index, vocab_size):
-    logits_dense = nn.Dense(
-        name='logits_dense',
-        features=vocab_size,
-        kernel_init=nn.initializers.xavier_uniform(),
-        bias_init=nn.initializers.normal(stddev=1e-6))
-
-    exit_hidden_states = jax.tree_map(lambda h: h[exit_index], hidden_states)
-    exit_concat = jnp.concatenate(jax.tree_leaves(exit_hidden_states), axis=-1)
-    logits = logits_dense(exit_concat)
-    return logits
-
-
 class SkipIPAGNNSingle(nn.Module):
   """Skip-IPAGNN model for a single example."""
 
@@ -736,27 +719,34 @@ class SkipIPAGNNSingle(nn.Module):
     # Make skip embedder.
     max_skip_steps = (config.compressive_max_skip or max_steps)
     skip_embedder = SkipEmbedder(
+        config=config,
+        name='skip_embedder')
+    skip_embedder = functools.partial(
+        skip_embedder,
         max_steps=max_skip_steps,
         num_nodes=num_nodes,
         true_indexes=true_indexes,
         false_indexes=false_indexes,
         exit_index=exit_index,
-        config=config,
-        name='skip_embedder')
+    )
     # skip_embedder = SkipEncoderLineByLine(config=config,
     #                                       name='skip_embedder')
     mask_maker = make_mask_maker(config)
     skip_decider = SkipDecider(config=config, name='skip_decider')
     execute_cells = create_lstm_cells(config.rnn_layers)
     skip_executor = SkipExecutor(
-        execute_cells=execute_cells, config=config,
+        config=config,
         name='skip_executor')
-    branch_decider = BranchDecider(name='branch_decider')
+    skip_executor = functools.partial(
+        skip_executor,
+        execute_cells=execute_cells)
+    branch_decider = BranchDecider(config=config, name='branch_decider')
     aggregator = Aggregator(
-        true_indexes=true_indexes, false_indexes=false_indexes, config=config,
+        config=config,
         name='aggregator')
-    decoder = Decoder(vocab_size=output_token_vocabulary_size,
-                      name='decoder')
+    aggregator = functools.partial(
+        aggregator,
+        true_indexes=true_indexes, false_indexes=false_indexes)
 
     # Pre-execution computation:
     # node_embeddings.shape: num_nodes, hidden_size
@@ -835,9 +825,15 @@ class SkipIPAGNNSingle(nn.Module):
     # leaves(final_hidden_states): num_nodes, hidden_size
 
     # Decode
-    logits = decoder(final_hidden_states, exit_index)
-    # logits.shape: vocab_size
-    return logits
+    exit_hidden_states = jax.tree_map(lambda h: h[exit_index], final_hidden_states)
+    exit_concat = jnp.concatenate(jax.tree_leaves(exit_hidden_states), axis=-1)
+    exit_node_instruction_pointer = (
+        final_interpreter_state.instruction_pointer[exit_index]
+    )
+    return {
+        'exit_node_embeddings': exit_concat,
+        'exit_node_instruction_pointer': exit_node_instruction_pointer,
+    }
 
 
 class SkipIPAGNN(nn.Module):
@@ -868,7 +864,7 @@ class SkipIPAGNN(nn.Module):
         config=config, info=info, max_steps=self.max_steps,
         name='ipagnn')
     ipagnn_batch = jax.vmap(ipagnn)
-    logits = ipagnn_batch(
+    return ipagnn_batch(
         node_embeddings,
         docstring_embeddings,
         docstring_mask,
@@ -881,5 +877,3 @@ class SkipIPAGNN(nn.Module):
         start_node_indexes,
         exit_node_indexes,
         step_limits)
-    logits = logits[:, None, :]
-    return logits
