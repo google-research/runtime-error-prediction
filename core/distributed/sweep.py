@@ -183,7 +183,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 10  # Machines per model
+  n = 1  # Machines per model
 
   # Cross-attention Exception IPA-GNN
   offset = 0  # The machine index to start with.
@@ -193,29 +193,29 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   }
   run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # FiLM Exception IPA-GNN
-  offset = 10  # The machine index to start with.
-  overrides = {
-      'config.raise_in_ipagnn': True,
-      'config.use_film': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, dataset_path, skip_create)
+  # # FiLM Exception IPA-GNN
+  # offset = 10  # The machine index to start with.
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_film': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # Cross-attention IPA-GNN
-  offset = 20
-  overrides = {
-      'config.raise_in_ipagnn': False,
-      'config.use_cross_attention': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, dataset_path, skip_create)
+  # # Cross-attention IPA-GNN
+  # offset = 20
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_cross_attention': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # FiLM IPA-GNN
-  offset = 30  # The machine index to start with.
-  overrides = {
-      'config.raise_in_ipagnn': False,
-      'config.use_film': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, dataset_path, skip_create)
+  # # FiLM IPA-GNN
+  # offset = 30  # The machine index to start with.
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_film': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, dataset_path, skip_create)
 
   # # Cross-attention IPA-GNN
   # offset = 40

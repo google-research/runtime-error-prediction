@@ -42,6 +42,18 @@ class TrainerTest(unittest.TestCase):
     validate_single_step(config)
 
 
+  @pytest.mark.slow
+  def test_cross_attention_ipagnn(self):
+    config = config_lib.get_test_config()
+    config.model_class = 'IPAGNN'
+    config.batch_size = 16
+    config.use_cross_attention = True
+    config.raise_in_ipagnn = False
+    config.eval_freq = 1
+    config.max_tokens = 512
+    validate_single_step(config)
+
+
 
 if __name__ == '__main__':
   unittest.main()
