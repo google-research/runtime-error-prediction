@@ -35,7 +35,7 @@ def create_lstm_cells(n):
         name=f'lstm_{i}',
     )
     cells.append(cell)
-  return cells
+  return tuple(cells)
 
 
 def make_concat(h):
@@ -106,8 +106,14 @@ class SkipEmbedderSingleSource(nn.Module):
 
   @nn.compact
   def __call__(
-      self, from_node_index, node_embeddings, max_steps,
-      num_nodes, true_indexes, false_indexes, exit_index):
+      self,
+      from_node_index,
+      node_embeddings,
+      max_steps,
+      num_nodes,
+      true_indexes,
+      false_indexes,
+      exit_index):
     """Creates skip embeddings representing the possible paths from i to j.
 
     Args:
@@ -129,12 +135,77 @@ class SkipEmbedderSingleSource(nn.Module):
       (num_nodes, hidden_size)
     """
     config = self.config
+
     execute_cells = create_lstm_cells(config.rnn_layers)
-    execute_lstm = StackedRNNCell(cells=execute_cells,
-                                         name='skip_execute_lstm')
+    execute_lstm = StackedRNNCell(
+        cells=execute_cells,
+        name='skip_execute_lstm')
+    step_scan = nn.scan(
+        nn.remat(SkipEmbedderSingleSourceStep),
+        variable_broadcast='params',
+        split_rngs={'params': False},
+        in_axes=nn.broadcast,
+        length=max_steps
+    )(config=self.config, execute_lstm=execute_lstm)
+
+    instruction_pointer = create_instruction_pointer(start=from_node_index,
+                                                     num_nodes=num_nodes)
+    # instruction_pointer.shape: num_nodes,
+    hidden_states = execute_lstm.initialize_carry(
+        jax.random.PRNGKey(0),
+        (num_nodes,),
+        config.hidden_size)
+    # leaves(hidden_states).shape: num_nodes, hidden_size
+
+    carry = hidden_states, instruction_pointer
+    _, carries = step_scan(
+        # State:
+        carry,
+        # Inputs:
+        node_embeddings,
+        max_steps,
+        true_indexes,
+        false_indexes,
+        exit_index,
+    )
+    # We want to aggregate the hidden states across time, averaging according
+    # to probability.
+    hidden_states, instruction_pointer = carries
+    # leaves(hidden_states).shape: max_steps, num_nodes, hidden_size
+    # instruction_pointer.shape: max_steps, num_nodes
+    hidden_states = jax.tree_map(
+        lambda h: jnp.sum(h * jnp.expand_dims(instruction_pointer, -1), axis=0),
+        hidden_states)
+    # leaves(hidden_states): num_nodes, hidden_size
+    # TODO(dbieber): get result from hidden state in more principled way
+    result = jax.tree_leaves(hidden_states)[-1]
+    return nn.LayerNorm(name='skip_layer_norm')(result)
+
+
+class SkipEmbedderSingleSourceStep(nn.Module):
+  """Module that creates skip embeddings from a single start node i."""
+
+  config: Any
+  execute_lstm: Any
+
+  @nn.compact
+  def __call__(
+      self,
+      # State. Varies from step to step.
+      carry,
+      # Inputs. Shared across all steps.
+      node_embeddings,
+      max_steps,
+      true_indexes,
+      false_indexes,
+      exit_index):
+    hidden_states, instruction_pointer = carry
+    num_nodes = node_embeddings.shape[0]
+
+    config = self.config
     def execute_single_node(hidden_state, node_embedding):
       # node_embedding.shape: hidden_size
-      result, _ = execute_lstm(hidden_state, node_embedding)
+      result, _ = self.execute_lstm(hidden_state, node_embedding)
       return result
     execute = jax.vmap(execute_single_node)
 
@@ -156,9 +227,10 @@ class SkipEmbedderSingleSource(nn.Module):
       # instruction_pointer.shape: num_nodes,
       # branch_decisions: num_nodes, 2,
       # true_indexes: num_nodes,
-      # false_indexes: num_nodes
+      # false_indexes: num_nodes,
       p_true = branch_decisions[:, 0]
       p_false = branch_decisions[:, 1]
+      # p_true.shape: num_nodes,
       true_contributions = jax.ops.segment_sum(
           p_true * instruction_pointer, true_indexes,
           num_segments=num_nodes)
@@ -228,42 +300,14 @@ class SkipEmbedderSingleSource(nn.Module):
           true_indexes, false_indexes)
       return hidden_states_new, instruction_pointer_new
 
-    def step_(carry, _):
-      hidden_states, instruction_pointer = carry
-      hidden_states_new, instruction_pointer_new = (
-          step_single_example(
-              hidden_states, instruction_pointer,
-              node_embeddings, true_indexes, false_indexes,
-              exit_index)
-      )
-      carry = hidden_states_new, instruction_pointer_new
-      return carry, carry
-    if config.compressive_remat and not self.is_initializing():
-      step_ = jax.checkpoint(step_)
-
-    instruction_pointer = create_instruction_pointer(start=from_node_index,
-                                                     num_nodes=num_nodes)
-    # instruction_pointer.shape: num_nodes,
-    hidden_states = StackedRNNCell.initialize_carry(
-        jax.random.PRNGKey(0), execute_cells, (num_nodes,),
-        config.hidden_size)
-    # hidden_states.shape: num_nodes, hidden_size
-
-    carry = hidden_states, instruction_pointer
-    _, carries = lax.scan(step_, carry, None, length=max_steps)
-    # We want to aggregate the hidden states across time, averaging according
-    # to probability.
-    hidden_states, instruction_pointer = carries
-    # leaves(hidden_states).shape: max_steps, num_nodes, hidden_size
-    # instruction_pointer.shape: max_steps, num_nodes
-    hidden_states = jax.tree_map(
-        lambda h: jnp.sum(h * jnp.expand_dims(instruction_pointer, -1), axis=0),
-        hidden_states)
-    # leaves(hidden_states): num_nodes, hidden_size
-    # TODO(dbieber): get result from hidden state in more principled way
-    result = jax.tree_leaves(hidden_states)[-1]
-    return nn.LayerNorm(result, name='skip_layer_norm')
-
+    hidden_states_new, instruction_pointer_new = (
+      step_single_example(
+          hidden_states, instruction_pointer,
+          node_embeddings, true_indexes, false_indexes,
+          exit_index)
+    )
+    carry = hidden_states_new, instruction_pointer_new
+    return carry, carry
 
 class SkipEncoderLineByLine(nn.Module):
   """Skip encoder layer (line by line RNN) for a single example."""
@@ -296,7 +340,7 @@ class SkipEncoderLineByLine(nn.Module):
     lstm = StackedRNNCell(cells=cells, name='skip_encoder_rnn')
 
     initial_state = lstm.initialize_carry(
-        jax.random.PRNGKey(0), cells, (), hidden_size)
+        jax.random.PRNGKey(0), (), hidden_size)
     default_result = jnp.zeros((hidden_size,))
 
     concat, unconcat = make_concat(initial_state)
@@ -552,18 +596,22 @@ class SkipExecutor(nn.Module):
   """
 
   config: Any
+  execute_cells: Any
+
+  def setup(self):
+    self.execute_lstm = StackedRNNCell(
+        cells=self.execute_cells,
+        name='execute_lstm')
 
   @nn.compact
-  def __call__(self, hidden_states, skip_embeddings, execute_cells):
+  def __call__(self, hidden_states, skip_embeddings):
     config = self.config
     # leaves(hidden_states): num_nodes, hidden_size
     # skip_embeddings.shape: num_nodes, num_nodes, hidden_size
-    execute_lstm = StackedRNNCell(cells=execute_cells,
-                                  name='execute_lstm')
     def execute_i_to_j(hidden_state_i, embedding_ij):
       # leaves(hidden_state_i).shape: hidden_size
       # leaves(embedding_ij).shape: hidden_size
-      new_state_ij, _ = execute_lstm(hidden_state_i, embedding_ij)
+      new_state_ij, _ = self.execute_lstm(hidden_state_i, embedding_ij)
       # leaves(new_state_ij).shape: hidden_size
       return new_state_ij
     execute_all_to_j = jax.vmap(execute_i_to_j, in_axes=0, out_axes=0)
@@ -736,10 +784,8 @@ class SkipIPAGNNSingle(nn.Module):
     execute_cells = create_lstm_cells(config.rnn_layers)
     skip_executor = SkipExecutor(
         config=config,
+        execute_cells=execute_cells,
         name='skip_executor')
-    skip_executor = functools.partial(
-        skip_executor,
-        execute_cells=execute_cells)
     branch_decider = BranchDecider(config=config, name='branch_decider')
     aggregator = Aggregator(
         config=config,
@@ -805,13 +851,14 @@ class SkipIPAGNNSingle(nn.Module):
           interpreter_state)
 
       return new_interpreter_state, None
-    if config.compressive_remat and not self.is_initializing():
+    if config.compressive_remat:
       step = jax.remat(step)
 
     # Initialization:
     initial_instruction_pointer = create_instruction_pointer(0, num_nodes)
-    initial_hidden_states = StackedRNNCell.initialize_carry(
-        jax.random.PRNGKey(0), execute_cells, (num_nodes,),
+    initial_hidden_states = skip_executor.execute_lstm.initialize_carry(
+        jax.random.PRNGKey(0),
+        (num_nodes,),
         config.hidden_size)
 
     # Execution
