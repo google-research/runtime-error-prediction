@@ -747,6 +747,97 @@ class SkipIPAGNNSingle(nn.Module):
     config = self.config
     info = self.info
 
+    step_scan = nn.scan(
+        nn.remat(SkipIPAGNNSingleStep),
+        variable_broadcast='params',
+        split_rngs={'params': False},
+        in_axes=nn.broadcast,
+        length=self.max_steps,
+    )(config=config, info=info, max_steps=self.max_steps)
+
+    # Initialization:
+    num_nodes = node_embeddings.shape[0]
+    initial_instruction_pointer = create_instruction_pointer(0, num_nodes)
+    initial_hidden_states = step_scan.skip_executor.execute_lstm.initialize_carry(
+        jax.random.PRNGKey(0),
+        (num_nodes,),
+        config.hidden_size)
+
+    # Execution
+    initial_interpreter_state = InterpreterState(
+        step=jnp.array([0]),
+        instruction_pointer=initial_instruction_pointer,
+        hidden_states=initial_hidden_states)
+    final_interpreter_state, _ = step_scan(
+        # State:
+        initial_interpreter_state,
+        # Inputs:
+        node_embeddings,
+        docstring_embeddings,
+        docstring_mask,
+        edge_sources,
+        edge_dests,
+        edge_types,
+        true_indexes,
+        false_indexes,
+        raise_indexes,
+        start_node_indexes,
+        exit_node_indexes,
+        step_limits,
+    )
+    final_hidden_states = final_interpreter_state.hidden_states
+    # leaves(final_hidden_states): num_nodes, hidden_size
+
+    # Decode
+    exit_index = exit_node_indexes
+    exit_hidden_states = jax.tree_map(lambda h: h[exit_index], final_hidden_states)
+    exit_concat = jnp.concatenate(jax.tree_leaves(exit_hidden_states), axis=-1)
+    exit_node_instruction_pointer = (
+        final_interpreter_state.instruction_pointer[exit_index]
+    )
+    return {
+        'exit_node_embeddings': exit_concat,
+        'exit_node_instruction_pointer': exit_node_instruction_pointer,
+    }
+
+
+
+class SkipIPAGNNSingleStep(nn.Module):
+  """Skip-IPAGNN single step for a single example."""
+
+  config: Any
+  info: Any
+  max_steps: int
+
+  def setup(self):
+    config = self.config
+    execute_cells = create_lstm_cells(config.rnn_layers)
+    self.skip_executor = SkipExecutor(
+        config=config,
+        execute_cells=execute_cells,
+        name='skip_executor')
+
+  @nn.compact
+  def __call__(self,
+      # State:
+      interpreter_state,
+      # Inputs:
+      node_embeddings,
+      docstring_embeddings,
+      docstring_mask,
+      edge_sources,
+      edge_dests,
+      edge_types,
+      true_indexes,
+      false_indexes,
+      raise_indexes,
+      start_node_indexes,
+      exit_node_indexes,
+      step_limits,
+  ):
+    config = self.config
+    info = self.info
+
     # Get inputs:
     # true_indexes.shape: num_nodes
     # false_indexes.shape: num_nodes
@@ -781,11 +872,6 @@ class SkipIPAGNNSingle(nn.Module):
     #                                       name='skip_embedder')
     mask_maker = make_mask_maker(config)
     skip_decider = SkipDecider(config=config, name='skip_decider')
-    execute_cells = create_lstm_cells(config.rnn_layers)
-    skip_executor = SkipExecutor(
-        config=config,
-        execute_cells=execute_cells,
-        name='skip_executor')
     branch_decider = BranchDecider(config=config, name='branch_decider')
     aggregator = Aggregator(
         config=config,
@@ -800,87 +886,56 @@ class SkipIPAGNNSingle(nn.Module):
     # skip_embeddings.shape: num_nodes, num_nodes, hidden_size
     # skip_mask.shape: num_nodes, num_nodes
 
-    # Execution Definition (Skip, Execute, Branch, Aggregate):
-    def step(interpreter_state, unused_input):
-      hidden_states = interpreter_state.hidden_states
+    # Main Step Definition (Skip, Execute, Branch, Aggregate):
+    hidden_states = interpreter_state.hidden_states
 
-      # Determine which nodes are valid to skip to.
-      skip_mask = mask_maker(interpreter_state.step, steps_all, exit_index,
-                             post_domination_matrix, length, num_nodes)
-      # SkipDecider: For each node, choose how much to skip to each of the
-      # allowed skip destinations.
-      skip_decisions = skip_decider(hidden_states, skip_embeddings, skip_mask)
-      # skip_decisions.shape: num_nodes, num_nodes
+    # Determine which nodes are valid to skip to.
+    skip_mask = mask_maker(interpreter_state.step, steps_all, exit_index,
+                           post_domination_matrix, length, num_nodes)
+    # SkipDecider: For each node, choose how much to skip to each of the
+    # allowed skip destinations.
+    skip_decisions = skip_decider(hidden_states, skip_embeddings, skip_mask)
+    # skip_decisions.shape: num_nodes, num_nodes
 
-      # SkipExecutor: For each destination for each node, run the RNN to
-      # determine what the hidden state would be if we went to that destination.
-      hidden_state_skip_proposals = skip_executor(
-          hidden_states, skip_embeddings)
-      # leaves(hidden_state_proposals).shape: num_nodes, num_nodes, hidden_size
-      # Prevent executing the exit node.
-      hidden_state_skip_proposals = jax.tree_multimap(
-          lambda hp, h: hp.at[exit_index, exit_index].set(h[exit_index]),
-          hidden_state_skip_proposals, hidden_states
-      )
-      # The diagonal of hidden_state_proposals represents the hidden that
-      # results from regular (non-skip) execution of the node.
-      hidden_state_proposals = jax.tree_map(lambda hp: jnp.diagonal(hp).T,
-                                            hidden_state_skip_proposals)
-      # leaves(hidden_state_proposals).shape: num_nodes, hidden_size
-
-      # BranchDecider: For each node, given that we've chosen not to skip (and
-      # hence are just executing the single statement at that note), decide
-      # whether to take the True or False branch. This decision only matters if
-      # the statement is an if/while.
-      branch_decisions = branch_decider(hidden_state_proposals)
-      # branch_decisions.shape: num_nodes, 2
-
-      # Aggregate: Compute the new soft instruction pointer using the skip and
-      # branch decisions. Aggregate the hidden state proposals accordingly.
-      new_interpreter_state = aggregator(
-          interpreter_state,
-          hidden_state_proposals, hidden_state_skip_proposals,
-          skip_decisions, branch_decisions, node_embeddings)
-      # instruction_pointer.shape: num_nodes,
-      # leaves(hidden_states): num_nodes, hidden_size
-
-      # Only perform num_steps steps of computation.
-      new_interpreter_state = jax.tree_multimap(
-          lambda a, b: jnp.where(interpreter_state.step[0] < steps_all, a, b),
-          new_interpreter_state,
-          interpreter_state)
-
-      return new_interpreter_state, None
-    if config.compressive_remat:
-      step = jax.remat(step)
-
-    # Initialization:
-    initial_instruction_pointer = create_instruction_pointer(0, num_nodes)
-    initial_hidden_states = skip_executor.execute_lstm.initialize_carry(
-        jax.random.PRNGKey(0),
-        (num_nodes,),
-        config.hidden_size)
-
-    # Execution
-    initial_interpreter_state = InterpreterState(
-        step=jnp.array([0]),
-        instruction_pointer=initial_instruction_pointer,
-        hidden_states=initial_hidden_states)
-    final_interpreter_state, _ = lax.scan(
-        step, initial_interpreter_state, None, length=max_steps)
-    final_hidden_states = final_interpreter_state.hidden_states
-    # leaves(final_hidden_states): num_nodes, hidden_size
-
-    # Decode
-    exit_hidden_states = jax.tree_map(lambda h: h[exit_index], final_hidden_states)
-    exit_concat = jnp.concatenate(jax.tree_leaves(exit_hidden_states), axis=-1)
-    exit_node_instruction_pointer = (
-        final_interpreter_state.instruction_pointer[exit_index]
+    # SkipExecutor: For each destination for each node, run the RNN to
+    # determine what the hidden state would be if we went to that destination.
+    hidden_state_skip_proposals = self.skip_executor(
+        hidden_states, skip_embeddings)
+    # leaves(hidden_state_proposals).shape: num_nodes, num_nodes, hidden_size
+    # Prevent executing the exit node.
+    hidden_state_skip_proposals = jax.tree_multimap(
+        lambda hp, h: hp.at[exit_index, exit_index].set(h[exit_index]),
+        hidden_state_skip_proposals, hidden_states
     )
-    return {
-        'exit_node_embeddings': exit_concat,
-        'exit_node_instruction_pointer': exit_node_instruction_pointer,
-    }
+    # The diagonal of hidden_state_proposals represents the hidden that
+    # results from regular (non-skip) execution of the node.
+    hidden_state_proposals = jax.tree_map(lambda hp: jnp.diagonal(hp).T,
+                                          hidden_state_skip_proposals)
+    # leaves(hidden_state_proposals).shape: num_nodes, hidden_size
+
+    # BranchDecider: For each node, given that we've chosen not to skip (and
+    # hence are just executing the single statement at that note), decide
+    # whether to take the True or False branch. This decision only matters if
+    # the statement is an if/while.
+    branch_decisions = branch_decider(hidden_state_proposals)
+    # branch_decisions.shape: num_nodes, 2
+
+    # Aggregate: Compute the new soft instruction pointer using the skip and
+    # branch decisions. Aggregate the hidden state proposals accordingly.
+    new_interpreter_state = aggregator(
+        interpreter_state,
+        hidden_state_proposals, hidden_state_skip_proposals,
+        skip_decisions, branch_decisions, node_embeddings)
+    # instruction_pointer.shape: num_nodes,
+    # leaves(hidden_states): num_nodes, hidden_size
+
+    # Only perform num_steps steps of computation.
+    new_interpreter_state = jax.tree_multimap(
+        lambda a, b: jnp.where(interpreter_state.step[0] < steps_all, a, b),
+        new_interpreter_state,
+        interpreter_state)
+
+    return new_interpreter_state, None
 
 
 class SkipIPAGNN(nn.Module):
