@@ -155,4 +155,5 @@ class IPAGNN(nn.Module):
           features=num_classes, name='output'
       )(exit_node_embeddings)
     # logits.shape: batch_size, num_classes
+
     return logits, ipagnn_output
