@@ -72,9 +72,15 @@ def create_instruction_pointer(start, num_nodes):
 class NodeEmbedder(nn.Module):
   """Embeds the statement at each node."""
 
-  def apply(self, data, info, config):
+  config: Any
+  info: Any
+
+  @nn.compact
+  def __call__(self, data):
+    config = self.config
+    info = self.info
     hidden_size = config.model.hidden_size
-    vocab_size = info.features[info._builder.key('statements')].vocab_size  # pylint: disable=protected-access
+    vocab_size = info.vocab_size
 
     def emb_init(key, shape, dtype=jnp.float32):
       return jax.random.uniform(
@@ -107,8 +113,13 @@ class NodeEmbedder(nn.Module):
 class SkipEmbedder(nn.Module):
   """Module that creates skip embeddings."""
 
-  def apply(self, node_embeddings, max_steps,
-            num_nodes, true_indexes, false_indexes, exit_index, config):
+  config: Any
+
+  @nn.compact
+  def __call__(
+      self, node_embeddings, max_steps,
+      num_nodes, true_indexes, false_indexes, exit_index):
+    config = self.config
     embedder = SkipEmbedderSingleSource(
         node_embeddings=node_embeddings,
         max_steps=max_steps,
@@ -130,8 +141,12 @@ class SkipEmbedder(nn.Module):
 class SkipEmbedderSingleSource(nn.Module):
   """Module that creates skip embeddings from a single start node i."""
 
-  def apply(self, from_node_index, node_embeddings, max_steps,
-            num_nodes, true_indexes, false_indexes, exit_index, config):
+  config: Any
+
+  @nn.compact
+  def __call__(
+      self, from_node_index, node_embeddings, max_steps,
+      num_nodes, true_indexes, false_indexes, exit_index):
     """Creates skip embeddings representing the possible paths from i to j.
 
     Args:
@@ -148,11 +163,11 @@ class SkipEmbedderSingleSource(nn.Module):
         is taken. If a node is not a branch, this is the same as the true index.
         Shape is (num_nodes,).
       exit_index: The index of the exit node.
-      config: The experimental config.
     Returns:
       A single embedding for each destination node. Shape:
       (num_nodes, hidden_size)
     """
+    config = self.config
     execute_cells = create_lstm_cells(config.model.rnn_cell.layers)
     execute_lstm = StackedRNNCell(cells=execute_cells,
                                          name='skip_execute_lstm')
@@ -292,9 +307,10 @@ class SkipEmbedderSingleSource(nn.Module):
 class SkipEncoderLineByLine(nn.Module):
   """Skip encoder layer (line by line RNN) for a single example."""
 
-  def apply(self,
-            node_embeddings,
-            config):
+  config: Any
+
+  @nn.compact
+  def __call__(self, node_embeddings):
     """Creates skip embeddings for a single example.
 
     The skip embedding from node i to node j is an RNN run over the code from
@@ -303,12 +319,12 @@ class SkipEncoderLineByLine(nn.Module):
     Args:
       node_embeddings: A single example's node embeddings. Shape
         is (num_nodes, hidden_size).
-      config: The experiment's Config object.
     Returns:
       The skip embeddings for all pairs of statements in the example. Shape is
         (num_statements, num_statements, hidden_size). Axis order is
         val[from, to, d].
     """
+    config = self.config
     hidden_size = config.model.hidden_size
     skip_embedder_layer_norm = nn.LayerNorm(
         name='skip_embedder_layer_norm')
@@ -369,8 +385,10 @@ class SkipEncoderLineByLine(nn.Module):
 class MaskMaker(nn.Module):
   """Determines which locations are OK to skip to."""
 
-  def apply(self, step, max_steps, exit_index, post_domination_matrix,
-            length, num_nodes, config):
+  config: Any
+
+  @nn.compact
+  def __call__(self, step, max_steps, exit_index, post_domination_matrix, length, num_nodes):
     """Creates the skip mask.
 
     Args:
@@ -383,10 +401,10 @@ class MaskMaker(nn.Module):
       length: The number of nodes in the example, including the exit node, but
         not including unused nodes (after the exit node).
       num_nodes: The number of nodes including unused padding nodes.
-      config: The experimental config.
     Returns:
       The mask indicating which locations are OK to skip to.
     """
+    config = self.config
     # Initial mask: read the first statement (the inputs)
     initial_mask = jnp.zeros((num_nodes, num_nodes)).at[:, 1].set(1)
 
@@ -408,8 +426,12 @@ class MaskMaker(nn.Module):
 class MaskMakerLineByLine(nn.Module):
   """Determines which locations are OK to skip to; only permits line-by-line."""
 
-  def apply(self, step, max_steps, exit_index, post_domination_matrix,
-            length, num_nodes, config):
+  config: Any
+
+  @nn.compact
+  def __call__(
+      self, step, max_steps, exit_index, post_domination_matrix,
+      length, num_nodes):
     """Creates the skip mask.
 
     Args:
@@ -422,10 +444,10 @@ class MaskMakerLineByLine(nn.Module):
       length: The number of nodes in the example, including the exit node, but
         not including unused nodes (after the exit node).
       num_nodes: The number of nodes including unused padding nodes.
-      config: The experimental config.
     Returns:
       The mask indicating which locations are OK to skip to.
     """
+    config = self.config
     # Initial mask: read the first statement (the inputs)
     initial_mask = jnp.zeros((num_nodes, num_nodes)).at[:, 1].set(1)
 
@@ -451,8 +473,12 @@ class MaskMakerLineByLine(nn.Module):
 class MaskMakerNoSkip(nn.Module):
   """Determines which locations are OK to skip to; no skipping is permitted."""
 
-  def apply(self, step, max_steps, exit_index, post_domination_matrix,
-            length, num_nodes, config):
+  config: Any
+
+  @nn.compact
+  def __call__(
+      self, step, max_steps, exit_index, post_domination_matrix,
+      length, num_nodes):
     """Creates the skip mask. Disallows skipping.
 
     Args:
@@ -465,10 +491,10 @@ class MaskMakerNoSkip(nn.Module):
       length: The number of nodes in the example, including the exit node, but
         not including unused nodes (after the exit node).
       num_nodes: The number of nodes including unused padding nodes.
-      config: The experimental config.
     Returns:
       The mask indicating which locations are OK to skip to.
     """
+    config = self.config
     # The diagonal represents normal (non-skip) execution.
     default_mask = jnp.diagonal(num_nodes)
 
@@ -495,7 +521,11 @@ def make_mask_maker(config):
 class SkipDecider(nn.Module):
   """Decides how much to skip to each of the valid skip destinations."""
 
-  def apply(self, hidden_states, skip_embeddings, skip_mask, config):
+  config: Any
+
+  @nn.compact
+  def __call__(self, hidden_states, skip_embeddings, skip_mask):
+    config = self.config
     decider = SkipDeciderSingleSource(config=config)
     # leaves(hidden_states).shape: num_nodes, hidden_size
     # skip_embeddings.shape: num_nodes, num_nodes, hidden_size
@@ -507,7 +537,11 @@ class SkipDecider(nn.Module):
 class SkipDeciderSingleSource(nn.Module):
   """Decides how much to skip to each of the valid skip destinations."""
 
-  def apply(self, hidden_states, skip_embeddings, skip_mask, config):
+  config: Any
+
+  @nn.compact
+  def __call__(self, hidden_states, skip_embeddings, skip_mask):
+    config = self.config
     num_nodes = skip_embeddings.shape[0]
     hidden_size = config.model.hidden_size
     key_dense = nn.Dense(
@@ -556,7 +590,11 @@ class SkipExecutor(nn.Module):
   execution.
   """
 
-  def apply(self, hidden_states, skip_embeddings, execute_cells, config):
+  config: Any
+
+  @nn.compact
+  def __call__(self, hidden_states, skip_embeddings, execute_cells):
+    config = self.config
     # leaves(hidden_states): num_nodes, hidden_size
     # skip_embeddings.shape: num_nodes, num_nodes, hidden_size
     execute_lstm = StackedRNNCell(cells=execute_cells,
@@ -580,7 +618,10 @@ class BranchDecider(nn.Module):
   """Assuming no skipping, decides how much to take the True and False branches.
   """
 
-  def apply(self, hidden_state_proposals):
+  config: Any
+
+  @nn.compact
+  def __call__(self, hidden_state_proposals):
     branch_dense = nn.Dense(
         name='branch_dense',
         features=2,
@@ -600,10 +641,14 @@ class BranchDecider(nn.Module):
 class Aggregator(nn.Module):
   """Applies IPA aggregation to the proposed states."""
 
-  def apply(self, interpreter_state, hidden_state_proposals,
-            hidden_state_skip_proposals, skip_decisions,
-            branch_decisions, node_embeddings, true_indexes, false_indexes,
-            config):
+  config: Any
+
+  @nn.compact
+  def __call__(
+      self, interpreter_state, hidden_state_proposals,
+      hidden_state_skip_proposals, skip_decisions,
+      branch_decisions, node_embeddings, true_indexes, false_indexes):
+    config = self.config
     instruction_pointer = interpreter_state.instruction_pointer
     # instruction_pointer.shape: num_nodes
     num_nodes = instruction_pointer.shape[0]
@@ -672,7 +717,8 @@ class Aggregator(nn.Module):
 class Decoder(nn.Module):
   """Decodes final hidden states into logits."""
 
-  def apply(self, hidden_states, exit_index, vocab_size):
+  @nn.compact
+  def __call__(self, hidden_states, exit_index, vocab_size):
     logits_dense = nn.Dense(
         name='logits_dense',
         features=vocab_size,
@@ -688,7 +734,14 @@ class Decoder(nn.Module):
 class SkipIPAGNNSingle(nn.Module):
   """Skip-IPAGNN model for a single example."""
 
-  def apply(self, inputs, info, config):
+  config: Any
+  info: Any
+
+  @nn.compact
+  def __call__(self, inputs):
+    config = self.config
+    info = self.info
+
     # Get inputs:
     true_indexes = inputs['true_branch_nodes']
     # true_indexes.shape: num_nodes
@@ -820,7 +873,13 @@ class SkipIPAGNNSingle(nn.Module):
 class SkipIPAGNN(nn.Module):
   """Skip-IPAGNN model with batch dimension (not graph batching)."""
 
-  def apply(self, inputs, info, config, train=False, cache=None):
+  config: Any
+  info: Any
+
+  @nn.compact
+  def __call__(self, inputs):
+    config = self.config
+    info = self.info
     ipagnn = SkipIPAGNNSingle(info=info, config=config, name='ipagnn')
     ipagnn_batch = jax.vmap(ipagnn)
     logits = ipagnn_batch(inputs)
