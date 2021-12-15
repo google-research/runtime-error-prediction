@@ -48,6 +48,7 @@ class TrainerTest(unittest.TestCase):
     config.batch_size = 16
     config.use_compressive_ipagnn = True
     config.eval_freq = 1
+    config.compressive_max_skip = 3
     validate_single_step(config)
 
 

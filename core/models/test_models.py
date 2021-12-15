@@ -80,6 +80,7 @@ class ModelsTest(unittest.TestCase):
     config = config_lib.get_test_config()
     config.model_class = 'IPAGNN'
     config.use_compressive_ipagnn = True
+    config.compressive_max_skip = 3
     validate_forward_pass(config, info)
 
   def test_transformer(self):
