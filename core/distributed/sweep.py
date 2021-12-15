@@ -186,7 +186,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   n = 1  # Machines per model
 
   # Cross-attention Exception IPA-GNN
-  offset = 0  # The machine index to start with.
+  offset = 1  # The machine index to start with.
   overrides = {
       'config.raise_in_ipagnn': True,
       'config.use_cross_attention': True,
