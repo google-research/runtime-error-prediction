@@ -148,6 +148,8 @@ def generate_example_from_python_source(executor, base, python_source, mod, outp
 
 
 def add_assert_error(source, example):
+  if example['error_type'] == 'RuntimeError':
+    return source, example
   is_error = random.choices([0,1], [1-ASSERTION_ERROR_PROB, ASSERTION_ERROR_PROB])[0]
   add_val = random.randint(1,10)
   current_val = int(example['human_readable_target_output'])
@@ -187,13 +189,14 @@ def main(argv: Sequence[str]) -> None:
           )
       )
       print(example)
+
       source, example = add_assert_error(source, example)
       target = example['human_readable_target_output']
       error_type = example['error_type']
       lines = source.split('\n')
       steps = process.get_step_limit(lines)
       counts[target] += 1
-      import pdb;pdb.set_trace()
+
       if error_type != 'NoError':
         target = error_type
       record_bytes = to_tf_example(source, target, steps).SerializeToString()
