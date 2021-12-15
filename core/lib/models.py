@@ -1,6 +1,5 @@
 """Models library."""
 
-from core.models import compressive_ipagnn
 from core.models import ipagnn
 from core.models import mlp
 from core.models import rnn

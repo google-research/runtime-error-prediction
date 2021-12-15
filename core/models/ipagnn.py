@@ -7,7 +7,7 @@ import jax
 import jax.numpy as jnp
 
 from core.data import error_kinds
-from core.models import compressive_ipagnn
+from core.modules.ipagnn import compressive_ipagnn
 from core.modules.ipagnn import encoder
 from core.modules.ipagnn import ipagnn
 from core.modules.ipagnn import logit_math
