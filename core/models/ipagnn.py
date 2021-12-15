@@ -29,6 +29,7 @@ class IPAGNN(nn.Module):
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
+    # TODO(dbieber): Use directly from config.
     max_steps = config.max_steps
     self.node_span_encoder = spans.NodeSpanEncoder(
         info=self.info,
@@ -49,11 +50,10 @@ class IPAGNN(nn.Module):
           config=self.docstring_transformer_config)
 
     if config.use_compressive_ipagnn:
-      self.ipagnn = compressive_ipagnn.SkipEncoderModel(
-          # self.ipagnn = compressive_ipagnn.CompressiveIPAGNNModule(
+      self.ipagnn = compressive_ipagnn.SkipIPAGNN(
           config=config,
           info=self.info,
-          # max_steps=max_steps,  # TODO(dbieber): Accept max_steps.
+          max_steps=max_steps,
       )
     else:
       self.ipagnn = ipagnn.IPAGNNModule(

@@ -1,5 +1,6 @@
 """Skip Encoder Model supporting control flow graphs."""
 
+import functools
 from typing import Any
 
 from absl import logging  # pylint: disable=unused-import
@@ -120,14 +121,15 @@ class SkipEmbedder(nn.Module):
       self, node_embeddings, max_steps,
       num_nodes, true_indexes, false_indexes, exit_index):
     config = self.config
-    embedder = SkipEmbedderSingleSource(
+    embedder = SkipEmbedderSingleSource(config=config)
+    embedder = functools.partial(
+        embedder,
         node_embeddings=node_embeddings,
         max_steps=max_steps,
         num_nodes=num_nodes,
         true_indexes=true_indexes,
         false_indexes=false_indexes,
-        exit_index=exit_index,
-        config=config)
+        exit_index=exit_index)
     from_node_indexes = jnp.arange(num_nodes)
     skip_embeddings = jax.vmap(embedder)(from_node_indexes)
     # You cannot skip from a node to itself.
@@ -736,27 +738,40 @@ class SkipIPAGNNSingle(nn.Module):
 
   config: Any
   info: Any
+  max_steps: int
 
   @nn.compact
-  def __call__(self, inputs):
+  def __call__(self, 
+      node_embeddings,
+      docstring_embeddings,
+      docstring_mask,
+      edge_sources,
+      edge_dests,
+      edge_types,
+      true_indexes,
+      false_indexes,
+      raise_indexes,
+      start_node_indexes,
+      exit_node_indexes,
+      step_limits):
     config = self.config
     info = self.info
 
     # Get inputs:
-    true_indexes = inputs['true_branch_nodes']
     # true_indexes.shape: num_nodes
-    false_indexes = inputs['false_branch_nodes']
-    start_indexes = inputs['start_index']  # pylint: disable=unused-variable
-    exit_index = inputs['exit_index']
-    steps_all = inputs['steps']  # scalar
-    post_domination_matrix = inputs['post_domination_matrix']
-    # data icludes the exit-node, and sometimes padding nodes.
-    data = inputs['data'].astype('int32')
-    num_nodes, unused_statement_length = data.shape
-    # The number of nodes, excluding padding.
-    length = inputs['cfg_shape'][0].astype('int32')
-    output_token_vocabulary_size = info.output_vocab_size
-    max_steps = int(1.5 * info.max_diameter)
+    # false_indexes.shape: num_nodes
+    start_indexes = start_node_indexes  # TODO(dbieber): Rename singular.
+    exit_index = exit_node_indexes
+    steps_all = step_limits
+    # steps_all.shape: scalar.
+    num_nodes = node_embeddings.shape[0]  # Includes padding.
+    # TODO(dbieber): Get the actual post_domination_matrix.
+    post_domination_matrix = jnp.ones((num_nodes, num_nodes))
+    # length is the number of nodes, excluding padding.
+    length = exit_node_indexes
+    # length.shape: scalar.
+    output_token_vocabulary_size = info.vocab_size
+    max_steps = self.max_steps
 
     # Create modules:
     node_embedder = NodeEmbedder(info=info, config=config,
@@ -788,7 +803,6 @@ class SkipIPAGNNSingle(nn.Module):
                       name='decoder')
 
     # Pre-execution computation:
-    node_embeddings = node_embedder(data)
     # node_embeddings.shape: num_nodes, hidden_size
     skip_embeddings = skip_embedder(node_embeddings)
     # skip_embeddings.shape: num_nodes, num_nodes, hidden_size
@@ -875,13 +889,41 @@ class SkipIPAGNN(nn.Module):
 
   config: Any
   info: Any
+  max_steps: int
 
   @nn.compact
-  def __call__(self, inputs):
+  def __call__(
+      self,
+      node_embeddings,
+      docstring_embeddings,
+      docstring_mask,
+      edge_sources,
+      edge_dests,
+      edge_types,
+      true_indexes,
+      false_indexes,
+      raise_indexes,
+      start_node_indexes,
+      exit_node_indexes,
+      step_limits):
     config = self.config
     info = self.info
-    ipagnn = SkipIPAGNNSingle(info=info, config=config, name='ipagnn')
+    ipagnn = SkipIPAGNNSingle(
+        config=config, info=info, max_steps=self.max_steps,
+        name='ipagnn')
     ipagnn_batch = jax.vmap(ipagnn)
-    logits = ipagnn_batch(inputs)
+    logits = ipagnn_batch(
+        node_embeddings,
+        docstring_embeddings,
+        docstring_mask,
+        edge_sources,
+        edge_dests,
+        edge_types,
+        true_indexes,
+        false_indexes,
+        raise_indexes,
+        start_node_indexes,
+        exit_node_indexes,
+        step_limits)
     logits = logits[:, None, :]
     return logits
