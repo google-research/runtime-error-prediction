@@ -183,7 +183,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 1  # Machines per model
+  n = 10  # Machines per model
 
   # Cross-attention Exception IPA-GNN
   offset = 0  # The machine index to start with.
