@@ -149,11 +149,36 @@ class SkipEncoderModel(nn.Module):
   info: Any
 
   @nn.compact
-  def __call__(self, example_inputs):
+  def __call__(
+      self,
+      node_embeddings,
+      docstring_embeddings,
+      docstring_mask,
+      edge_sources,
+      edge_dests,
+      edge_types,
+      true_indexes,
+      false_indexes,
+      raise_indexes,
+      start_node_indexes,
+      exit_node_indexes,
+      step_limits,
+  ):
     """Applies Transformer model on the inputs.
 
     Args:
-      example_inputs: input data
+      node_embeddings: TODO
+      docstring_embeddings: TODO
+      docstring_mask: TODO
+      edge_sources: TODO
+      edge_dests: TODO
+      edge_types: TODO
+      true_indexes: TODO
+      false_indexes: TODO
+      raise_indexes: TODO
+      start_node_indexes: TODO
+      exit_node_indexes: TODO
+      step_limits: TODO
     Returns:
       output of a transformer decoder.
     """
@@ -168,20 +193,7 @@ class SkipEncoderModel(nn.Module):
     vocab_size = info.vocab_size
     output_token_vocabulary_size = info.vocab_size
 
-    tokens_per_statement = info.program_encoder.tokens_per_statement
-    inputs = example_inputs['code_statements']
-    # inputs.shape: batch_size, (num_statements * tokens_per_statement)
-    # lengths: Numbed of tokens in each program.
-    lengths = example_inputs['code_length']
-    # statement_lengths: Number of statements in each program.
-    statement_lengths = (lengths / tokens_per_statement).astype('int32')
-
-    if config.model.skip_encoder.avg_statements_per_step == 0:
-      num_layers = config.model.gnn.num_layers
-    else:
-      max_num_statements = inputs.shape[1] / tokens_per_statement
-      num_layers = int(max_num_statements
-                       / config.model.skip_encoder.avg_statements_per_step)
+    num_layers = config.max_steps
     assert num_layers >= 2, 'At least two steps are required.'
     num_layers = log(num_layers, label='num_layers')
 
@@ -202,8 +214,7 @@ class SkipEncoderModel(nn.Module):
     # token_embeddings.shape: batch_size, length, hidden_size
 
     batch_size = token_embeddings.shape[0]
-    token_embeddings_bnlh = jnp.reshape(
-        token_embeddings, (batch_size, -1, tokens_per_statement, hidden_size))
+    token_embeddings_bnlh = node_embeddings[:, :, None, :]  # length == 1
     # token_embeddings_bnlh.shape:
     #     batch_size, num_statements, length, hidden_size
     num_statements = token_embeddings_bnlh.shape[1]
