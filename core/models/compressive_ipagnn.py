@@ -5,7 +5,7 @@ from typing import Any
 
 from absl import logging  # pylint: disable=unused-import
 import flax
-from flax.linen import nn
+from flax import linen as nn
 import jax
 from jax import lax
 import jax.numpy as jnp
@@ -70,47 +70,6 @@ def create_instruction_pointer(start, num_nodes):
   return jnp.zeros((num_nodes,)).at[start].set(1.0)
 
 
-class NodeEmbedder(nn.Module):
-  """Embeds the statement at each node."""
-
-  config: Any
-  info: Any
-
-  @nn.compact
-  def __call__(self, data):
-    config = self.config
-    info = self.info
-    hidden_size = config.model.hidden_size
-    vocab_size = info.vocab_size
-
-    def emb_init(key, shape, dtype=jnp.float32):
-      return jax.random.uniform(
-          key, shape, dtype,
-          -config.initialization.maxval,
-          config.initialization.maxval)
-
-    token_embed = Embed(num_embeddings=vocab_size,
-                        features=hidden_size,
-                        emb_init=emb_init,
-                        name='token_embed')
-    # TODO(dbieber): Consider concat and MLP in place of LSTM embedding.
-    cells = create_lstm_cells(config.model.rnn_cell.layers)
-    embed_lstm = StackedRNNCell(cells=cells, name='embed_lstm')
-    def embed_single_node(token_embedding):
-      # token_embedding.shape: statement_length, hidden_size
-      initial_hidden_state = embed_lstm.initialize_carry(
-          jax.random.PRNGKey(0), cells, (), hidden_size)
-      _, result = lax.scan(embed_lstm, initial_hidden_state, token_embedding)
-      return result[-1]
-    node_embed = jax.vmap(embed_single_node)
-
-    token_embeddings = token_embed(data)
-    # token_embeddings.shape: num_nodes, statement_length, hidden_size
-    node_embeddings = node_embed(token_embeddings)
-    # node_embeddings.shape: num_nodes, hidden_size
-    return node_embeddings
-
-
 class SkipEmbedder(nn.Module):
   """Module that creates skip embeddings."""
 
@@ -170,7 +129,7 @@ class SkipEmbedderSingleSource(nn.Module):
       (num_nodes, hidden_size)
     """
     config = self.config
-    execute_cells = create_lstm_cells(config.model.rnn_cell.layers)
+    execute_cells = create_lstm_cells(config.rnn_layers)
     execute_lstm = StackedRNNCell(cells=execute_cells,
                                          name='skip_execute_lstm')
     def execute_single_node(hidden_state, node_embedding):
@@ -279,7 +238,7 @@ class SkipEmbedderSingleSource(nn.Module):
       )
       carry = hidden_states_new, instruction_pointer_new
       return carry, carry
-    if config.model.ipagnn2.checkpoint and not self.is_initializing():
+    if config.compressive_remat and not self.is_initializing():
       step_ = jax.checkpoint(step_)
 
     instruction_pointer = create_instruction_pointer(start=from_node_index,
@@ -287,7 +246,7 @@ class SkipEmbedderSingleSource(nn.Module):
     # instruction_pointer.shape: num_nodes,
     hidden_states = StackedRNNCell.initialize_carry(
         jax.random.PRNGKey(0), execute_cells, (num_nodes,),
-        config.model.hidden_size)
+        config.hidden_size)
     # hidden_states.shape: num_nodes, hidden_size
 
     carry = hidden_states, instruction_pointer
@@ -327,13 +286,13 @@ class SkipEncoderLineByLine(nn.Module):
         val[from, to, d].
     """
     config = self.config
-    hidden_size = config.model.hidden_size
+    hidden_size = config.hidden_size
     skip_embedder_layer_norm = nn.LayerNorm(
         name='skip_embedder_layer_norm')
     statement_embeddings_nh = node_embeddings[:-1]
     num_statements = statement_embeddings_nh.shape[0]
     num_nodes = num_statements + 1
-    cells = create_lstm_cells(config.model.rnn_cell.layers)
+    cells = create_lstm_cells(config.rnn_layers)
     lstm = StackedRNNCell(cells=cells, name='skip_encoder_rnn')
 
     initial_state = lstm.initialize_carry(
@@ -509,7 +468,7 @@ class MaskMakerNoSkip(nn.Module):
 
 
 def make_mask_maker(config):
-  mask_maker_kind = config.model.skip_encoder.mask_maker
+  mask_maker_kind = config.compressive_mask_maker
   if mask_maker_kind == 'default':
     return MaskMaker(config=config, name='mask_maker')
   elif mask_maker_kind == 'no-skip':
@@ -545,7 +504,7 @@ class SkipDeciderSingleSource(nn.Module):
   def __call__(self, hidden_states, skip_embeddings, skip_mask):
     config = self.config
     num_nodes = skip_embeddings.shape[0]
-    hidden_size = config.model.hidden_size
+    hidden_size = config.hidden_size
     key_dense = nn.Dense(
         name='key_dense',
         features=hidden_size,
@@ -774,11 +733,8 @@ class SkipIPAGNNSingle(nn.Module):
     max_steps = self.max_steps
 
     # Create modules:
-    node_embedder = NodeEmbedder(info=info, config=config,
-                                 name='node_embedder')
     # Make skip embedder.
-    max_skip_steps = (config.model.skip_encoder.max_skip
-                      or max_steps)
+    max_skip_steps = (config.compressive_max_skip or max_steps)
     skip_embedder = SkipEmbedder(
         max_steps=max_skip_steps,
         num_nodes=num_nodes,
@@ -791,7 +747,7 @@ class SkipIPAGNNSingle(nn.Module):
     #                                       name='skip_embedder')
     mask_maker = make_mask_maker(config)
     skip_decider = SkipDecider(config=config, name='skip_decider')
-    execute_cells = create_lstm_cells(config.model.rnn_cell.layers)
+    execute_cells = create_lstm_cells(config.rnn_layers)
     skip_executor = SkipExecutor(
         execute_cells=execute_cells, config=config,
         name='skip_executor')
@@ -859,14 +815,14 @@ class SkipIPAGNNSingle(nn.Module):
           interpreter_state)
 
       return new_interpreter_state, None
-    if config.model.ipagnn2.checkpoint and not self.is_initializing():
+    if config.compressive_remat and not self.is_initializing():
       step = jax.remat(step)
 
     # Initialization:
     initial_instruction_pointer = create_instruction_pointer(0, num_nodes)
     initial_hidden_states = StackedRNNCell.initialize_carry(
         jax.random.PRNGKey(0), execute_cells, (num_nodes,),
-        config.model.hidden_size)
+        config.hidden_size)
 
     # Execution
     initial_interpreter_state = InterpreterState(

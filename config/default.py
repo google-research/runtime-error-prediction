@@ -41,6 +41,11 @@ def default_config():
   config.docstring_transformer_num_layers: int = 2
   config.cross_attention_num_heads = 1
 
+  # Compressive IPA-GNN configs
+  config.compressive_remat = True
+  config.compressive_max_skip = 10
+  config.compressive_mask_maker = 'default'
+
   # Dataset filtering and configs
   config.epochs: Optional[int] = 0
   config.batch_size: int = 128
