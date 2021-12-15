@@ -29,7 +29,6 @@ class IPAGNN(nn.Module):
     max_tokens = config.max_tokens
     max_num_nodes = config.max_num_nodes
     max_num_edges = config.max_num_edges
-    # TODO(dbieber): Use directly from config.
     max_steps = config.max_steps
     self.node_span_encoder = spans.NodeSpanEncoder(
         info=self.info,
@@ -110,10 +109,6 @@ class IPAGNN(nn.Module):
     # exit_node_embeddings.shape: batch_size, hidden_size
     exit_node_instruction_pointer = ipagnn_output['exit_node_instruction_pointer']
     # exit_node_instruction_pointer.shape: batch_size
-    print(ipagnn_output)
-    print(ipagnn_output.keys())
-    print('exit_node_instruction_pointer.shape')
-    print(exit_node_instruction_pointer.shape)
 
     num_classes = info.num_classes
     if config.raise_in_ipagnn:
@@ -160,6 +155,4 @@ class IPAGNN(nn.Module):
           features=num_classes, name='output'
       )(exit_node_embeddings)
     # logits.shape: batch_size, num_classes
-    print('logits.shape')
-    print(logits.shape)
     return logits, ipagnn_output
