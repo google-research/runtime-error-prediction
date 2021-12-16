@@ -104,59 +104,85 @@ class MILTransformer(nn.Module):
     )(encoded_inputs)
     # per_line_logits.shape: batch_size, max_num_nodes, num_classes
 
-    per_line_probs = jax.nn.softmax(per_line_logits, axis=-1)
-    # per_line_probs.shape: batch_size, max_num_nodes, num_classes
-
-    # Compute localization_logits:
     aux = {}
-    if len(info.no_error_ids) == 1:
-      no_error_id = info.no_error_ids[0]
-      per_line_no_error_probs = per_line_probs[:, :, no_error_id]
-      # per_line_no_error_probs.shape: batch_size, max_num_nodes
-      per_line_error_probs = 1 - per_line_no_error_probs
-      # per_line_error_probs.shape: batch_size, max_num_nodes
-      # Normalization assumes uniform prior over lines.
-      normalized_error_probs = per_line_error_probs / jnp.sum(per_line_error_probs, axis=-1, keepdims=True)
-      # normalized_error_probs.shape: batch_size, max_num_nodes
-      aux['localization_logits'] = jnp.log(normalized_error_probs)
-      # aux['localization_logits'].shape: batch_size, max_num_nodes
-      assert aux['localization_logits'].shape == (batch_size, max_num_nodes)
-    elif len(info.no_error_ids) > 1:
-      if len(info.error_ids) > 1:
-        raise NotImplementedError('Multiple error classes and multiple no-error classes.')
-      assert len(info.error_ids) == 1
-      error_id = info.error_ids[0]
-      per_line_error_probs = per_line_probs[:, :, error_id]
-      # per_line_error_probs.shape: batch_size, max_num_nodes
-      # Normalization assumes uniform prior over lines.
-      normalized_error_probs = per_line_error_probs / jnp.sum(per_line_error_probs, axis=-1, keepdims=True)
-      # normalized_error_probs.shape: batch_size, max_num_nodes
-      aux['localization_logits'] = jnp.log(normalized_error_probs)
-      # aux['localization_logits'].shape: batch_size, max_num_nodes
-      assert aux['localization_logits'].shape == (batch_size, max_num_nodes)
-    else:
-      raise ValueError('Tried using MILTransformer on data with no errors.')
+    if config.mil_pool == 'logsumexp':
+      # logits = phi(c) = logsumexp_{l} phi(l, c)
+      logits = jax.scipy.special.logsumexp(per_line_logits, axis=1)
+      # logits.shape: batch_size, num_classes
+      # probs = p(c) \propto exp(phi(c))
 
-    # Compute overall logits using pooling:
-    if config.mil_pool == 'max':
-      max_probs = jnp.max(per_line_probs, axis=1)
-      # max_probs.shape: batch_size, num_classes
-      logits = jnp.log(max_probs)
-      # logits.shape: batch_size, num_classes
-    elif config.mil_pool == 'mean':
-      mean_probs = jnp.mean(per_line_probs, axis=1)
-      # mean_probs.shape: batch_size, num_classes
-      logits = jnp.log(mean_probs)
-      # logits.shape: batch_size, num_classes
-    elif config.mil_pool == 'noisy-or':
-      # NOTE: I leave noisy-or unfinished because we are operating in the
-      # at-most-one error setting.
-      per_line_neg_probs = 1 - per_line_probs
-      # per_line_neg_probs.shape: batch_size, max_num_nodes, num_classes
-      class_probs = x = 1 - jnp.product(per_line_neg_probs, axis=1)
-      # x.shape: batch_size, num_classes
-      raise NotImplementedError()
+      # phi(l) = logsumexp_{c \in errors} phi(l, c)
+      if len(info.no_error_ids) == 1:
+        no_error_id = info.no_error_ids[0]
+        per_line_error_logits = per_line_logits.at[:, :, no_error_id].set(-jnp.inf)
+        # per_line_error_logits.shape: batch_size, max_num_nodes, num_classes
+        aux['localization_logits'] = jax.scipy.special.logsumexp(
+            per_line_error_logits, axis=2)
+        # aux['localization_logits'].shape: batch_size, max_num_nodes
+      elif len(info.no_error_ids) > 1:
+        if len(info.error_ids) > 1:
+          raise NotImplementedError('Multiple error classes and multiple no-error classes.')
+        assert len(info.error_ids) == 1
+        error_id = info.error_ids[0]
+        per_line_error_logits = per_line_logits.at[:, :, error_id]
+        # per_line_error_logits.shape: batch_size, max_num_nodes
+        aux['localization_logits'] = per_line_error_logits
+        # aux['localization_logits'].shape: batch_size, max_num_nodes
+      else:
+        raise ValueError('Tried using MILTransformer on data with no errors.')
     else:
-      raise ValueError('Unexpected mil_pool parameter', config.mil_pool)
+      per_line_probs = jax.nn.softmax(per_line_logits, axis=-1)
+      # per_line_probs.shape: batch_size, max_num_nodes, num_classes
+
+      # Compute localization_logits:
+      if len(info.no_error_ids) == 1:
+        no_error_id = info.no_error_ids[0]
+        per_line_no_error_probs = per_line_probs[:, :, no_error_id]
+        # per_line_no_error_probs.shape: batch_size, max_num_nodes
+        per_line_error_probs = 1 - per_line_no_error_probs
+        # per_line_error_probs.shape: batch_size, max_num_nodes
+        # Normalization assumes uniform prior over lines.
+        normalized_error_probs = per_line_error_probs / jnp.sum(per_line_error_probs, axis=-1, keepdims=True)
+        # normalized_error_probs.shape: batch_size, max_num_nodes
+        aux['localization_logits'] = jnp.log(normalized_error_probs)
+        # aux['localization_logits'].shape: batch_size, max_num_nodes
+        assert aux['localization_logits'].shape == (batch_size, max_num_nodes)
+      elif len(info.no_error_ids) > 1:
+        if len(info.error_ids) > 1:
+          raise NotImplementedError('Multiple error classes and multiple no-error classes.')
+        assert len(info.error_ids) == 1
+        error_id = info.error_ids[0]
+        per_line_error_probs = per_line_probs[:, :, error_id]
+        # per_line_error_probs.shape: batch_size, max_num_nodes
+        # Normalization assumes uniform prior over lines.
+        normalized_error_probs = per_line_error_probs / jnp.sum(per_line_error_probs, axis=-1, keepdims=True)
+        # normalized_error_probs.shape: batch_size, max_num_nodes
+        aux['localization_logits'] = jnp.log(normalized_error_probs)
+        # aux['localization_logits'].shape: batch_size, max_num_nodes
+        assert aux['localization_logits'].shape == (batch_size, max_num_nodes)
+      else:
+        raise ValueError('Tried using MILTransformer on data with no errors.')
+
+      # Compute overall logits using pooling:
+      if config.mil_pool == 'max':
+        max_probs = jnp.max(per_line_probs, axis=1)
+        # max_probs.shape: batch_size, num_classes
+        logits = jnp.log(max_probs)
+        # logits.shape: batch_size, num_classes
+      elif config.mil_pool == 'mean':
+        mean_probs = jnp.mean(per_line_probs, axis=1)
+        # mean_probs.shape: batch_size, num_classes
+        logits = jnp.log(mean_probs)
+        # logits.shape: batch_size, num_classes
+      elif config.mil_pool == 'noisy-or':
+        # NOTE: I leave noisy-or unfinished because we are operating in the
+        # at-most-one error setting.
+        per_line_neg_probs = 1 - per_line_probs
+        # per_line_neg_probs.shape: batch_size, max_num_nodes, num_classes
+        class_probs = x = 1 - jnp.product(per_line_neg_probs, axis=1)
+        # x.shape: batch_size, num_classes
+        raise NotImplementedError()
+      else:
+        raise ValueError('Unexpected mil_pool parameter', config.mil_pool)
 
     return logits, aux

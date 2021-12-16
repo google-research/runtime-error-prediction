@@ -95,6 +95,13 @@ class ModelsTest(unittest.TestCase):
     config.mil_pool = 'mean'
     validate_forward_pass(config, info)
 
+  def test_transformer_mil_logsumexp(self):
+    info = info_lib.get_test_info()
+    config = config_lib.get_test_config()
+    config.model_class = 'MILTransformer'
+    config.mil_pool = 'logsumexp'
+    validate_forward_pass(config, info)
+
   def test_lstm(self):
     info = info_lib.get_test_info()
     config = config_lib.get_test_config()
