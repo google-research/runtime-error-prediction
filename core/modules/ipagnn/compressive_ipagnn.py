@@ -309,6 +309,7 @@ class SkipEmbedderSingleSourceStep(nn.Module):
     carry = hidden_states_new, instruction_pointer_new
     return carry, carry
 
+
 class SkipEncoderLineByLine(nn.Module):
   """Skip encoder layer (line by line RNN) for a single example."""
 

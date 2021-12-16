@@ -42,6 +42,7 @@ def default_config():
   config.cross_attention_num_heads = 1
 
   # Compressive IPA-GNN configs
+  config.use_compressive_ipagnn = False
   config.compressive_max_skip = 10
   config.compressive_mask_maker = 'default'
 
