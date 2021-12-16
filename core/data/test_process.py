@@ -2,6 +2,8 @@
 
 import unittest
 
+import numpy as np
+
 from core.data import process
 from core.data import tokenization
 
@@ -450,6 +452,38 @@ for x,y in range(
         source, target, lineno)
     nodes = process.get_nodes_at_lineno(raw, lineno)
     self.assertEqual(nodes, [2, 3])
+
+  def test_post_domination_matrix(self):
+    lineno = 5  # for x,y in range(
+    target = '1'
+    source = '''"""Example
+docstring
+"""
+x = 1
+for x,y in range(
+  100
+):
+  while y < 4:
+    y += 5
+  x += 6
+'''
+    raw = process.make_rawruntimeerrorproblem(
+        source, target, lineno)
+    # targets[i, j] = i post-dominated by j.
+    # targets[i, j] = i post-dominated by j.
+    target = [
+        [1., 1., 1., 1., 0., 0., 0., 1.],
+        [0., 1., 1., 1., 0., 0., 0., 1.],
+        [0., 0., 1., 1., 0., 0., 0., 1.],
+        [0., 0., 0., 1., 0., 0., 0., 1.],
+        [0., 0., 0., 1., 1., 0., 1., 1.],
+        [0., 0., 0., 1., 1., 1., 1., 1.],
+        [0., 0., 0., 1., 0., 0., 1., 1.],
+        [0., 0., 0., 0., 0., 0., 0., 1.],
+    ]
+    np.testing.assert_array_equal(
+        raw.post_domination_matrix,
+        target)
 
 if __name__ == '__main__':
   unittest.main()

@@ -36,6 +36,8 @@ def to_tf_example(problem):
       'target_lineno': _int64_feature([problem.target_lineno]),
       'target_node_indexes': _int64_feature(problem.target_node_indexes),
       'num_target_nodes': _int64_feature([len(problem.target_node_indexes)]),
+      'post_domination_matrix': _int64_feature(problem.post_domination_matrix),
+      'post_domination_matrix_shape': _int64_feature(problem.post_domination_matrix.shape),
 
       'problem_id': _bytes_feature([problem.problem_id]),
       'submission_id': _bytes_feature([problem.submission_id]),
