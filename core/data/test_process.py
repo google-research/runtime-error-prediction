@@ -470,7 +470,6 @@ for x,y in range(
     raw = process.make_rawruntimeerrorproblem(
         source, target, lineno)
     # targets[i, j] = i post-dominated by j.
-    # targets[i, j] = i post-dominated by j.
     target = [
         [1., 1., 1., 1., 0., 0., 0., 1.],
         [0., 1., 1., 1., 0., 0., 0., 1.],
