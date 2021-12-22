@@ -6,7 +6,7 @@ import time
 
 DEFAULT_CONFIG_PATH = 'config/default.py'
 DEFAULT_DATASET_PATH = 'datasets/codenet/2021-12-06-f=0.01'
-TEST_DATASET_PATH = 'datasets/codenet/2021-12-06-f=0.01'
+TEST_DATASET_PATH = 'datasets/codenet/2021-12-22-f=0.01'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
 DOCSTRING_TOKENIZER_PATH = 'out/tokenizers/train-docstrings-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
