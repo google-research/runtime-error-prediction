@@ -98,6 +98,7 @@ class IPAGNN(nn.Module):
         raise_indexes=x['raise_nodes'],
         start_node_indexes=x['start_index'],
         exit_node_indexes=x['exit_index'],
+        post_domination_matrix=x['post_domination_matrix'],
         step_limits=x['step_limit'],
     )
     # ipagnn_output['exit_node_embeddings'].shape: batch_size, hidden_size

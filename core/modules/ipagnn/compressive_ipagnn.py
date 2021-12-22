@@ -744,6 +744,7 @@ class SkipIPAGNNSingle(nn.Module):
       raise_indexes,
       start_node_indexes,
       exit_node_indexes,
+      post_domination_matrix,
       step_limits):
     config = self.config
     info = self.info
@@ -784,6 +785,7 @@ class SkipIPAGNNSingle(nn.Module):
         raise_indexes,
         start_node_indexes,
         exit_node_indexes,
+        post_domination_matrix,
         step_limits,
     )
     final_hidden_states = final_interpreter_state.hidden_states
@@ -836,6 +838,7 @@ class SkipIPAGNNSingleStep(nn.Module):
       raise_indexes,
       start_node_indexes,
       exit_node_indexes,
+      post_domination_matrix,
       step_limits,
   ):
     config = self.config
@@ -849,8 +852,6 @@ class SkipIPAGNNSingleStep(nn.Module):
     steps_all = step_limits
     # steps_all.shape: scalar.
     num_nodes = node_embeddings.shape[0]  # Includes padding.
-    # TODO(dbieber): Get the actual post_domination_matrix.
-    post_domination_matrix = jnp.ones((num_nodes, num_nodes))
     # length is the number of nodes, excluding padding.
     length = exit_node_indexes
     # length.shape: scalar.
@@ -962,6 +963,7 @@ class SkipIPAGNN(nn.Module):
       raise_indexes,
       start_node_indexes,
       exit_node_indexes,
+      post_domination_matrix,
       step_limits):
     config = self.config
     info = self.info
@@ -981,4 +983,5 @@ class SkipIPAGNN(nn.Module):
         raise_indexes,
         start_node_indexes,
         exit_node_indexes,
+        post_domination_matrix,
         step_limits)
