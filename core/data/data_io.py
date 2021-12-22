@@ -110,6 +110,8 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       'target_lineno': jnp.ones((batch_size, 1), dtype=jnp.int32),
       'target_node_indexes': jnp.zeros((batch_size, 1), dtype=jnp.int32),
       'num_target_nodes': jnp.ones((batch_size, 1), dtype=jnp.int32),
+      'post_domination_matrix': jnp.ones((batch_size, max_num_nodes, max_num_nodes), dtype=jnp.int32),
+      'post_domination_matrix_shape': jnp.array([max_num_nodes, max_num_nodes], dtype=jnp.uint32),
 
       # We exclude problem_id and submission_id from fake_input, as they are not
       # model inputs.
@@ -146,6 +148,8 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
       'target_lineno': [1],
       'target_node_indexes': [max_target_nodes],
       'num_target_nodes': [1],
+      'post_domination_matrix': [max_num_nodes, max_num_nodes],
+      'post_domination_matrix_shape': [2],
 
       'in_dataset': [1],
       'num_tokens': [1],
