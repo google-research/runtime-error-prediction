@@ -187,25 +187,25 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
 
   # No-input I, E, T:
   # IPA-GNN
-  offset = 0
-  overrides = {
-      'config.raise_in_ipagnn': False,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'IN', 'IPAGNN', overrides, dataset_path, skip_create)
+  # offset = 0
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IN', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # Exception IPA-GNN
-  offset = 10
-  overrides = {
-      'config.raise_in_ipagnn': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'EN', 'IPAGNN', overrides, dataset_path, skip_create)
+  # # Exception IPA-GNN
+  # offset = 10
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EN', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # Transformer
-  offset = 20
-  overrides = {
-      'config.raise_in_ipagnn': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'TN', 'Transformer', overrides, dataset_path, skip_create)
+  # # Transformer
+  # offset = 20
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'TN', 'Transformer', overrides, dataset_path, skip_create)
 
   # Cross-attention Exception IPA-GNN
   # offset = 0  # The machine index to start with.
@@ -247,12 +247,25 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create)
 
-  # # MIL Transformer
-  # offset = 50
-  # overrides = {
-  #     'config.raise_in_ipagnn': False,
-  # }
-  # run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, dataset_path, skip_create)
+  # MIL Transformer
+  offset = 30
+  overrides = {
+      'config.raise_in_ipagnn': False,
+      'config.permissive_node_embeddings': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'MP', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  offset = 40
+  overrides = {
+      'config.raise_in_ipagnn': False,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'MN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+
+  offset = 50
+  overrides = {
+      'config.raise_in_ipagnn': False,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
 
 # # To kill the runner processes:
