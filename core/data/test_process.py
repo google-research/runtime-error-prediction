@@ -4,6 +4,7 @@ import unittest
 
 import numpy as np
 
+from core.data import data_io
 from core.data import process
 from core.data import tokenization
 
@@ -483,6 +484,56 @@ for x,y in range(
     np.testing.assert_array_equal(
         raw.post_domination_matrix,
         target)
+
+  def test_decode_fn(self):
+    tokenizer = tokenization.load_tokenizer()
+    lineno = 5  # for x,y in range(
+    target = 1
+    docstring = """Example
+docstring
+"""
+    source = '''"""Example
+docstring
+"""
+x = 1
+for x,y in range(100):
+  while y < 4:
+    y += 5
+  x += 6
+'''
+    problem = process.make_runtimeerrorproblem(
+        source, target,
+        docstring=docstring, extended_source=source,
+        target_lineno=lineno, tokenizer=tokenizer,
+        problem_id='p00000', submission_id='s0000000')
+    tf_example = data_io.to_tf_example(problem)
+    tf_example_bytes = tf_example.SerializeToString()
+    reconstructed = data_io.decode_fn(tf_example_bytes, include_strings=True)
+
+    for key in [
+        'tokens',
+        'docstring_tokens',
+        'edge_sources',
+        'edge_dests',
+        'edge_types',
+        'node_token_span_starts',
+        'node_token_span_ends',
+        'token_node_indexes',
+        'true_branch_nodes',
+        'false_branch_nodes',
+        'raise_nodes',
+        'start_index',
+        'exit_index',
+        'step_limit',
+        'target',
+        'target_lineno',
+        'target_node_indexes',
+        # 'num_target_nodes',
+        'post_domination_matrix',
+        # 'post_domination_matrix_shape',
+    ]:
+      np.testing.assert_array_equal(getattr(problem, key), reconstructed[key])
+
 
 if __name__ == '__main__':
   unittest.main()

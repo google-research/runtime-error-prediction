@@ -15,7 +15,7 @@ def get_post_domination_matrix(cfg):
   """
   post_dominator_sets = get_post_dominator_sets(cfg)
   num_nodes = len(cfg.nodes) + 1  # Add one for the exit node.
-  mat = np.zeros((num_nodes, num_nodes))
+  mat = np.zeros((num_nodes, num_nodes), dtype=np.int64)
 
   # Create mapping from cfg_node to index in matrix.
   node_indexes = {

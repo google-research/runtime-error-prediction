@@ -1,6 +1,7 @@
 import functools
 import os
 
+import numpy as np
 import tensorflow as tf
 
 import jax.numpy as jnp
@@ -36,7 +37,7 @@ def to_tf_example(problem):
       'target_lineno': _int64_feature([problem.target_lineno]),
       'target_node_indexes': _int64_feature(problem.target_node_indexes),
       'num_target_nodes': _int64_feature([len(problem.target_node_indexes)]),
-      'post_domination_matrix': _int64_feature(problem.post_domination_matrix),
+      'post_domination_matrix': _int64_feature(list(problem.post_domination_matrix.flat)),
       'post_domination_matrix_shape': _int64_feature(problem.post_domination_matrix.shape),
 
       'problem_id': _bytes_feature([problem.problem_id]),
@@ -69,6 +70,8 @@ def decode_fn(record_bytes, include_strings=False):
       'target_lineno': _int64_scalar_feature(),
       'target_node_indexes': _int64_sequence_feature(),
       'num_target_nodes': _int64_scalar_feature(),
+      'post_domination_matrix': _int64_sequence_feature(),
+      'post_domination_matrix_shape': _int64_sequence_feature(),
 
       'in_dataset': _int64_scalar_feature(),
       'num_tokens': _int64_scalar_feature(),
@@ -80,7 +83,12 @@ def decode_fn(record_bytes, include_strings=False):
         'problem_id': _string_scalar_feature(),
         'submission_id': _string_scalar_feature(),
     })
-  return tf.io.parse_single_example(record_bytes, features)
+  example = tf.io.parse_single_example(record_bytes, features)
+  example['post_domination_matrix'] = tf.reshape(
+      example['post_domination_matrix'],
+      example['post_domination_matrix_shape']
+  )
+  return example
 
 
 def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
