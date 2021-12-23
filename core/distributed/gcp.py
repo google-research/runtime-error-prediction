@@ -57,7 +57,7 @@ def _tpu_hostname(index):
 
 def _tpu_zone(index):
   """Chooses a GCP TPU zone based on the index."""
-  if index < 118:
+  if index < 70:
     return 'europe-west4-a'
   elif index < 128:  # 10
     return 'us-central1-b'
