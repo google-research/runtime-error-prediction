@@ -65,8 +65,12 @@ def _tpu_zone(index):
     return 'us-central1-c'
   elif index < 100:  # 30 (seems like 10...)
     return 'asia-east1-c'
-  elif index < 200:  # 30 (seems like 10...)
+  elif index < 110:
     return 'us-central1-a'
+  elif index < 120:
+    return 'us-central1-b'
+  elif index < 130:
+    return 'europe-west4-a'
   else:
     raise ValueError('Unhandled zone index')
 
