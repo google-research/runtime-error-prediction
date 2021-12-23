@@ -248,24 +248,29 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create)
 
   # MIL Transformer
-  offset = 30
-  overrides = {
-      'config.raise_in_ipagnn': False,
-      'config.permissive_node_embeddings': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'MP', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # offset = 30
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.permissive_node_embeddings': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'MP', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
-  offset = 40
-  overrides = {
-      'config.raise_in_ipagnn': False,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'MN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # offset = 40
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'MN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
-  offset = 50
+  # offset = 50
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  offset = 60
   overrides = {
-      'config.raise_in_ipagnn': False,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
 
 # # To kill the runner processes:
