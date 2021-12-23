@@ -452,6 +452,7 @@ class IPAGNNModule(nn.Module):
       raise_indexes,
       start_node_indexes,
       exit_node_indexes,
+      post_domination_matrix,
       step_limits,
   ):
     info = self.info
