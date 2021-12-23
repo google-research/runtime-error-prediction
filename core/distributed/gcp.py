@@ -61,7 +61,7 @@ def _tpu_zone(index):
     return 'europe-west4-a'
   elif index < 80:  # 10
     return 'us-central1-b'
-  elif index < 138:  # 10
+  elif index < 90:  # 10
     return 'us-central1-c'
   elif index < 168:  # 30
     return 'asia-east1-c'
