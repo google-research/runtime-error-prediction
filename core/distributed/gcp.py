@@ -59,7 +59,7 @@ def _tpu_zone(index):
   """Chooses a GCP TPU zone based on the index."""
   if index < 70:
     return 'europe-west4-a'
-  elif index < 128:  # 10
+  elif index < 80:  # 10
     return 'us-central1-b'
   elif index < 138:  # 10
     return 'us-central1-c'
