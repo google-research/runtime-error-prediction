@@ -34,6 +34,7 @@ def default_config():
   config.hidden_size: int = 16
   config.span_encoding_method = 'first'  # first, mean, max, sum
   config.permissive_node_embeddings = True
+  config.raise_decision_offset = 0.0
 
   # TODO(dbieber): Switch to "use_conditioning" or similar.
   config.use_film: bool = False

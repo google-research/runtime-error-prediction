@@ -32,7 +32,7 @@ class IPAGNNLayer(nn.Module):
         name='raise_decide_dense',
         features=2,  # raise or don't raise.
         kernel_init=nn.initializers.xavier_uniform(),
-        bias_init=nn.initializers.normal(stddev=1e-6))
+        bias_init=nn.initializers.normal(stddev=1e-6))  # raise, no-raise
     self.branch_decide_dense = nn.Dense(
         name='branch_decide_dense',
         features=2,  # true branch or false branch.
@@ -343,6 +343,11 @@ class IPAGNNLayer(nn.Module):
       batch_set = jax.vmap(set_values, in_axes=(0, None, 0))
 
       raise_decision_logits = raise_decide(hidden_state_contributions)
+      # raise_decision_logits.shape: batch_size, num_nodes, 2
+      raise_decision_logits = (
+          # Adds offset to raise prediction, so offset should be negative.
+          raise_decision_logits.at[:, :, 0].add(config.raise_decision_offset)
+      )
       # raise_decision_logits.shape: batch_size, num_nodes, 2
       raise_decisions = nn.softmax(raise_decision_logits, axis=-1)
       # raise_decision.shape: batch_size, num_nodes, 2

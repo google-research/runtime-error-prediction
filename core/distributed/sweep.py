@@ -22,6 +22,7 @@ hparams = {
     'config.cross_attention_num_heads': [1, 2],
     'config.mil_pool': ['max', 'mean', 'logsumexp'],
     'config.compressive_mask_maker': ['default'],
+    'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
     'transformer_size': ['tiny', 'small', 'default'],
 }
 
@@ -286,12 +287,19 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'CD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
-  offset = 90
+  # offset = 90
+  # overrides = {
+  #     'config.use_compressive_ipagnn': True,
+  #     'config.compressive_max_skip': 3,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+
+  offset = 100
   overrides = {
-      'config.use_compressive_ipagnn': True,
-      'config.compressive_max_skip': 3,
+      'config.raise_in_ipagnn': True,
+      # Using config.raise_decision_offset.
   }
-  run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'EO', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
 
 # # To kill the runner processes:

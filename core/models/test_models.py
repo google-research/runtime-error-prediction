@@ -73,6 +73,7 @@ class ModelsTest(unittest.TestCase):
     config = config_lib.get_test_config()
     config.model_class = 'IPAGNN'
     config.raise_in_ipagnn = True
+    config.raise_decision_offset = -3
     validate_forward_pass(config, info)
 
   def test_compressive_ipagnn(self):
