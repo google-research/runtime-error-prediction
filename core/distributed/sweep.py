@@ -267,10 +267,15 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
-  offset = 60
+  # offset = 60
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  offset = 70
   overrides = {
   }
-  run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
 
 # # To kill the runner processes:
