@@ -13,8 +13,10 @@ DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
-FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22-nodoc'
-FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22'
+# FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22-nodoc'
+# FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22'
+FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-06-nodoc'
+FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-06'
 SMALL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-23-nodoc-f=0.1'
 SMALL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-23-f=0.1'
 # Raw control_flow_programs data pattern:
