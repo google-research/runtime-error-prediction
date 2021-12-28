@@ -284,19 +284,19 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
   # # Compressive IPA-GNN
-  offset = 80
-  overrides = {
-      'config.use_compressive_ipagnn': True,
-      'config.compressive_max_skip': 3,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'CD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # offset = 80
+  # overrides = {
+  #     'config.use_compressive_ipagnn': True,
+  #     'config.compressive_max_skip': 3,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'CD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
-  offset = 90
-  overrides = {
-      'config.use_compressive_ipagnn': True,
-      'config.compressive_max_skip': 3,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # offset = 90
+  # overrides = {
+  #     'config.use_compressive_ipagnn': True,
+  #     'config.compressive_max_skip': 3,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
   # # Bias
   # offset = 100
@@ -312,6 +312,28 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     # Using config.raise_decision_offset.
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'EOD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  offset = 20
+  overrides = {
+      'config.raise_in_ipagnn': False,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  offset = 10
+  overrides = {
+      'config.raise_in_ipagnn': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  offset = 60
+  overrides = {
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  offset = 70
+  overrides = {
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
 
 # # To kill the runner processes:
