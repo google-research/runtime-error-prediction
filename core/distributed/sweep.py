@@ -299,14 +299,14 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
   # # Bias
-  offset = 100
-  overrides = {
-      'config.raise_in_ipagnn': True,
-      # Using config.raise_decision_offset.
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'EO', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # offset = 100
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     # Using config.raise_decision_offset.
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EO', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
-  offset = 110
+  offset = 0
   overrides = {
       'config.raise_in_ipagnn': True,
       # Using config.raise_decision_offset.
