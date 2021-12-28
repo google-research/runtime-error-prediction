@@ -335,22 +335,30 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
-  offset = 30
-  overrides = {
-      'config.raise_in_ipagnn': False,
-      'config.use_cross_attention': True,
-      'config.modulate_mode': 'add',
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # offset = 30
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_cross_attention': True,
+  #     'config.modulate_mode': 'add',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
-  offset = 40
+  # offset = 40
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_cross_attention': True,
+  #     'config.modulate_mode': 'add',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  # Exception IPA-GNN FiLM
+  offset = 50
   overrides = {
       'config.raise_in_ipagnn': True,
-      'config.use_cross_attention': True,
-      'config.modulate_mode': 'add',
+      'config.use_film': True,
+      'config.modulate_mode': 'concat',
   }
-  run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
-
+  run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
 # # To kill the runner processes:
 # # python -m core.distributed.gcp tpu_run_command 'pkill runner.py && pkill tmux' --n=60 --offset=0

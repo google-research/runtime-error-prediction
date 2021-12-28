@@ -42,6 +42,18 @@ class TrainerTest(unittest.TestCase):
     validate_single_step(config)
 
   @pytest.mark.slow
+  def test_film_exception_ipagnn(self):
+    config = config_lib.get_test_config()
+    config.model_class = 'IPAGNN'
+    config.batch_size = 16
+    config.use_film = True
+    config.raise_in_ipagnn = True
+    config.modulate_mode = 'concat'
+    config.eval_freq = 1
+    config.max_tokens = 512
+    validate_single_step(config)
+
+  @pytest.mark.slow
   def test_compressive_ipagnn(self):
     config = config_lib.get_test_config()
     config.model_class = 'IPAGNN'
