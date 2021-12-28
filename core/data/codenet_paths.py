@@ -15,6 +15,8 @@ EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
 FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22-nodoc'
 FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22'
+SMALL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-23-nodoc-f=0.1'
+SMALL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-23-f=0.1'
 # Raw control_flow_programs data pattern:
 DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
 # Processed control_flow_programs dataset path:

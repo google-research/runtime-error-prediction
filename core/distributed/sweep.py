@@ -85,12 +85,12 @@ def make_run_id(name, index, params):
 def choose_commands(n, experiment_id, study_id, name, model_class, overrides, dataset_path):
   commands = []
   for index, params in enumerate(dict_product(hparams)):
+    params.update(overrides)
     run_id = make_run_id(name, index, params)
     if 'transformer_size' in params:
       transformer_size = params.pop('transformer_size')
       params.update(transformer_configs[transformer_size])
 
-    params.update(overrides)
 
     flags = []
     for key, value in params.items():
@@ -181,6 +181,10 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
     dataset_path = codenet_paths.FULL_DATASET_PATH
   elif dataset_path == 'DEFAULT_CFP_RAISE_DATASET_PATH':
     dataset_path = codenet_paths.DEFAULT_CFP_RAISE_DATASET_PATH
+  elif dataset_path == 'SMALL_DATASET_PATH_WITH_DOCSTRINGS':
+    dataset_path = codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS
+  elif dataset_path == 'SMALL_DATASET_PATH':
+    dataset_path = codenet_paths.SMALL_DATASET_PATH
 
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
@@ -294,6 +298,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
 
+  # Bias
   # offset = 100
   # overrides = {
   #     'config.raise_in_ipagnn': True,

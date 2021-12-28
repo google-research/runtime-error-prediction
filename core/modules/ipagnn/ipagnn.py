@@ -344,6 +344,8 @@ class IPAGNNLayer(nn.Module):
 
       raise_decision_logits = raise_decide(hidden_state_contributions)
       # raise_decision_logits.shape: batch_size, num_nodes, 2
+      import pdb
+      pdb.set_trace()
       raise_decision_logits = (
           # Adds offset to raise prediction, so offset should be negative.
           raise_decision_logits.at[:, :, 0].add(config.raise_decision_offset)
