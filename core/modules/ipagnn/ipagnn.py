@@ -252,8 +252,17 @@ class IPAGNNLayer(nn.Module):
       # docstring_pooled.shape: hidden_size
       docstring_pooled = jnp.maximum(docstring_pooled, 0)
       # docstring_pooled.shape: hidden_size
-      modulated_node_embedding = node_embedding + docstring_pooled
-      # modulated_node_embedding.shape: hidden_size
+      if config.modulate_mode == 'add':
+        modulated_node_embedding = node_embedding + docstring_pooled
+        # modulated_node_embedding.shape: hidden_size
+      elif config.modulate_mode == 'concat':
+        modulated_node_embedding = jnp.concatenate(
+            [node_embedding, docstring_pooled],
+            axis=0)
+        # modulated_node_embedding.shape: 2 * hidden_size
+      else:
+        raise ValueError('Unexpected modulate_mode', config.modulate_mode)
+      # modulated_node_embedding.shape: n * hidden_size
       return modulated_node_embedding
     film_modulate_all_nodes = jax.vmap(film_modulate_single, in_axes=(0, 0, None, None))
     film_modulate = jax.vmap(film_modulate_all_nodes)
@@ -303,10 +312,17 @@ class IPAGNNLayer(nn.Module):
           docstring_mask)
       # docstring_summary_embedding.shape: hidden_size
       # node_embedding: hidden_size
-      new_node_embeddings = jnp.concatenate(
-          [node_embedding, docstring_summary_embedding],
-          axis=0)
-      # new_node_embeddings.shape: 2 * hidden_size
+      if config.modulate_mode == 'add':
+        new_node_embeddings = node_embedding + docstring_summary_embedding
+        # new_node_embeddings.shape: hidden_size
+      elif config.modulate_mode == 'concat':
+        new_node_embeddings = jnp.concatenate(
+            [node_embedding, docstring_summary_embedding],
+            axis=0)
+        # new_node_embeddings.shape: 2 * hidden_size
+      else:
+        raise ValueError('Unexpected modulate_mode', config.modulate_mode)
+      # new_node_embeddings.shape: n * hidden_size
       return new_node_embeddings
     cross_attention_all_nodes = jax.vmap(cross_attention_single, in_axes=(0, 0, None, None))
     cross_attention = jax.vmap(cross_attention_all_nodes)

@@ -41,6 +41,7 @@ def default_config():
   config.use_cross_attention: bool = False
   config.docstring_transformer_num_layers: int = 2
   config.cross_attention_num_heads = 1
+  config.modulate_mode = 'add'
 
   # Compressive IPA-GNN configs
   config.use_compressive_ipagnn = False
