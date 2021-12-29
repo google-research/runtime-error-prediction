@@ -319,7 +319,7 @@ class Trainer:
 
     rng = jax.random.PRNGKey(0)
     rng, init_rng = jax.random.split(rng)
-    model = self.make_model(deterministic=True)
+    model = self.make_model(deterministic=False)
 
     checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
     assert config.restore_checkpoint_dir
@@ -328,6 +328,7 @@ class Trainer:
     state = checkpoints.restore_checkpoint(checkpoint_dir, state)
     # Copy the restored checkpoint into the checkpoint_dir.
     step = state.step
+    print(f'Step: {step}')
 
     test_writer = tensorboard.SummaryWriter(test_dir)
 
@@ -372,6 +373,11 @@ class Trainer:
     metrics.write_metric(
         EvaluationMetric.LOCALIZATION_ACCURACY.value,
         test_metrics, test_writer.scalar, step)
+
+    sys.stdout.flush()
+    test_writer.flush()
+    if test_writer_fd:
+      os.fsync(test_writer_fd)
 
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
