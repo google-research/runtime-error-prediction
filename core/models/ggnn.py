@@ -48,7 +48,7 @@ class GGNNLayer(nn.Module):
       source_indices,
       dest_indices,
       edge_types):
-    """Apply graph attention transformer layer."""
+    """Apply GGNN layer."""
     config = self.config
     num_nodes = self.num_nodes
     hidden_size = self.hidden_size
@@ -114,6 +114,13 @@ class GGNNModule(nn.Module):
       step_limits):
     config = self.config
     info = self.info
+
+    # start_node_indexes.shape: batch_size, 1
+    # exit_node_indexes.shape: batch_size, 1
+    start_node_indexes = jnp.squeeze(start_node_indexes, axis=-1)
+    exit_node_indexes = jnp.squeeze(exit_node_indexes, axis=-1)
+    # start_node_indexes.shape: batch_size
+    # exit_node_indexes.shape: batch_size
 
     start_indexes = start_node_indexes
     exit_indexes = exit_node_indexes
