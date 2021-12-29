@@ -28,6 +28,7 @@ class TrainerTest(unittest.TestCase):
     config.model_class = 'IPAGNN'
     config.batch_size = 16
     config.raise_in_ipagnn = True
+    config.max_tokens = 512
     validate_single_step(config)
 
   @pytest.mark.slow
