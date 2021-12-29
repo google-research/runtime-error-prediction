@@ -1,6 +1,7 @@
 """Models library."""
 
 from core.models import ipagnn
+from core.models import ggnn
 from core.models import mlp
 from core.models import rnn
 from core.models import transformer
@@ -43,6 +44,12 @@ def make_model(config, info, deterministic):
         info=info,
         transformer_config=transformer_config,
         docstring_transformer_config=docstring_transformer_config,
+    )
+  elif model_class == 'GGNN':
+    return ggnn.GGNN(
+        config=config,
+        info=info,
+        transformer_config=transformer_config,
     )
   elif model_class == 'LSTM':
     return rnn.LSTM(
