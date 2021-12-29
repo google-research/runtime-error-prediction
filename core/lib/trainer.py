@@ -51,8 +51,11 @@ class Trainer:
 
   def load_dataset(
       self, dataset_path=DEFAULT_DATASET_PATH, split='train', epochs=None,
-      include_strings=False,
+      include_strings=False, class_subsample_values='default',
   ):
+    if class_subsample_values == 'default':
+      class_subsample_values = {1: 0.0660801055}
+
     config = self.config
     batch_size = config.batch_size
     if epochs is None:
@@ -66,7 +69,7 @@ class Trainer:
       allowlist = error_kinds.TIER1_ERROR_IDS
     filter_fn = data_io.make_filter(
         config.max_tokens, config.max_num_nodes, config.max_num_edges,
-        config.max_steps, allowlist=allowlist, class_subsample_values={1: 0.0660801055},
+        config.max_steps, allowlist=allowlist, class_subsample_values=class_subsample_values,
         use_in_dataset_field=config.use_in_dataset_field)
 
     if config.binary_targets:
@@ -301,7 +304,7 @@ class Trainer:
 
     print(f'Testing on data: {dataset_path}')
     print(f'Using model: {config.model_class}')
-    dataset = self.load_dataset(dataset_path, split=split, epochs=1)
+    dataset = self.load_dataset(dataset_path, split=split, epochs=1, class_subsample_values=None)
     num_classes = self.info.num_classes
     all_error_kinds = self.info.all_error_kinds
     evaluate_batch = self.make_evaluate_batch()
