@@ -59,14 +59,28 @@ def _tpu_zone(index):
   """Chooses a GCP TPU zone based on the index."""
   if index < 70:
     return 'europe-west4-a'
-  elif index < 128:  # 10
+  elif index < 80:  # 10
     return 'us-central1-b'
-  elif index < 138:  # 10
+  elif index < 90:  # 10
     return 'us-central1-c'
-  elif index < 168:  # 30
+  elif index < 100:  # 30 (seems like 10...)
     return 'asia-east1-c'
+  elif index < 110:
+    return 'us-central1-a'
+  elif index < 120:
+    return 'us-central1-b'
+  elif index < 130:
+    return 'europe-west4-a'
   else:
     raise ValueError('Unhandled zone index')
+
+
+def _tpu_version(index):
+  """Chooses a GCP TPU version based on the index."""
+  if index < 100:
+    return 'v2-alpha', 'v2-8'  # version, accelerator-type
+  else:
+    return 'v2-alpha', 'v3-8'
 
 
 def as_shell_string(args):
@@ -171,12 +185,13 @@ def tpu_up_args(
 ):
   hostname = _tpu_hostname(index)
   zone = _tpu_zone(index)
+  version, accelerator_type = _tpu_version(index)
   return f"""
 gcloud alpha compute tpus tpu-vm create {hostname} \
 --project={project} \
 --zone={zone} \
---version=v2-alpha \
---accelerator-type=v2-8
+--version={version} \
+--accelerator-type={accelerator_type}
   """.split()
 
 

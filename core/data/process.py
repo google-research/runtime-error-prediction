@@ -14,6 +14,7 @@ import numpy as np
 from python_graphs import control_flow
 from python_graphs import instruction as instruction_module
 
+from core.data import post_domination
 from core.data import tokenization
 
 
@@ -35,6 +36,7 @@ class RawRuntimeErrorProblem:
   step_limit: int
   target: int
   target_lineno: Optional[int]
+  post_domination_matrix: List[List[int]]
 
 
 @dataclasses.dataclass
@@ -59,6 +61,7 @@ class RuntimeErrorProblem:
   target: int
   target_lineno: Optional[int]
   target_node_indexes: List[int]
+  post_domination_matrix: List[List[int]]
   in_dataset: bool
 
 
@@ -223,6 +226,8 @@ def make_rawruntimeerrorproblem(
   raises_list = get_raises_list(nodes, exit_index)
   step_limit = get_step_limit(lines)
 
+  post_domination_matrix = post_domination.get_post_domination_matrix(graph)
+
   return RawRuntimeErrorProblem(
       source=source,
       problem_id=problem_id,
@@ -239,6 +244,7 @@ def make_rawruntimeerrorproblem(
       step_limit=step_limit,
       target=target,
       target_lineno=target_lineno,
+      post_domination_matrix=post_domination_matrix,
   )
 
 
@@ -431,6 +437,7 @@ def make_runtimeerrorproblem(
       target=raw.target,
       target_lineno=raw.target_lineno,
       target_node_indexes=target_node_indexes,
+      post_domination_matrix=raw.post_domination_matrix,
       in_dataset=in_dataset,
   )
 

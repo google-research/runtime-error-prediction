@@ -1,6 +1,7 @@
 import functools
 import os
 
+import numpy as np
 import tensorflow as tf
 
 import jax.numpy as jnp
@@ -36,6 +37,8 @@ def to_tf_example(problem):
       'target_lineno': _int64_feature([problem.target_lineno]),
       'target_node_indexes': _int64_feature(problem.target_node_indexes),
       'num_target_nodes': _int64_feature([len(problem.target_node_indexes)]),
+      'post_domination_matrix': _int64_feature(list(problem.post_domination_matrix.flat)),
+      'post_domination_matrix_shape': _int64_feature(problem.post_domination_matrix.shape),
 
       'problem_id': _bytes_feature([problem.problem_id]),
       'submission_id': _bytes_feature([problem.submission_id]),
@@ -67,6 +70,8 @@ def decode_fn(record_bytes, include_strings=False):
       'target_lineno': _int64_scalar_feature(),
       'target_node_indexes': _int64_sequence_feature(),
       'num_target_nodes': _int64_scalar_feature(),
+      'post_domination_matrix': _int64_sequence_feature(),
+      'post_domination_matrix_shape': _int64_sequence_feature(),
 
       'in_dataset': _int64_scalar_feature(),
       'num_tokens': _int64_scalar_feature(),
@@ -78,7 +83,12 @@ def decode_fn(record_bytes, include_strings=False):
         'problem_id': _string_scalar_feature(),
         'submission_id': _string_scalar_feature(),
     })
-  return tf.io.parse_single_example(record_bytes, features)
+  example = tf.io.parse_single_example(record_bytes, features)
+  example['post_domination_matrix'] = tf.reshape(
+      example['post_domination_matrix'],
+      example['post_domination_matrix_shape']
+  )
+  return example
 
 
 def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
@@ -100,6 +110,8 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
       'target_lineno': jnp.ones((batch_size, 1), dtype=jnp.int32),
       'target_node_indexes': jnp.zeros((batch_size, 1), dtype=jnp.int32),
       'num_target_nodes': jnp.ones((batch_size, 1), dtype=jnp.int32),
+      'post_domination_matrix': jnp.ones((batch_size, max_num_nodes, max_num_nodes), dtype=jnp.int32),
+      'post_domination_matrix_shape': jnp.array([max_num_nodes, max_num_nodes], dtype=jnp.uint32),
 
       # We exclude problem_id and submission_id from fake_input, as they are not
       # model inputs.
@@ -136,6 +148,8 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
       'target_lineno': [1],
       'target_node_indexes': [max_target_nodes],
       'num_target_nodes': [1],
+      'post_domination_matrix': [max_num_nodes, max_num_nodes],
+      'post_domination_matrix_shape': [2],
 
       'in_dataset': [1],
       'num_tokens': [1],

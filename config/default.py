@@ -34,12 +34,19 @@ def default_config():
   config.hidden_size: int = 16
   config.span_encoding_method = 'first'  # first, mean, max, sum
   config.permissive_node_embeddings = True
+  config.raise_decision_offset = 0.0
 
   # TODO(dbieber): Switch to "use_conditioning" or similar.
   config.use_film: bool = False
   config.use_cross_attention: bool = False
   config.docstring_transformer_num_layers: int = 2
   config.cross_attention_num_heads = 1
+  config.modulate_mode = 'add'
+
+  # Compressive IPA-GNN configs
+  config.use_compressive_ipagnn = False
+  config.compressive_max_skip = 10
+  config.compressive_mask_maker = 'default'
 
   # Dataset filtering and configs
   config.epochs: Optional[int] = 0

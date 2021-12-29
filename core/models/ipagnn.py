@@ -7,6 +7,7 @@ import jax
 import jax.numpy as jnp
 
 from core.data import error_kinds
+from core.modules.ipagnn import compressive_ipagnn
 from core.modules.ipagnn import encoder
 from core.modules.ipagnn import ipagnn
 from core.modules.ipagnn import logit_math
@@ -47,11 +48,18 @@ class IPAGNN(nn.Module):
       self.docstring_encoder = encoder.TransformerEncoder(
           config=self.docstring_transformer_config)
 
-    self.ipagnn = ipagnn.IPAGNNModule(
-        info=self.info,
-        config=config,
-        max_steps=max_steps,
-    )
+    if config.use_compressive_ipagnn:
+      self.ipagnn = compressive_ipagnn.SkipIPAGNN(
+          config=config,
+          info=self.info,
+          max_steps=max_steps,
+      )
+    else:
+      self.ipagnn = ipagnn.IPAGNNModule(
+          info=self.info,
+          config=config,
+          max_steps=max_steps,
+      )
 
   @nn.compact
   def __call__(self, x):
@@ -90,6 +98,7 @@ class IPAGNN(nn.Module):
         raise_indexes=x['raise_nodes'],
         start_node_indexes=x['start_index'],
         exit_node_indexes=x['exit_index'],
+        post_domination_matrix=x['post_domination_matrix'],
         step_limits=x['step_limit'],
     )
     # ipagnn_output['exit_node_embeddings'].shape: batch_size, hidden_size
@@ -99,15 +108,15 @@ class IPAGNN(nn.Module):
 
     exit_node_embeddings = ipagnn_output['exit_node_embeddings']
     # exit_node_embeddings.shape: batch_size, hidden_size
-    raise_node_embeddings = ipagnn_output['raise_node_embeddings']
-    # raise_node_embeddings.shape: batch_size, hidden_size
     exit_node_instruction_pointer = ipagnn_output['exit_node_instruction_pointer']
     # exit_node_instruction_pointer.shape: batch_size
-    raise_node_instruction_pointer = ipagnn_output['raise_node_instruction_pointer']
-    # raise_node_instruction_pointer.shape: batch_size
 
     num_classes = info.num_classes
     if config.raise_in_ipagnn:
+      raise_node_embeddings = ipagnn_output['raise_node_embeddings']
+      # raise_node_embeddings.shape: batch_size, hidden_size
+      raise_node_instruction_pointer = ipagnn_output['raise_node_instruction_pointer']
+      # raise_node_instruction_pointer.shape: batch_size
       if len(info.no_error_ids) == 1:
         # Multiple error classes; only one No-Error class.
         no_error_id = info.no_error_ids[0]

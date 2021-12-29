@@ -32,7 +32,7 @@ class IPAGNNLayer(nn.Module):
         name='raise_decide_dense',
         features=2,  # raise or don't raise.
         kernel_init=nn.initializers.xavier_uniform(),
-        bias_init=nn.initializers.normal(stddev=1e-6))
+        bias_init=nn.initializers.normal(stddev=1e-6))  # raise, no-raise
     self.branch_decide_dense = nn.Dense(
         name='branch_decide_dense',
         features=2,  # true branch or false branch.
@@ -252,8 +252,17 @@ class IPAGNNLayer(nn.Module):
       # docstring_pooled.shape: hidden_size
       docstring_pooled = jnp.maximum(docstring_pooled, 0)
       # docstring_pooled.shape: hidden_size
-      modulated_node_embedding = node_embedding + docstring_pooled
-      # modulated_node_embedding.shape: hidden_size
+      if config.modulate_mode == 'add':
+        modulated_node_embedding = node_embedding + docstring_pooled
+        # modulated_node_embedding.shape: hidden_size
+      elif config.modulate_mode == 'concat':
+        modulated_node_embedding = jnp.concatenate(
+            [node_embedding, docstring_pooled],
+            axis=0)
+        # modulated_node_embedding.shape: 2 * hidden_size
+      else:
+        raise ValueError('Unexpected modulate_mode', config.modulate_mode)
+      # modulated_node_embedding.shape: n * hidden_size
       return modulated_node_embedding
     film_modulate_all_nodes = jax.vmap(film_modulate_single, in_axes=(0, 0, None, None))
     film_modulate = jax.vmap(film_modulate_all_nodes)
@@ -303,10 +312,17 @@ class IPAGNNLayer(nn.Module):
           docstring_mask)
       # docstring_summary_embedding.shape: hidden_size
       # node_embedding: hidden_size
-      new_node_embeddings = jnp.concatenate(
-          [node_embedding, docstring_summary_embedding],
-          axis=0)
-      # new_node_embeddings.shape: 2 * hidden_size
+      if config.modulate_mode == 'add':
+        new_node_embeddings = node_embedding + docstring_summary_embedding
+        # new_node_embeddings.shape: hidden_size
+      elif config.modulate_mode == 'concat':
+        new_node_embeddings = jnp.concatenate(
+            [node_embedding, docstring_summary_embedding],
+            axis=0)
+        # new_node_embeddings.shape: 2 * hidden_size
+      else:
+        raise ValueError('Unexpected modulate_mode', config.modulate_mode)
+      # new_node_embeddings.shape: n * hidden_size
       return new_node_embeddings
     cross_attention_all_nodes = jax.vmap(cross_attention_single, in_axes=(0, 0, None, None))
     cross_attention = jax.vmap(cross_attention_all_nodes)
@@ -343,6 +359,11 @@ class IPAGNNLayer(nn.Module):
       batch_set = jax.vmap(set_values, in_axes=(0, None, 0))
 
       raise_decision_logits = raise_decide(hidden_state_contributions)
+      # raise_decision_logits.shape: batch_size, num_nodes, 2
+      raise_decision_logits = (
+          # Adds offset to raise prediction, so offset should be negative.
+          raise_decision_logits.at[:, :, 0].add(config.raise_decision_offset)
+      )
       # raise_decision_logits.shape: batch_size, num_nodes, 2
       raise_decisions = nn.softmax(raise_decision_logits, axis=-1)
       # raise_decision.shape: batch_size, num_nodes, 2
@@ -452,6 +473,7 @@ class IPAGNNModule(nn.Module):
       raise_indexes,
       start_node_indexes,
       exit_node_indexes,
+      post_domination_matrix,
       step_limits,
   ):
     info = self.info
