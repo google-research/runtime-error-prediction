@@ -15,6 +15,7 @@ DEFAULT_CONFIG_PATH = codenet_paths.DEFAULT_CONFIG_PATH
 
 flags.DEFINE_string('dataset_path', DEFAULT_DATASET_PATH, 'Dataset path.')
 flags.DEFINE_string('split', 'train', 'Split for training.')
+flags.DEFINE_string('mode', 'train', 'Runner mode')
 config_flags.DEFINE_config_file(
     name='config', default=DEFAULT_CONFIG_PATH, help_string='Config file.'
 )
@@ -29,8 +30,14 @@ def main(argv):
   config = FLAGS.config
   jnp.set_printoptions(threshold=config.printoptions_threshold)
   info = info_lib.get_dataset_info(dataset_path, config)
-  trainer.Trainer(config=config, info=info).run_train(
-      dataset_path=dataset_path, split=split)
+  if FLAGS.mode == 'train':
+    trainer.Trainer(config=config, info=info).run_train(
+        dataset_path=dataset_path, split=split)
+  elif FLAGS.mode == 'test':
+    trainer.Trainer(config=config, info=info).run_test(
+        dataset_path=dataset_path, split=split)
+  else:
+    raise ValueError('Unexpected mode', FLAGS.mode)
 
 
 if __name__ == '__main__':

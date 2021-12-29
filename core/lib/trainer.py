@@ -4,6 +4,7 @@ import dataclasses
 import functools
 import itertools
 import os
+import shutil
 import sys
 
 from typing import Any
@@ -291,6 +292,87 @@ class Trainer:
         config.eval_metric_names,
         self.info)
     return eval_loss, eval_metrics, num_examples
+
+  def run_test(self, dataset_path=DEFAULT_DATASET_PATH, split='test', steps=None):
+    # Ensure eval_subsample==1 and eval_max_batches==-1 are set to test on the full split.
+    assert config.eval_subsample == 1
+    assert config.eval_max_batches == -1
+
+    config = self.config
+    print(f'Testing on data: {dataset_path}')
+    print(f'Using model: {config.model_class}')
+    dataset = self.load_dataset(dataset_path, split=split)
+    num_classes = self.info.num_classes
+    all_error_kinds = self.info.all_error_kinds
+    evaluate_batch = self.make_evaluate_batch()
+
+    study_id = config.study_id
+    exp_id = config.experiment_id or codenet_paths.make_experiment_id()
+    run_id = config.run_id or codenet_paths.make_run_id()
+    run_dir = codenet_paths.make_run_dir(study_id, exp_id, run_id)
+
+    os.makedirs(run_dir, exist_ok=True)
+    metadata_path = codenet_paths.make_metadata_path(run_dir)
+    metadata.write_metadata(metadata_path)
+    
+    test_dir = codenet_paths.make_log_dir(run_dir, 'test')
+
+    rng = jax.random.PRNGKey(0)
+    rng, init_rng = jax.random.split(rng)
+    model = self.make_model(deterministic=True)
+
+    checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
+    assert config.restore_checkpoint_dir
+    shutil.copytree(config.restore_checkpoint_dir, checkpoint_dir)
+    state = self.create_train_state(init_rng, model)
+    state = checkpoints.restore_checkpoint(checkpoint_dir, state)
+    # Copy the restored checkpoint into the checkpoint_dir.
+    step = state.step
+
+    test_writer = tensorboard.SummaryWriter(test_dir)
+
+    # Determine the file descriptors for the summary writer.
+    pid = os.getpid()
+    test_writer_fd = None
+    if os.path.exists(f'/proc/{pid}/fd'):
+      for fd in os.listdir(f'/proc/{pid}/fd'):
+        if test_dir in os.path.realpath(f'/proc/{pid}/fd/{fd}'):
+          test_writer_fd = int(fd)
+
+    test_writer.hparams(config.to_dict())
+    test_writer.flush()
+    if test_writer_fd:
+      os.fsync(test_writer_fd)
+    sys.stdout.flush()
+
+    test_loss, test_metrics, num_examples = self.run_eval(dataset, state, evaluate_batch)
+
+    test_writer.scalar('loss', test_loss, step)
+    metrics.write_metric(EvaluationMetric.ACCURACY.value, test_metrics,
+                         test_writer.scalar, step)
+    metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE.value, test_metrics,
+                         test_writer.scalar, step)
+    metrics.write_metric(EvaluationMetric.MACRO_F1_SCORE.value, test_metrics,
+                         test_writer.scalar, step)
+    metrics.write_metric(EvaluationMetric.BINARY_F1_SCORE.value, test_metrics,
+                         test_writer.scalar, step)
+    metrics.write_metric(EvaluationMetric.BINARY_AUC.value, test_metrics,
+                         test_writer.scalar, step)
+    metrics.write_metric(EvaluationMetric.BINARY_RECALL_AT_90.value, test_metrics,
+                         test_writer.scalar, step)
+    metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE_ERROR_ONLY.value, test_metrics,
+                         test_writer.scalar, step)
+    metrics.write_metric(
+        EvaluationMetric.CONFUSION_MATRIX.value,
+        test_metrics,
+        test_writer.image,
+        step,
+        transform_fn=functools.partial(
+            metrics.confusion_matrix_to_image, class_names=all_error_kinds))
+    metrics.write_metric(
+        EvaluationMetric.LOCALIZATION_ACCURACY.value,
+        test_metrics, test_writer.scalar, step)
+
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config

@@ -91,7 +91,6 @@ def choose_commands(n, experiment_id, study_id, name, model_class, overrides, da
       transformer_size = params.pop('transformer_size')
       params.update(transformer_configs[transformer_size])
 
-
     flags = []
     for key, value in params.items():
       flags.append(f'--{key}={value}')
