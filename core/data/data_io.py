@@ -46,7 +46,7 @@ def to_tf_example(problem):
       'in_dataset': _int64_feature([problem.in_dataset]),
       'num_tokens': _int64_feature([len(problem.tokens)]),
       'num_nodes': _int64_feature([len(problem.true_branch_nodes)]),
-      'num_edges': _int64_feature([len(problem.edge_sources)]),
+      'num_edges': _int64_feature([problem.num_edges]),
   }))
 
 

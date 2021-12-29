@@ -6,6 +6,7 @@ from typing import List, Optional, Text
 import bisect
 import collections
 import dataclasses
+import enum
 import re
 
 import fire
@@ -18,6 +19,15 @@ from core.data import post_domination
 from core.data import tokenization
 
 
+class EdgeTypes(enum.IntEnum):
+  UNCONDITIONAL_FORWARD = enum.auto()
+  UNCONDITIONAL_BACKWARD = enum.auto()
+  TRUE_FORWARD = enum.auto()
+  TRUE_BACKWARD = enum.auto()
+  FALSE_FORWARD = enum.auto()
+  FALSE_BACKWARD = enum.auto()
+
+
 @dataclasses.dataclass
 class RawRuntimeErrorProblem:
   """RawRuntimeErrorProblem."""
@@ -27,6 +37,7 @@ class RawRuntimeErrorProblem:
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
+  num_edges: int
   node_span_starts: List[int]
   node_span_ends: List[int]
   branch_list: List[List[int]]
@@ -49,6 +60,7 @@ class RuntimeErrorProblem:
   edge_sources: List[int]
   edge_dests: List[int]
   edge_types: List[int]
+  num_edges: int
   node_token_span_starts: List[int]
   node_token_span_ends: List[int]
   token_node_indexes: List[int]
@@ -212,19 +224,45 @@ def make_rawruntimeerrorproblem(
     node_span_starts.append(node_span_start)
     node_span_ends.append(node_span_end)
 
-  # edge_sources, edge_dests, and edge_types
-  edge_sources = []
-  edge_dests = []
-  edge_types = []
+  # For consistency with legacy datasets, we count the number of edges this way.
+  # The actual number of edges is higher.
+  num_edges = 0
   for node_index, node in enumerate(nodes):
     for next_node in node.next:
-      edge_sources.append(node_index)
-      edge_dests.append(node_indexes[next_node.uuid])
-      edge_types.append(0)
+      num_edges += 1
 
   branch_list = get_branch_list(nodes, exit_index)
   raises_list = get_raises_list(nodes, exit_index)
   step_limit = get_step_limit(lines)
+
+  edge_sources = []
+  edge_dests = []
+  edge_types = []
+  for node_index, (true_branch, false_branch) in enumerate(branch_list):
+    if true_branch == false_branch:
+      edge_sources.append(node_index)
+      edge_dests.append(true_branch)
+      edge_types.append(EdgeTypes.UNCONDITIONAL_FORWARD.value)
+
+      edge_sources.append(true_branch)
+      edge_dests.append(node_index)
+      edge_types.append(EdgeTypes.UNCONDITIONAL_BACKWARD.value)
+    else:
+      edge_sources.append(node_index)
+      edge_dests.append(true_branch)
+      edge_types.append(EdgeTypes.TRUE_FORWARD.value)
+
+      edge_sources.append(true_branch)
+      edge_dests.append(node_index)
+      edge_types.append(EdgeTypes.TRUE_BACKWARD.value)
+
+      edge_sources.append(node_index)
+      edge_dests.append(false_branch)
+      edge_types.append(EdgeTypes.FALSE_FORWARD.value)
+
+      edge_sources.append(false_branch)
+      edge_dests.append(node_index)
+      edge_types.append(EdgeTypes.FALSE_BACKWARD.value)
 
   post_domination_matrix = post_domination.get_post_domination_matrix(graph)
 
@@ -235,6 +273,7 @@ def make_rawruntimeerrorproblem(
       edge_sources=edge_sources,
       edge_dests=edge_dests,
       edge_types=edge_types,
+      num_edges=num_edges,
       node_span_starts=node_span_starts,
       node_span_ends=node_span_ends,
       branch_list=branch_list,
@@ -425,6 +464,7 @@ def make_runtimeerrorproblem(
       edge_sources=raw.edge_sources,
       edge_dests=raw.edge_dests,
       edge_types=raw.edge_types,
+      num_edges=raw.num_edges,
       node_token_span_starts=token_data['node_token_span_starts'],
       node_token_span_ends=token_data['node_token_span_ends'],
       token_node_indexes=token_data['token_node_indexes'],
