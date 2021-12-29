@@ -105,6 +105,24 @@ Source: {source}""")
       for i, (span_start, span_end, true_node, false_node, raise_node) in enumerate(zip(span_starts, span_ends, true_branch_nodes, false_branch_nodes, raise_nodes)):
         print(f"""Span {i} (--> {true_node},{false_node},{raise_node}): {' '.join(tokens[span_start:span_end + 1])}""")
 
+  def inspect_edges(
+      self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
+      split='train', steps=None):
+    tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
+    dataset = self.load_dataset(dataset_path, split=split)
+    for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      edge_dests = example['edge_dests']
+      edge_sources = example['edge_sources']
+      edge_types = example['edge_types']
+
+      submission_id = example['submission_id'][0].decode('utf-8')
+      problem_id = example['problem_id'][0].decode('utf-8')
+      source, target = explore.get_source_and_target_for_submission(problem_id, submission_id)
+      print(f"""Submission ID: {submission_id} {problem_id}
+Source: {source}""")
+      for i, (dest, src, t) in enumerate(zip(edge_dests, edge_sources, edge_types)):
+        print(i, ':', dest, source, t)
+
   def inspect_targets(
       self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
       split='train', steps=None):
