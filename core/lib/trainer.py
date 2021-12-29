@@ -294,11 +294,11 @@ class Trainer:
     return eval_loss, eval_metrics, num_examples
 
   def run_test(self, dataset_path=DEFAULT_DATASET_PATH, split='test', steps=None):
+    config = self.config
     # Ensure eval_subsample==1 and eval_max_batches==-1 are set to test on the full split.
     assert config.eval_subsample == 1
     assert config.eval_max_batches == -1
 
-    config = self.config
     print(f'Testing on data: {dataset_path}')
     print(f'Using model: {config.model_class}')
     dataset = self.load_dataset(dataset_path, split=split)
