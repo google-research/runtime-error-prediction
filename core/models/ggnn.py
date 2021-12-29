@@ -167,8 +167,6 @@ class GGNNModule(nn.Module):
     # final_states.shape: batch_size, hidden_size
     logits = output_dense(final_states)
     # logits.shape: batch_size, output_token_vocabulary_size
-    logits = jnp.expand_dims(logits, axis=1)
-    # logits.shape: batch_size, 1, output_token_vocabulary_size
     return logits
 
 
