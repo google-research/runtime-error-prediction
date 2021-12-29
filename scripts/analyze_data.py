@@ -121,7 +121,7 @@ Source: {source}""")
       print(f"""Submission ID: {submission_id} {problem_id}
 Source: {source}""")
       for i, (dest, src, t) in enumerate(zip(edge_dests, edge_sources, edge_types)):
-        print(i, ':', dest, source, t)
+        print(i, ':', dest, src, t)
 
   def inspect_targets(
       self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
