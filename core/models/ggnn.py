@@ -1,22 +1,27 @@
 """Gated Graph Neural Network."""
 
+from typing import Any
+
 from absl import logging  # pylint: disable=unused-import
-from flax.deprecated import nn
+from flax import linen as nn
 import jax
 from jax import lax
 import jax.numpy as jnp
 
-from ipagnn.modules import common_modules
+from core.modules.ipagnn import encoder
+from core.modules.ipagnn import rnn
+from core.modules.ipagnn import spans
+from third_party.flax_examples import transformer_modules
 
-Embed = common_modules.Embed
-StackedRNNCell = common_modules.StackedRNNCell
+Embed = nn.Embed
+StackedRNNCell = rnn.StackedRNNCell
 
 
 def create_lstm_cells(n):
   """Creates a list of n LSTM cells."""
   cells = []
   for i in range(n):
-    cell = nn.LSTMCell.partial(
+    cell = nn.LSTMCell(
         gate_fn=nn.sigmoid,
         activation_fn=nn.tanh,
         kernel_init=nn.initializers.xavier_uniform(),
@@ -31,32 +36,40 @@ def create_lstm_cells(n):
 class GGNNLayer(nn.Module):
   """A single layer of GGNN message passing."""
 
-  def apply(
+  info: Any
+  config: Any
+  num_nodes: Any
+  hidden_size: Any
+
+  @nn.compact
+  def __call__(
       self,
-      statement_embeddings,
+      node_embeddings,
       source_indices,
       dest_indices,
-      edge_types,
-      num_nodes,
-      hidden_size,
-      config):
+      edge_types):
     """Apply graph attention transformer layer."""
-    gru_cell = nn.recurrent.GRUCell.shared(name='gru_cell')
+    config = self.config
+    num_nodes = self.num_nodes
+    hidden_size = self.hidden_size
 
+    gru_cell = nn.recurrent.GRUCell(name='gru_cell')
+
+    # TODO(dbieber): Fix edge_types.
     num_edge_types = 6
     num_edges = edge_types.shape[0]
-    edge_dense = nn.Dense.partial(  # Used for creating key/query/values.
+    edge_dense = nn.Dense(  # Used for creating key/query/values.
         name='edge_dense',
         features=num_edge_types * hidden_size,
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
 
-    # statement_embeddings.shape: num_nodes, hidden_size
-    source_embeddings = statement_embeddings[source_indices]
+    # node_embeddings.shape: num_nodes, hidden_size
+    source_embeddings = node_embeddings[source_indices]
     # source_embeddings.shape: num_edges, hidden_size
 
     new_source_embeddings_all_types = edge_dense(source_embeddings)
-    # new_statement_embeddings_all_types.shape:
+    # new_source_embeddings_all_types.shape:
     #   num_edges, (num_edge_types*hidden_size)
     new_source_embeddings_by_type = (
         new_source_embeddings_all_types.reshape(
@@ -67,99 +80,172 @@ class GGNNLayer(nn.Module):
         new_source_embeddings_by_type[jnp.arange(num_edges), edge_types, :])
     # new_source_embeddings.shape: num_edges, hidden_size
 
-    proposed_statement_embeddings = jax.ops.segment_sum(
+    proposed_node_embeddings = jax.ops.segment_sum(
         data=new_source_embeddings,
         segment_ids=dest_indices,
         num_segments=num_nodes,
     )
-    # proposed_statement_embeddings.shape: num_nodes, hidden_state
+    # proposed_node_embeddings.shape: num_nodes, hidden_state
 
-    _, outputs = gru_cell(proposed_statement_embeddings, statement_embeddings)
+    _, outputs = gru_cell(proposed_node_embeddings, node_embeddings)
     return outputs
 
 
-class GGNN(nn.Module):
-  """GGNN model."""
+class GGNNModule(nn.Module):
+  """GGNN model. Operates on batches of batch_size."""
 
-  def apply(self, inputs, info, config, train=False, cache=None):
-    start_indexes = inputs['start_index']  # pylint: disable=unused-variable
-    exit_indexes = inputs['exit_index']
-    steps_all = jnp.squeeze(inputs['steps'], axis=-1)
+  config: Any
+  info: Any
+
+  @nn.compact
+  def __call__(
+      self,
+      node_embeddings,
+      docstring_embeddings,
+      docstring_mask,
+      edge_sources,
+      edge_dests,
+      edge_types,
+      true_indexes,
+      false_indexes,
+      raise_indexes,
+      start_node_indexes,
+      exit_node_indexes,
+      step_limits):
+    config = self.config
+    info = self.info
+
+    start_indexes = start_node_indexes
+    exit_indexes = exit_node_indexes
+    steps_all = jnp.squeeze(step_limits, axis=-1)
     # steps_all.shape: batch_size
-    edge_types = inputs['edge_types']
-    source_indices = inputs['source_indices']
-    dest_indices = inputs['dest_indices']
-    vocab_size = info.features[info._builder.key('statements')].vocab_size  # pylint: disable=protected-access
-    output_token_vocabulary_size = info.output_vocab_size
-    hidden_size = config.model.hidden_size
-    data = inputs['data'].astype('int32')
-    unused_batch_size, num_nodes, unused_statement_length = data.shape
+    # edge_types = edge_types
+    source_indices = edge_sources
+    dest_indices = edge_dests
+    vocab_size = info.vocab_size
+    output_token_vocabulary_size = info.num_classes
+    hidden_size = config.hidden_size
+    num_nodes = node_embeddings.shape[1]
 
-    max_steps = int(1.5 * info.max_diameter)
+    max_steps = config.max_steps
 
-    # Init parameters
-    def emb_init(key, shape, dtype=jnp.float32):
-      return jax.random.uniform(
-          key, shape, dtype,
-          -config.initialization.maxval,
-          config.initialization.maxval)
-
-    embed = Embed.shared(num_embeddings=vocab_size,
-                         features=hidden_size,
-                         emb_init=emb_init,
-                         name='embed')
-
-    cells = create_lstm_cells(config.model.rnn_cell.layers)
-    lstm = StackedRNNCell.shared(cells=cells)
-    initial_state = lstm.initialize_carry(
-        jax.random.PRNGKey(0), cells, (), hidden_size)
-
-    def embed_statement(token_embeddings):
-      # token_embeddings.shape: 4, hidden_size
-      _, results = lax.scan(lstm, initial_state, token_embeddings)
-      return results[-1]
-    embed_all_statements_single_example = jax.vmap(embed_statement)
-    embed_all_statements = jax.vmap(embed_all_statements_single_example)
-
-    output_dense = nn.Dense.shared(
+    output_dense = nn.Dense(
         name='output_dense',
         features=output_token_vocabulary_size,
         kernel_init=nn.initializers.xavier_uniform(),
         bias_init=nn.initializers.normal(stddev=1e-6))
 
-    node_embeddings = embed(data)
     # node_embeddings.shape:
     #     batch_size, num_nodes, statement_length, hidden_size
-    statement_embeddings = embed_all_statements(node_embeddings)
-    # statement_embeddings.shape: batch_size, num_nodes, hidden_size
 
-    gnn_layer_single_example = GGNNLayer.shared(
+    gnn_layer_single_example = GGNNLayer(
+        info=info,
+        config=config,
         num_nodes=num_nodes,
         hidden_size=hidden_size,
-        config=config)
+    )
     gnn_layer = jax.vmap(gnn_layer_single_example)
 
-    # statement_embeddings.shape: batch_size, num_nodes, hidden_size
+    # node_embeddings.shape: batch_size, num_nodes, hidden_size
     for step in range(max_steps):
-      new_statement_embeddings = gnn_layer(
-          statement_embeddings,
+      new_node_embeddings = gnn_layer(
+          node_embeddings,
           source_indices,
           dest_indices,
           edge_types)
       # steps_all.shape: batch_size
       valid = jnp.expand_dims(step < steps_all, axis=(1, 2))
       # valid.shape: batch_size, 1, 1
-      statement_embeddings = jnp.where(
+      node_embeddings = jnp.where(
           valid,
-          new_statement_embeddings,
-          statement_embeddings)
+          new_node_embeddings,
+          node_embeddings)
 
-    def get_final_state(statement_embeddings, exit_index):
-      return statement_embeddings[exit_index]
-    final_states = jax.vmap(get_final_state)(statement_embeddings, exit_indexes)
+    def get_final_state(node_embeddings, exit_index):
+      return node_embeddings[exit_index]
+    final_states = jax.vmap(get_final_state)(node_embeddings, exit_indexes)
     # final_states.shape: batch_size, hidden_size
     logits = output_dense(final_states)
     # logits.shape: batch_size, output_token_vocabulary_size
     logits = jnp.expand_dims(logits, axis=1)
     # logits.shape: batch_size, 1, output_token_vocabulary_size
     return logits
+
+
+class GGNN(nn.Module):
+
+  config: Any
+  info: Any
+  transformer_config: transformer_modules.TransformerConfig
+  docstring_transformer_config: transformer_modules.TransformerConfig
+
+  def setup(self):
+    config = self.config
+    vocab_size = self.info.vocab_size
+    max_tokens = config.max_tokens
+    max_num_nodes = config.max_num_nodes
+    max_num_edges = config.max_num_edges
+    max_steps = config.max_steps
+    self.node_span_encoder = spans.NodeSpanEncoder(
+        info=self.info,
+        config=config,
+        transformer_config=self.transformer_config,
+        max_tokens=max_tokens,
+        max_num_nodes=max_num_nodes,
+        use_span_index_encoder=False,
+        use_span_start_indicators=False,
+    )
+    if config.use_film or config.use_cross_attention:
+      self.docstring_token_encoder = encoder.TokenEncoder(
+          transformer_config=self.docstring_transformer_config,
+          num_embeddings=vocab_size,
+          features=config.hidden_size,
+      )
+      self.docstring_encoder = encoder.TransformerEncoder(
+          config=self.docstring_transformer_config)
+
+    self.ggnn = GGNNModule(
+        info=self.info,
+        config=config,
+    )
+
+  @nn.compact
+  def __call__(self, x):
+    config = self.config
+    info = self.info
+    tokens = x['tokens']
+    docstring_tokens = x['docstring_tokens']
+    # tokens.shape: batch_size, max_tokens
+    batch_size = tokens.shape[0]
+    encoded_inputs = self.node_span_encoder(
+        tokens, x['node_token_span_starts'], x['node_token_span_ends'],
+        x['num_nodes'])
+    # encoded_inputs.shape: batch_size, max_num_nodes, hidden_size
+    if config.use_film or config.use_cross_attention:
+      docstring_token_embeddings = self.docstring_token_encoder(
+          docstring_tokens)
+      docstring_mask = docstring_tokens > 0
+      docstring_encoder_mask = nn.make_attention_mask(
+          docstring_mask, docstring_mask, dtype=jnp.float32)
+      # docstring_token_embeddings.shape: batch_size, max_tokens, hidden_size
+      docstring_embeddings = self.docstring_encoder(
+          docstring_token_embeddings,
+          encoder_mask=docstring_encoder_mask)
+    else:
+      docstring_embeddings = None
+      docstring_mask = None
+    logits = self.ggnn(
+        node_embeddings=encoded_inputs,
+        docstring_embeddings=docstring_embeddings,
+        docstring_mask=docstring_mask,
+        edge_sources=x['edge_sources'],
+        edge_dests=x['edge_dests'],
+        edge_types=x['edge_types'],
+        true_indexes=x['true_branch_nodes'],
+        false_indexes=x['false_branch_nodes'],
+        raise_indexes=x['raise_nodes'],
+        start_node_indexes=x['start_index'],
+        exit_node_indexes=x['exit_index'],
+        step_limits=x['step_limit'],
+    )
+    return logits, {}
