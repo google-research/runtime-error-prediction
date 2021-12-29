@@ -349,7 +349,7 @@ class Trainer:
     test_loss, test_metrics, num_examples = self.run_eval(dataset, state, evaluate_batch)
 
     test_writer.scalar('loss', test_loss, step)
-    test_writer.scalar('num_examples', num_examples)
+    test_writer.scalar('num_examples', num_examples, step)
     metrics.write_metric(EvaluationMetric.ACCURACY.value, test_metrics,
                          test_writer.scalar, step)
     metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE.value, test_metrics,
