@@ -304,7 +304,7 @@ class Trainer:
 
     print(f'Testing on data: {dataset_path}')
     print(f'Using model: {config.model_class}')
-    dataset = self.load_dataset(dataset_path, split=split, epochs=1, class_subsample_values=None)
+    dataset = self.load_dataset(dataset_path, split=split, epochs=1, class_subsample_values='default')
     num_classes = self.info.num_classes
     all_error_kinds = self.info.all_error_kinds
     evaluate_batch = self.make_evaluate_batch()
