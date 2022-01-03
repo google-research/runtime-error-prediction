@@ -23,6 +23,8 @@ def default_config():
   config.use_in_dataset_field = True
 
   # Training configs
+  config.train_steps = 0  # 0 means run forever.
+  config.seed = 0
   config.optimizer = 'adam'  # sgd, adam
   config.learning_rate = 0.03
   config.grad_clip_value: float = 0.0  # 0 means no clipping.
