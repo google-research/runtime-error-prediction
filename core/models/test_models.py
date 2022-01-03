@@ -60,6 +60,14 @@ class ModelsTest(unittest.TestCase):
     config.raise_in_ipagnn = False
     validate_forward_pass(config, info)
 
+  # Disabled for timeout.
+  # @pytest.mark.slow
+  # def test_ggnn(self):
+  #   info = info_lib.get_test_info()
+  #   config = config_lib.get_test_config()
+  #   config.model_class = 'GGNN'
+  #   validate_forward_pass(config, info)
+
   def test_cross_attention_ipagnn(self):
     info = info_lib.get_test_info()
     config = config_lib.get_test_config()
