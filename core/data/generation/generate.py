@@ -21,7 +21,7 @@ from core.data.generation import program_generator
 from core.data.generation import python_interpreter
 
 TFRECORD_PATH = codenet_paths.RAW_CFP_RAISE_DATA_PATH
-# TFRECORD_PATH = 'tmp.tfrecord'
+TFRECORD_PATH = 'tmp-002.tfrecord'
 ASSERTION_ERROR_PROB = 0.5
 ADD_ASSERTION_ERRO = True
 
@@ -166,8 +166,8 @@ def main(argv: Sequence[str]) -> None:
 
   # if os.path.exists(TFRECORD_PATH):
   #   return read()
-  os.makedirs(TFRECORD_PATH, exist_ok=True)
-  
+  # os.makedirs(TFRECORD_PATH, exist_ok=True)
+
   executor = python_interpreter.ExecExecutor()
   counts = collections.Counter()
   program_generator_config = ArithmeticIfRepeatsConfig(
