@@ -166,7 +166,8 @@ def main(argv: Sequence[str]) -> None:
 
   # if os.path.exists(TFRECORD_PATH):
   #   return read()
-
+  os.makedirs(TFRECORD_PATH, exist_ok=True)
+  
   executor = python_interpreter.ExecExecutor()
   counts = collections.Counter()
   program_generator_config = ArithmeticIfRepeatsConfig(
@@ -175,11 +176,11 @@ def main(argv: Sequence[str]) -> None:
       length=30,
   )
   with tf.io.TFRecordWriter(TFRECORD_PATH) as file_writer:
-    for _ in tqdm.tqdm(range(50)):
+    for _ in tqdm.tqdm(range(5000000)):
       source = program_generator.generate_python_source(
           30, program_generator_config)
-      print(source)
-      print()
+      # print(source)
+      # print()
 
       example = (
           generate_example_from_python_source(
@@ -188,7 +189,7 @@ def main(argv: Sequence[str]) -> None:
               output_mod=1000,
           )
       )
-      print(example)
+      # print(example)
 
       source, example = add_assert_error(source, example)
       target = example['human_readable_target_output']
