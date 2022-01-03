@@ -5,8 +5,6 @@ git clone https://$PERSONAL_ACCESS_TOKEN@github.com/googleprivate/compressive-ip
 
 # Install deps
 cd compressive-ipagnn
-git fetch --all
-git checkout 2021-11-10-assert-error-gen
 git pull
 sudo apt-get update
 sudo apt install libgraphviz-dev -y
@@ -17,14 +15,10 @@ if [ ! -f /mnt/runtime-error-problems-experiments/README.md ]; then
   sudo mkdir -p /mnt/runtime-error-problems-experiments
   sudo chown $(whoami) /mnt/runtime-error-problems-experiments
   gcsfuse runtime-error-problems-experiments /mnt/runtime-error-problems-experiments/
-
-  sudo mkdir -p /mnt/error-prediction-synthetic-data
-  sudo chown $(whoami) /mnt/error-prediction-synthetic-data
-  gcsfuse error-prediction-synthetic-data /mnt/error-prediction-synthetic-data/
 fi
 
-# # Copy data out of bucket for faster access.
-# if [ ! -d project-codenet-data/full-noudf-ids ]; then
-#   mkdir -p project-codenet-data
-#   cp -r /mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids project-codenet-data/full-noudf-ids
-# fi
+# Copy data out of bucket for faster access.
+if [ ! -d project-codenet-data/full-noudf-ids ]; then
+  mkdir -p project-codenet-data
+  cp -r /mnt/runtime-error-problems-experiments/datasets/project-codenet/full-noudf-ids project-codenet-data/full-noudf-ids
+fi

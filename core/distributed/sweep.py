@@ -168,8 +168,6 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
 
   if dataset_path is None:
     dataset_path = codenet_paths.FULL_DATASET_PATH
-  elif dataset_path == 'FULL_DATASET_PATH_WITH_DOCSTRINGS':
-    dataset_path = codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS
   elif dataset_path == 'DEFAULT_CFP_DATASET_PATH':
     dataset_path = codenet_paths.DEFAULT_CFP_DATASET_PATH
   elif dataset_path == 'FULL_DATASET_PATH':
@@ -180,19 +178,18 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 12  # Machines per model
+  n = 20  # Machines per model
 
   # Exception IPAGNN
-  offset = 0
+  offset = 20
   run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', True, dataset_path, skip_create)  # Exception IPAGNN
 
   # IPAGNN
-  offset = 12
+  offset = 40
   run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', False, dataset_path, skip_create)
 
-  n = 6
   # Transformer
-  offset = 23  # The machine index to start with.
+  offset = 0  # The machine index to start with.
   run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', False, dataset_path, skip_create)
 
 
