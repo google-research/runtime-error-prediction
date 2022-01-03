@@ -21,7 +21,7 @@ from core.data.generation import program_generator
 from core.data.generation import python_interpreter
 
 TFRECORD_PATH = codenet_paths.RAW_CFP_RAISE_DATA_PATH
-TFRECORD_PATH = 'tmp.tfrecord'
+# TFRECORD_PATH = 'tmp.tfrecord'
 ASSERTION_ERROR_PROB = 0.5
 ADD_ASSERTION_ERRO = True
 
