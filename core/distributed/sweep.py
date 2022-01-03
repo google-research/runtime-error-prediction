@@ -118,27 +118,33 @@ def choose_commands(n, experiment_id, study_id, name, model_class, overrides, da
   return commands
 
 
-def run_sweep(n, offset, experiment_id, study_id, name, model_class, overrides, dataset_path, skip_create):
+def run_sweep(n, offset, experiment_id, study_id, name, model_class, overrides, dataset_path, skip_create, dry_run):
   commands = choose_commands(n, experiment_id, study_id, name, model_class, overrides, dataset_path)
 
   def make_run_command(index):
     return commands[index - offset]
 
-  # Ensure TPUs are up and unused.
-  if not skip_create:
-    print(f'Starting {n} TPUs')
-    gcp.tpu_up_n(n, offset=offset)
-  gcp.fix_firewall().wait()
+  if not dry_run:
+    # Ensure TPUs are up and unused.
+    if not skip_create:
+      print(f'Starting {n} TPUs')
+      gcp.tpu_up_n(n, offset=offset)
+    gcp.fix_firewall().wait()
 
-  access_token = codenet_paths.get_personal_access_token()
-  gcp.tpu_run_script(
-      'scripts/setup-tpu.sh', n, {
-          'PERSONAL_ACCESS_TOKEN': access_token
-      }, offset=offset
-  )
+    access_token = codenet_paths.get_personal_access_token()
+    gcp.tpu_run_script(
+        'scripts/setup-tpu.sh', n, {
+            'PERSONAL_ACCESS_TOKEN': access_token
+        }, offset=offset
+    )
 
-  gcp.fix_firewall().wait()
-  gcp.tpu_run_commands(make_run_command, n, offset=offset)
+    gcp.fix_firewall().wait()
+    gcp.tpu_run_commands(make_run_command, n, offset=offset)
+  else:
+    # This is a dry run.
+    for i in range(offset, offset + n):
+      command = make_run_command(i)
+      print(command)
 
 
 def get_and_increment_global_experiment_id():
@@ -150,7 +156,7 @@ def get_and_increment_global_experiment_id():
   return experiment_id
 
 
-def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False):
+def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False, dry_run=False):
   """Runs a sweep.
 
   To restart any failed jobs in an existing sweep, call this with the experiment_id
@@ -196,21 +202,21 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # overrides = {
   #     'config.raise_in_ipagnn': False,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'IN', 'IPAGNN', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'IN', 'IPAGNN', overrides, dataset_path, skip_create, dry_run, dry_run)
 
   # # Exception IPA-GNN
   # offset = 10
   # overrides = {
   #     'config.raise_in_ipagnn': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EN', 'IPAGNN', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EN', 'IPAGNN', overrides, dataset_path, skip_create, dry_run)
 
   # # Transformer
   # offset = 20
   # overrides = {
   #     'config.raise_in_ipagnn': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'TN', 'Transformer', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'TN', 'Transformer', overrides, dataset_path, skip_create, dry_run)
 
   # Cross-attention Exception IPA-GNN
   # offset = 0  # The machine index to start with.
@@ -218,7 +224,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.raise_in_ipagnn': True,
   #     'config.use_cross_attention': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, dataset_path, skip_create, dry_run)
 
   # # FiLM Exception IPA-GNN
   # offset = 10  # The machine index to start with.
@@ -226,7 +232,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.raise_in_ipagnn': True,
   #     'config.use_film': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, dataset_path, skip_create, dry_run)
 
   # # Cross-attention IPA-GNN
   # offset = 20
@@ -234,7 +240,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.raise_in_ipagnn': False,
   #     'config.use_cross_attention': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, dataset_path, skip_create, dry_run)
 
   # # FiLM IPA-GNN
   # offset = 30  # The machine index to start with.
@@ -242,7 +248,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.raise_in_ipagnn': False,
   #     'config.use_film': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, dataset_path, skip_create, dry_run)
 
   # # Cross-attention IPA-GNN
   # offset = 40
@@ -250,7 +256,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.raise_in_ipagnn': False,
   #     'config.use_cross_attention': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'C', 'IPAGNN', overrides, dataset_path, skip_create, dry_run)
 
   # MIL Transformer
   # offset = 30
@@ -258,29 +264,29 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.raise_in_ipagnn': False,
   #     'config.permissive_node_embeddings': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'MP', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'MP', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 40
   # overrides = {
   #     'config.raise_in_ipagnn': False,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'MN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'MN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # offset = 50
   # overrides = {
   #     'config.raise_in_ipagnn': False,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'M', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 60
   # overrides = {
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 70
   # overrides = {
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # # Compressive IPA-GNN
   # offset = 80
@@ -288,14 +294,14 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.use_compressive_ipagnn': True,
   #     'config.compressive_max_skip': 3,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'CD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'CD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 90
   # overrides = {
   #     'config.use_compressive_ipagnn': True,
   #     'config.compressive_max_skip': 3,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'CN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # # Bias
   # offset = 100
@@ -303,36 +309,36 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.raise_in_ipagnn': True,
   #     # Using config.raise_decision_offset.
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EO', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EO', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # offset = 0
   # overrides = {
   #     'config.raise_in_ipagnn': True,
   #     # Using config.raise_decision_offset.
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EOD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EOD', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 20
   # overrides = {
   #     'config.raise_in_ipagnn': False,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 10
   # overrides = {
   #     'config.raise_in_ipagnn': True,
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 60
   # overrides = {
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 70
   # overrides = {
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 30
   # overrides = {
@@ -340,7 +346,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.use_cross_attention': True,
   #     'config.modulate_mode': 'add',
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # offset = 40
   # overrides = {
@@ -348,7 +354,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.use_cross_attention': True,
   #     'config.modulate_mode': 'add',
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # Exception IPA-GNN FiLM
   # offset = 50
@@ -357,19 +363,19 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.use_film': True,
   #     'config.modulate_mode': 'concat',
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # GGNN with docstring input
   # offset = 70
   # overrides = {
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN with no input
   # offset = 60
   # overrides = {
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # IPA-GNN FiLM
   offset = 70
@@ -378,7 +384,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
       'config.use_film': True,
       'config.modulate_mode': 'concat',
   }
-  run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # Exception IPA-GNN FiLM
   offset = 60
@@ -387,7 +393,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
       'config.use_film': True,
       'config.modulate_mode': 'concat',
   }
-  run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create)
+  run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
 # # To kill the runner processes:
 # # python -m core.distributed.gcp tpu_run_command 'pkill runner.py && pkill tmux' --n=60 --offset=0
