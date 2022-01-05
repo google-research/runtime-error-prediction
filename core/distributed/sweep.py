@@ -372,10 +372,11 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN with no input
-  # offset = 60
-  # overrides = {
-  # }
-  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+  offset = 42
+  n = 1
+  overrides = {
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # IPA-GNN FiLM
   # offset = 70
@@ -414,13 +415,13 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
   # IPA-GNN FiLM Concat with Docstrings
-  offset = 10
-  overrides = {
-      'config.raise_in_ipagnn': False,
-      'config.use_film': True,
-      'config.modulate_mode': 'concat',
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  # offset = 10
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_film': True,
+  #     'config.modulate_mode': 'concat',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
 
 # # To kill the runner processes:
