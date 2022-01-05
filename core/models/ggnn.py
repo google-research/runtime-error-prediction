@@ -154,19 +154,28 @@ class GGNNModule(nn.Module):
     gnn_layer = jax.vmap(gnn_layer_single_example)
 
     # node_embeddings.shape: batch_size, num_nodes, hidden_size
-    for step in range(max_steps):
-      new_node_embeddings = gnn_layer(
-          node_embeddings,
-          source_indices,
-          dest_indices,
-          edge_types)
-      # steps_all.shape: batch_size
-      valid = jnp.expand_dims(step < steps_all, axis=(1, 2))
-      # valid.shape: batch_size, 1, 1
-      node_embeddings = jnp.where(
-          valid,
-          new_node_embeddings,
-          node_embeddings)
+    if config.ggnn_use_fixed_num_layers:
+      for step in range(config.ggnn_layers):
+        node_embeddings = gnn_layer(
+            node_embeddings,
+            source_indices,
+            dest_indices,
+            edge_types)
+    else:
+      # Run one layer per allowed step of execution.
+      for step in range(max_steps):
+        new_node_embeddings = gnn_layer(
+            node_embeddings,
+            source_indices,
+            dest_indices,
+            edge_types)
+        # steps_all.shape: batch_size
+        valid = jnp.expand_dims(step < steps_all, axis=(1, 2))
+        # valid.shape: batch_size, 1, 1
+        node_embeddings = jnp.where(
+            valid,
+            new_node_embeddings,
+            node_embeddings)
 
     def get_final_state(node_embeddings, exit_index):
       return node_embeddings[exit_index]
