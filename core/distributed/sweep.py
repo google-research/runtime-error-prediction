@@ -397,6 +397,24 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
+  # IPA-GNN FiLM
+  # offset = 70
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_film': True,
+  #     'config.modulate_mode': 'concat',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # # Exception IPA-GNN FiLM
+  # offset = 60
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_film': True,
+  #     'config.modulate_mode': 'concat',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
   # IPA-GNN Cross-attention
   # offset = 60
   # overrides = {
@@ -416,13 +434,13 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
   # IPA-GNN FiLM Concat with Docstrings
-  # offset = 10
-  # overrides = {
-  #     'config.raise_in_ipagnn': False,
-  #     'config.use_film': True,
-  #     'config.modulate_mode': 'concat',
-  # }
-  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  offset = 10
+  overrides = {
+      'config.raise_in_ipagnn': False,
+      'config.use_film': True,
+      'config.modulate_mode': 'concat',
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
 
 # # To kill the runner processes:
