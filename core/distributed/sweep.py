@@ -24,6 +24,7 @@ hparams = {
     'config.compressive_mask_maker': ['default'],
     'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
     'transformer_size': ['tiny', 'small', 'default'],
+    'config.ggnn_layers': [8, 16, 24]
 }
 
 transformer_configs = {
@@ -372,8 +373,8 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN with no input
-  offset = 42
-  n = 1
+  offset = 80
+  n = 10
   overrides = {
   }
   run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
