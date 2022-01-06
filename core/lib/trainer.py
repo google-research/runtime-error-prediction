@@ -429,6 +429,12 @@ class Trainer:
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
 
+    if config.save_freq >= 50000:
+      keep_num = 100
+    else:
+      # If saving very frequently, don't keep as many checkpoints on disk.
+      keep_num = 10
+
     # TODO(rishab): Store the state of the early stopping.
     es = early_stopping.EarlyStopping(
         min_delta=config.early_stopping_delta,
@@ -490,7 +496,7 @@ class Trainer:
 
       # Save checkpoints.
       if step % config.save_freq == 0:
-        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=100)
+        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=keep_num)
 
       # Do batch evaluation.
       if step % config.eval_freq == 0:
@@ -661,4 +667,4 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         train_localization_predictions.clear()
 
     # Save final state.
-    checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
+    checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=keep_num)
