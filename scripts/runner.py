@@ -32,7 +32,7 @@ def main(argv):
   info = info_lib.get_dataset_info(dataset_path, config)
   if FLAGS.mode == 'train':
     trainer.Trainer(config=config, info=info).run_train(
-        dataset_path=dataset_path, split=split)
+        dataset_path=dataset_path, split=split, steps=config.train_steps)
   elif FLAGS.mode == 'test':
     trainer.Trainer(config=config, info=info).run_test(
         dataset_path=dataset_path, split=split)

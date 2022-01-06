@@ -398,6 +398,8 @@ class Trainer:
     exp_id = config.experiment_id or codenet_paths.make_experiment_id()
     run_id = config.run_id or codenet_paths.make_run_id()
     run_dir = codenet_paths.make_run_dir(study_id, exp_id, run_id)
+    if steps == 0:
+      steps = None  # Run forever.
 
     os.makedirs(run_dir, exist_ok=True)
     metadata_path = codenet_paths.make_metadata_path(run_dir)
@@ -409,7 +411,7 @@ class Trainer:
     valid_dir = codenet_paths.make_log_dir(run_dir, 'valid')
     print(f'Checkpoints: {checkpoint_dir}')
 
-    rng = jax.random.PRNGKey(0)
+    rng = jax.random.PRNGKey(config.seed)
     rng, init_rng = jax.random.split(rng)
     model = self.make_model(deterministic=False)
 
@@ -426,6 +428,12 @@ class Trainer:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
     train_step = self.make_train_step()
+
+    if config.save_freq >= 50000:
+      keep_num = 100
+    else:
+      # If saving very frequently, don't keep as many checkpoints on disk.
+      keep_num = 10
 
     # TODO(rishab): Store the state of the early stopping.
     es = early_stopping.EarlyStopping(
@@ -488,7 +496,7 @@ class Trainer:
 
       # Save checkpoints.
       if step % config.save_freq == 0:
-        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=3)
+        checkpoints.save_checkpoint(checkpoint_dir, state, step, keep=keep_num)
 
       # Do batch evaluation.
       if step % config.eval_freq == 0:
@@ -659,4 +667,4 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         train_localization_predictions.clear()
 
     # Save final state.
-    checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=3)
+    checkpoints.save_checkpoint(checkpoint_dir, state, state.step, keep=keep_num)
