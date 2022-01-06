@@ -5,18 +5,18 @@ import socket
 import time
 
 DEFAULT_CONFIG_PATH = 'config/default.py'
-DEFAULT_DATASET_PATH = 'datasets/codenet/2021-12-06-f=0.01'
-TEST_DATASET_PATH = 'datasets/codenet/2021-12-22-f=0.01'
+DEFAULT_DATASET_PATH = 'datasets/codenet/2021-12-09-f=0.01'
+TEST_DATASET_PATH = 'datasets/codenet/2021-12-29-f=0.01'
 DEFAULT_TOKENIZER_PATH = 'out/tokenizers/train-1000000.json'
 DOCSTRING_TOKENIZER_PATH = 'out/tokenizers/train-docstrings-1000000.json'
 DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
-FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22-nodoc'
-FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-22'
-SMALL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-23-nodoc-f=0.1'
-SMALL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-23-f=0.1'
+FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-nodoc'
+FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29'
+SMALL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-nodoc-f=0.1'
+SMALL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-f=0.1'
 # Raw control_flow_programs data pattern:
 DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
 # Processed control_flow_programs dataset path:
