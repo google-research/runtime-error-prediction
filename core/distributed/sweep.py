@@ -24,7 +24,7 @@ hparams = {
     'config.compressive_mask_maker': ['default'],
     'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
     'transformer_size': ['tiny', 'small', 'default'],
-    'config.ggnn_layers': [8, 16, 24]
+    'config.ggnn_layers': [8, 16, 24],
 }
 
 transformer_configs = {
