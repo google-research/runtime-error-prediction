@@ -88,7 +88,6 @@ def decode_fn(record_bytes, include_strings=False):
       example['post_domination_matrix'],
       example['post_domination_matrix_shape']
   )
-  example['num_edge_sources'] = example['edge_sources'].shape
   return example
 
 
