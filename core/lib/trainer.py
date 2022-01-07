@@ -72,13 +72,10 @@ class Trainer:
         config.max_steps, allowlist=allowlist, class_subsample_values=class_subsample_values,
         use_in_dataset_field=config.use_in_dataset_field)
 
-    def add_edge_sources_len(x):
-      x['edge_sources_shape'] = tf.shape(x['edge_sources'])
-      return x
     if config.binary_targets:
-      map_fn = lambda x: add_edge_sources_len(functools.partial(data_io.binarize_targets, dataset_path=dataset_path)(x))
+      map_fn = functools.partial(data_io.binarize_targets, dataset_path=dataset_path)
     else:
-      map_fn = add_edge_sources_len
+      map_fn = lambda x: x
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
@@ -646,7 +643,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
 
         did_improve, es = es.update(-1 * primary_metric_value_pos)
         if did_improve:
-          checkpoints.save_checkpoint(top_checkpoint_dir, state, state.step, keep=3)
+          checkpoints.save_checkpoint(top_checkpoint_dir, state, state.step, keep=3, overwrite=True)
 
         if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')
