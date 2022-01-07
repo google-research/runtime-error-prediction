@@ -95,9 +95,10 @@ def get_fake_input(batch_size, max_tokens, max_num_nodes, max_num_edges):
   return {
       'tokens': jnp.ones((batch_size, max_tokens), dtype=jnp.int32),
       'docstring_tokens': jnp.ones((batch_size, max_tokens), dtype=jnp.int32),
-      'edge_sources': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
-      'edge_dests': jnp.ones((batch_size, max_num_edges), dtype=jnp.int32),
-      'edge_types': jnp.zeros((batch_size, max_num_edges), dtype=jnp.int32),
+      'edge_sources': jnp.zeros((batch_size, 2 * max_num_edges + 4), dtype=jnp.int32),
+      'edge_dests': jnp.ones((batch_size, 2 * max_num_edges + 4), dtype=jnp.int32),
+      'edge_types': jnp.zeros((batch_size, 2 * max_num_edges + 4), dtype=jnp.int32),
+      'edge_sources_shape': jnp.full((batch_size, 1), 2 * max_num_edges + 4, dtype=jnp.int32),
       'node_token_span_starts': jnp.zeros((batch_size, max_num_nodes), dtype=jnp.int32),
       'node_token_span_ends': jnp.ones((batch_size, max_num_nodes), dtype=jnp.int32),
       'true_branch_nodes': jnp.ones((batch_size, max_num_nodes), dtype=jnp.int32),
@@ -135,6 +136,7 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
       'edge_sources': [2 * max_num_edges + 6],
       'edge_dests': [2 * max_num_edges + 6],
       'edge_types': [2 * max_num_edges + 6],
+      'edge_sources_shape': [1],  # Added in trainer.py.
       'node_token_span_starts': [max_num_nodes],
       'node_token_span_ends': [max_num_nodes],
       'token_node_indexes': [max_tokens],

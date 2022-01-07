@@ -132,6 +132,7 @@ class GGNNModule(nn.Module):
     # start_node_indexes.shape: batch_size
     # exit_node_indexes.shape: batch_size
     # num_edges.shape: batch_size
+    batch_size = node_embeddings.shape[0]
     assert num_edges.shape == (batch_size,)
 
     start_indexes = start_node_indexes
