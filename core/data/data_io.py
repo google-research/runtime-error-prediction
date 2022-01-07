@@ -88,6 +88,7 @@ def decode_fn(record_bytes, include_strings=False):
       example['post_domination_matrix'],
       example['post_domination_matrix_shape']
   )
+  example['edge_sources_shape'] = tf.shape(example['edge_sources'])
   return example
 
 
