@@ -174,9 +174,13 @@ def process_codenet(
     problem_ids=None,
     include_docstrings=True,
     fraction=1.0,
+    class_subsample_values=None,
     start_at=0):
   """Makes RuntimeErrorProblem objects per submission using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
+
+  if class_subsample_values == 'default':
+    class_subsample_values = {1: 0.0660801055}
 
   if problem_ids:
     problem_and_submission_ids = codenet.get_split_problem_and_submission_ids_with_evals(
@@ -188,6 +192,7 @@ def process_codenet(
   count = 0
   yielded = 0
   runtime_error_count = 0
+  sampled_out_count = 0
   udf_count = 0
   syntax_error_count = 0
   py2_skip = 0
@@ -233,6 +238,13 @@ def process_codenet(
     if include_docstrings and docstring:
       if target_lineno:  # 0 indicates no error, and should remain 0.
         target_lineno += len(docstring.split('\n')) + 1
+
+    if class_subsample_values:
+      if target in class_subsample_values:
+        subsample_value = class_subsample_values[target]
+        if random.random() > subsample_value:
+          sampled_out_count += 1
+          continue
 
     try:
       problem = process.make_runtimeerrorproblem(
@@ -293,6 +305,7 @@ def process_codenet(
   print(f'Final Syntax Error Count: {syntax_error_count}')
   print(f'Final UDF Count: {udf_count}')
   print(f'Final Runtime Error Count: {runtime_error_count}')
+  print(f'Final Sampled-out Count: {sampled_out_count}')
   print(f'Final Count: {count}')
   print(f'Final PY2 count: {py2_skip}')
   print(f'Final assertion_error_count: {assertion_error_count}')
