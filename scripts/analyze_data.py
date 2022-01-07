@@ -118,10 +118,10 @@ Source: {source}""")
       edge_types = example['edge_types']
       if edge_sources.shape > max_shape:
         print(example['num_edges'])
-        print(example['num_edge_sources'])
-        print(max_shape)
+        print(edge_sources.shape)
         if example['num_edges'] <= 128:
           max_shape = edge_sources.shape
+          print('max', max_shape)
       all_edge_shapes.append(edge_sources.shape)
 
       submission_id = example['submission_id'][0].decode('utf-8')
