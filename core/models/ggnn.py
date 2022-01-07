@@ -55,7 +55,6 @@ class GGNNLayer(nn.Module):
 
     gru_cell = nn.recurrent.GRUCell(name='gru_cell')
 
-    # TODO(dbieber): Fix edge_types.
     num_edge_types = 6
     num_edges = edge_types.shape[0]
     edge_dense = nn.Dense(  # Used for creating key/query/values.
