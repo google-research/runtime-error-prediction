@@ -148,6 +148,37 @@ def generate_codenet_dataset(
   save_codenet_tfrecord(test_path, test_problems_gen, max_files=max_files)
 
 
+def generate_codenet_test_dataset(
+    tokenizer_path=DEFAULT_TOKENIZER_PATH,
+    dataset_path=DEFAULT_DATASET_PATH,
+    splits_path=DEFAULT_SPLITS_PATH,
+    include_docstrings=True,
+    fraction=1.0,
+    max_files=None):
+  """Generates a TFRecord dataset from the CodeNet test data.
+
+  Args:
+    tokenizer_path: The tokenizer data to use when generating the dataset.
+    dataset_path: The path to write the dataset to.
+    splits_path: The path to the split data.
+    include_docstrings: If True, adds a synthetic docstring at the start of
+      each submission, generated from the problem statement.
+    fraction: The fraction of submissions to include in the dataset.
+    max_files: (optional) The maximum number of submissions to use for
+      generating the tokenizer.
+  """
+  random.seed(0)
+  splits_dict = splits.load_splits(path=splits_path)
+
+  test_path = codenet_paths.make_tfrecord_path(dataset_path, 'test')
+
+  test_problems_gen = process_codenet(
+      tokenizer_path=tokenizer_path, problem_ids=splits_dict['test'],
+      include_docstrings=include_docstrings, fraction=fraction,
+      class_subsample_values='default')
+  save_codenet_tfrecord(test_path, test_problems_gen, max_files=max_files)
+
+
 def save_codenet_tfrecord(tfrecord_path, problems_gen, max_files=None):
   ids = []
   with tf.io.TFRecordWriter(tfrecord_path) as file_writer:
