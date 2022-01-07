@@ -47,7 +47,8 @@ class GGNNLayer(nn.Module):
       node_embeddings,
       source_indices,
       dest_indices,
-      edge_types):
+      edge_types,
+      num_edges):
     """Apply GGNN layer."""
     config = self.config
     num_nodes = self.num_nodes
@@ -56,7 +57,9 @@ class GGNNLayer(nn.Module):
     gru_cell = nn.recurrent.GRUCell(name='gru_cell')
 
     num_edge_types = 6
-    num_edges = edge_types.shape[0]
+    max_num_edges = edge_types.shape[0]
+    # num_edges.shape: scalar
+    assert num_edges.shape == ()
     edge_dense = nn.Dense(  # Used for creating key/query/values.
         name='edge_dense',
         features=num_edge_types * hidden_size,
@@ -65,19 +68,26 @@ class GGNNLayer(nn.Module):
 
     # node_embeddings.shape: num_nodes, hidden_size
     source_embeddings = node_embeddings[source_indices]
-    # source_embeddings.shape: num_edges, hidden_size
+    # source_embeddings.shape: max_num_edges, hidden_size
 
     new_source_embeddings_all_types = edge_dense(source_embeddings)
     # new_source_embeddings_all_types.shape:
-    #   num_edges, (num_edge_types*hidden_size)
+    #   max_num_edges, (num_edge_types*hidden_size)
     new_source_embeddings_by_type = (
         new_source_embeddings_all_types.reshape(
             (-1, num_edge_types, hidden_size)))
     # new_source_embeddings_by_type.shape:
-    #    num_edges, num_edge_types, hidden_size
+    #    max_num_edges, num_edge_types, hidden_size
     new_source_embeddings = (
-        new_source_embeddings_by_type[jnp.arange(num_edges), edge_types, :])
-    # new_source_embeddings.shape: num_edges, hidden_size
+        new_source_embeddings_by_type[jnp.arange(max_num_edges), edge_types, :])
+    # new_source_embeddings.shape: max_num_edges, hidden_size
+
+    # Set new_source_embeddings to zero for all edges beyond the last edge.
+    new_source_embeddings = jnp.where(
+        jnp.arange(max_num_edges) < num_edges, 
+        new_source_embeddings,
+        0
+    )
 
     proposed_node_embeddings = jax.ops.segment_sum(
         data=new_source_embeddings,
@@ -105,6 +115,7 @@ class GGNNModule(nn.Module):
       edge_sources,
       edge_dests,
       edge_types,
+      num_edges,
       true_indexes,
       false_indexes,
       raise_indexes,
@@ -120,6 +131,8 @@ class GGNNModule(nn.Module):
     exit_node_indexes = jnp.squeeze(exit_node_indexes, axis=-1)
     # start_node_indexes.shape: batch_size
     # exit_node_indexes.shape: batch_size
+    # num_edges.shape: batch_size
+    assert num_edges.shape == (batch_size,)
 
     start_indexes = start_node_indexes
     exit_indexes = exit_node_indexes
@@ -159,7 +172,8 @@ class GGNNModule(nn.Module):
             node_embeddings,
             source_indices,
             dest_indices,
-            edge_types)
+            edge_types,
+            num_edges)
     else:
       # Run one layer per allowed step of execution.
       for step in range(max_steps):
@@ -167,7 +181,8 @@ class GGNNModule(nn.Module):
             node_embeddings,
             source_indices,
             dest_indices,
-            edge_types)
+            edge_types,
+            num_edges)
         # steps_all.shape: batch_size
         valid = jnp.expand_dims(step < steps_all, axis=(1, 2))
         # valid.shape: batch_size, 1, 1
@@ -254,6 +269,7 @@ class GGNN(nn.Module):
         edge_sources=x['edge_sources'],
         edge_dests=x['edge_dests'],
         edge_types=x['edge_types'],
+        num_edges=x['edge_sources_shape'],
         true_indexes=x['true_branch_nodes'],
         false_indexes=x['false_branch_nodes'],
         raise_indexes=x['raise_nodes'],

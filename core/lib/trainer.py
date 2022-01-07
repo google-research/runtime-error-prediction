@@ -72,10 +72,13 @@ class Trainer:
         config.max_steps, allowlist=allowlist, class_subsample_values=class_subsample_values,
         use_in_dataset_field=config.use_in_dataset_field)
 
+    def add_edge_sources_len(x):
+      x['edge_sources_shape'] = tf.shape(x['edge_sources'])
+      return x
     if config.binary_targets:
-      map_fn = functools.partial(data_io.binarize_targets, dataset_path=dataset_path)
+      map_fn = lambda x: add_edge_sources_len(functools.partial(data_io.binarize_targets, dataset_path=dataset_path)(x))
     else:
-      map_fn = lambda x: x
+      map_fn = add_edge_sources_len
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.

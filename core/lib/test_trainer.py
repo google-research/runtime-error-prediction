@@ -33,12 +33,12 @@ class TrainerTest(unittest.TestCase):
 
   # Disabled for timeout.
   # @pytest.mark.slow
-  # def test_ggnn(self):
-  #   config = config_lib.get_test_config()
-  #   config.model_class = 'GGNN'
-  #   config.batch_size = 16
-  #   config.max_tokens = 512
-  #   validate_single_step(config)
+  def test_ggnn(self):
+    config = config_lib.get_test_config()
+    config.model_class = 'GGNN'
+    config.batch_size = 16
+    config.max_tokens = 512
+    validate_single_step(config)
 
   @pytest.mark.slow
   def test_film_ipagnn(self):
