@@ -83,8 +83,13 @@ class GGNNLayer(nn.Module):
     # new_source_embeddings.shape: max_num_edges, hidden_size
 
     # Set new_source_embeddings to zero for all edges beyond the last edge.
+    print('max_num_edges')
+    print(max_num_edges)
+    print((jnp.arange(max_num_edges) < num_edges)[:, None].shape)  # 260,
+    print(num_edges)
+    print(new_source_embeddings.shape)  # 260, 10
     new_source_embeddings = jnp.where(
-        jnp.arange(max_num_edges) < num_edges, 
+        (jnp.arange(max_num_edges) < num_edges)[:, None],
         new_source_embeddings,
         0
     )
@@ -133,7 +138,6 @@ class GGNNModule(nn.Module):
     # exit_node_indexes.shape: batch_size
     # num_edges.shape: batch_size
     batch_size = node_embeddings.shape[0]
-    print(num_edges.shape)
     num_edges = jnp.squeeze(num_edges, axis=-1)
     assert num_edges.shape == (batch_size,)
 
