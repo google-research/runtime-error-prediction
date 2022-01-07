@@ -114,6 +114,7 @@ Source: {source}""")
       edge_dests = example['edge_dests']
       edge_sources = example['edge_sources']
       edge_types = example['edge_types']
+      print(edge_sources.shape)
 
       submission_id = example['submission_id'][0].decode('utf-8')
       problem_id = example['problem_id'][0].decode('utf-8')

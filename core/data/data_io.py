@@ -132,9 +132,9 @@ def get_padded_shapes(max_tokens, max_num_nodes, max_num_edges, include_strings=
   shapes = {
       'tokens': [max_tokens],
       'docstring_tokens': [max_tokens],
-      'edge_sources': [max_num_edges],
-      'edge_dests': [max_num_edges],
-      'edge_types': [max_num_edges],
+      'edge_sources': [2 * max_num_edges],
+      'edge_dests': [2 * max_num_edges],
+      'edge_types': [2 * max_num_edges],
       'node_token_span_starts': [max_num_nodes],
       'node_token_span_ends': [max_num_nodes],
       'token_node_indexes': [max_tokens],
