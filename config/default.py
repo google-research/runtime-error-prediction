@@ -51,6 +51,7 @@ def default_config():
   config.compressive_mask_maker = 'default'
 
   # GGNN Configs
+  config.ggnn_use_exit_node_embedding = False
   config.ggnn_use_fixed_num_layers = True
   config.ggnn_layers = 3
 

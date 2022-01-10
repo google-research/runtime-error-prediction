@@ -194,9 +194,23 @@ class GGNNModule(nn.Module):
             node_embeddings)
 
     def get_final_state(node_embeddings, exit_index):
-      return node_embeddings[exit_index]
+      if config.ggnn_use_exit_node_embedding:
+        return node_embeddings[exit_index]
+      else:
+        # Mean Pool over num_nodes (only up to the actual num nodes, given by exit_index + 1)
+        is_node = jnp.arange(num_nodes) < exit_index
+        print(is_node.shape)
+        print(node_embeddings.shape)
+        node_embeddings = jnp.where(is_node[:, None], node_embeddings, 0)
+        # set to 0 anything beyond exit_index
+        # sum and divide.
+        global_embedding = jnp.sum(node_embeddings, axis=0) / (exit_index + 1)
+        assert global_embedding.shape == (hidden_size,)
+        return global_embedding
+    # node_embeddings.shape: batch_size, num_nodes, hidden_size
     final_states = jax.vmap(get_final_state)(node_embeddings, exit_indexes)
     # final_states.shape: batch_size, hidden_size
+
     logits = output_dense(final_states)
     # logits.shape: batch_size, output_token_vocabulary_size
     return logits

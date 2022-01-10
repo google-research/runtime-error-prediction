@@ -436,11 +436,11 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN with input
-  offset = 80
+  offset = 0
   n = 10
   overrides = {
   }
-  run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
 
 # # To kill the runner processes:
