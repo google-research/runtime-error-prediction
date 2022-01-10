@@ -140,6 +140,7 @@ class Trainer:
     state = TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
     state.step = step
+    return state
 
   def restore_checkpoint(self, restore_checkpoint_dir, init_rng, model):
     state_dict = checkpoints.restore_checkpoint(restore_checkpoint_dir, None)
@@ -348,7 +349,6 @@ class Trainer:
     checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
     assert config.restore_checkpoint_dir
     # shutil.copytree(config.restore_checkpoint_dir, checkpoint_dir)
-    # state = self.create_train_state(init_rng, model)
     state = self.restore_checkpoint(config.restore_checkpoint_dir, init_rng, model)
     # Copy the restored checkpoint into the checkpoint_dir.
     step = state.step
