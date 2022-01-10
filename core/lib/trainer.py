@@ -147,7 +147,7 @@ class Trainer:
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
   def restore_checkpoint(self, restore_checkpoint_dir, init_rng, model):
-    state_dict = checkpoints.restore_checkpoint(restore_checkpoint_dir)
+    state_dict = checkpoints.restore_checkpoint(restore_checkpoint_dir, None)
     return self.create_train_state_from_params(init_rng, model, state_dict['params'])
 
   def make_loss_fn(self, deterministic):
