@@ -124,6 +124,32 @@ class Trainer:
     return TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
+  def create_train_state_from_params(self, rng, model, params):
+    """Creates initial TrainState."""
+    config = self.config
+    # fake_input = data_io.get_fake_input(
+    #     config.batch_size, config.max_tokens, config.max_num_nodes, config.max_num_edges)
+    rng, params_rng, dropout_rng = jax.random.split(rng, 3)
+    # variables = model.init(
+    #     {'params': params_rng, 'dropout': dropout_rng},
+    #     fake_input)
+    # params = variables['params']
+    learning_rate = config.learning_rate
+    if config.optimizer == 'sgd':
+      tx = optax.sgd(learning_rate)
+    elif config.optimizer == 'adam':
+      tx = optax.adam(learning_rate)
+    else:
+      raise ValueError('Unexpected optimizer', config.optimizer)
+    # TODO(dbieber): I don't think model.apply is used from here.
+    # Instead, it's used from make_loss_fn.
+    return TrainState.create(
+        apply_fn=model.apply, params=params, tx=tx, rng=rng)
+
+  def restore_checkpoint(self, restore_checkpoint_dir, init_rng, model):
+    state_dict = checkpoints.restore_checkpoint(restore_checkpoint_dir, None)
+    return self.create_train_state_from_params(init_rng, model, state_dict['params'])
+
   def make_loss_fn(self, deterministic):
     model = self.make_model(deterministic)
     num_classes = self.info.num_classes
@@ -327,8 +353,8 @@ class Trainer:
     checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
     assert config.restore_checkpoint_dir
     # shutil.copytree(config.restore_checkpoint_dir, checkpoint_dir)
-    state = self.create_train_state(init_rng, model)
-    state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
+    # state = self.create_train_state(init_rng, model)
+    state = self.restore_checkpoint(config.restore_checkpoint_dir, init_rng, model)
     # Copy the restored checkpoint into the checkpoint_dir.
     step = state.step
     print(f'Step: {step}')
