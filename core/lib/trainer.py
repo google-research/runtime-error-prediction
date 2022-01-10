@@ -137,10 +137,15 @@ class Trainer:
       raise ValueError('Unexpected optimizer', config.optimizer)
     # TODO(dbieber): I don't think model.apply is used from here.
     # Instead, it's used from make_loss_fn.
-    state = TrainState.create(
-        apply_fn=model.apply, params=params, tx=tx, rng=rng)
-    state.step = step
-    return state
+    opt_state = tx.init(params)
+    return TrainState(
+        step=step,
+        apply_fn=model.apply,
+        params=params,
+        tx=tx,
+        opt_state=opt_state,
+        rng=rng,
+    )
 
   def restore_checkpoint(self, restore_checkpoint_dir, init_rng, model):
     state_dict = checkpoints.restore_checkpoint(restore_checkpoint_dir, None)
