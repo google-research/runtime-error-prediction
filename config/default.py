@@ -50,6 +50,11 @@ def default_config():
   config.compressive_max_skip = 10
   config.compressive_mask_maker = 'default'
 
+  # GGNN Configs
+  config.ggnn_use_exit_node_embedding = False
+  config.ggnn_use_fixed_num_layers = True
+  config.ggnn_layers = 3
+
   # Dataset filtering and configs
   config.epochs: Optional[int] = 0
   config.batch_size: int = 128

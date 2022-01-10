@@ -110,18 +110,28 @@ Source: {source}""")
       split='train', steps=None):
     tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
     dataset = self.load_dataset(dataset_path, split=split)
+    max_shape = (0,)
+    all_edge_shapes = []
     for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       edge_dests = example['edge_dests']
       edge_sources = example['edge_sources']
       edge_types = example['edge_types']
+      if edge_sources.shape > max_shape:
+        print(example['num_edges'])
+        print(edge_sources.shape)
+        if example['num_edges'] <= 128:
+          max_shape = edge_sources.shape
+          print('max', max_shape)
+      all_edge_shapes.append(edge_sources.shape)
 
       submission_id = example['submission_id'][0].decode('utf-8')
       problem_id = example['problem_id'][0].decode('utf-8')
       source, target = explore.get_source_and_target_for_submission(problem_id, submission_id)
-      print(f"""Submission ID: {submission_id} {problem_id}
-Source: {source}""")
-      for i, (dest, src, t) in enumerate(zip(edge_dests, edge_sources, edge_types)):
-        print(i, ':', dest, src, t)
+#       print(f"""Submission ID: {submission_id} {problem_id}
+# Source: {source}""")
+#       for i, (dest, src, t) in enumerate(zip(edge_dests, edge_sources, edge_types)):
+#         print(i, ':', dest, src, t)
+    print(max_shape)
 
   def inspect_targets(
       self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,

@@ -643,7 +643,7 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
 
         did_improve, es = es.update(-1 * primary_metric_value_pos)
         if did_improve:
-          checkpoints.save_checkpoint(top_checkpoint_dir, state, state.step, keep=3)
+          checkpoints.save_checkpoint(top_checkpoint_dir, state, state.step, keep=3, overwrite=True)
 
         if es.should_stop and config.early_stopping_on:
           logging.info('Early stopping triggered.')

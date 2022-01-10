@@ -24,6 +24,7 @@ hparams = {
     'config.compressive_mask_maker': ['default'],
     'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
     'transformer_size': ['tiny', 'small', 'default'],
+    'config.ggnn_layers': [8, 16, 24],
 }
 
 transformer_configs = {
@@ -365,17 +366,23 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # }
   # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
-  # GGNN with docstring input
+  # IPA-GNN FiLM
   # offset = 70
   # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_film': True,
+  #     'config.modulate_mode': 'concat',
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  # run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
-  # # GGNN with no input
+  # # Exception IPA-GNN FiLM
   # offset = 60
   # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_film': True,
+  #     'config.modulate_mode': 'concat',
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # IPA-GNN FiLM
   # offset = 70
@@ -414,13 +421,31 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
   # IPA-GNN FiLM Concat with Docstrings
+  # offset = 10
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_film': True,
+  #     'config.modulate_mode': 'concat',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # GGNN with docstring input
+  # offset = 70
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # # GGNN with docstring input
   offset = 10
   overrides = {
-      'config.raise_in_ipagnn': False,
-      'config.use_film': True,
-      'config.modulate_mode': 'concat',
   }
-  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # # GGNN without input
+  offset = 40
+  overrides = {
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
 
 # # To kill the runner processes:
