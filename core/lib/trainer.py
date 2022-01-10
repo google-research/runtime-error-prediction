@@ -124,16 +124,10 @@ class Trainer:
     return TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
-  def create_train_state_from_params(self, rng, model, params):
-    """Creates initial TrainState."""
+  def create_train_state_from_params(self, rng, model, params, step):
+    """Creates initial TrainState. Skips init and uses params."""
     config = self.config
-    # fake_input = data_io.get_fake_input(
-    #     config.batch_size, config.max_tokens, config.max_num_nodes, config.max_num_edges)
     rng, params_rng, dropout_rng = jax.random.split(rng, 3)
-    # variables = model.init(
-    #     {'params': params_rng, 'dropout': dropout_rng},
-    #     fake_input)
-    # params = variables['params']
     learning_rate = config.learning_rate
     if config.optimizer == 'sgd':
       tx = optax.sgd(learning_rate)
@@ -143,12 +137,13 @@ class Trainer:
       raise ValueError('Unexpected optimizer', config.optimizer)
     # TODO(dbieber): I don't think model.apply is used from here.
     # Instead, it's used from make_loss_fn.
-    return TrainState.create(
+    state = TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
+    state.step = step
 
   def restore_checkpoint(self, restore_checkpoint_dir, init_rng, model):
     state_dict = checkpoints.restore_checkpoint(restore_checkpoint_dir, None)
-    return self.create_train_state_from_params(init_rng, model, state_dict['params'])
+    return self.create_train_state_from_params(init_rng, model, state_dict['params'], state_dict['step'])
 
   def make_loss_fn(self, deterministic):
     model = self.make_model(deterministic)
