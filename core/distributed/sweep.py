@@ -22,7 +22,7 @@ hparams = {
     'config.cross_attention_num_heads': [1, 2],
     'config.mil_pool': ['max', 'mean', 'logsumexp'],
     'config.compressive_mask_maker': ['default'],
-    'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
+    # 'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
     'transformer_size': ['tiny', 'small', 'default'],
     'config.ggnn_layers': [8, 16, 24],
 }
@@ -436,16 +436,34 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN with docstring input
-  offset = 10
-  overrides = {
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  # offset = 10
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN without input
-  offset = 40
+  # offset = 40
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # IPA-GNN Cross-attention
+  offset = 50
   overrides = {
+      'config.raise_in_ipagnn': False,
+      'config.use_cross_attention': True,
+      'config.modulate_mode': 'concat',
   }
-  run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+
+  # # Exception IPA-GNN Cross-attention
+  offset = 60
+  overrides = {
+      'config.raise_in_ipagnn': True,
+      'config.use_cross_attention': True,
+      'config.modulate_mode': 'concat',
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
 
 
 # # To kill the runner processes:
