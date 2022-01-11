@@ -472,7 +472,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
       'config.use_film': True,
       'config.modulate_mode': 'concat',
       'config.finetune': 'LSTM',
-      'config.restore_checkpoint_dir': '/mnt/runtime-error-problems-experiments/experiments/2021-12-23-lstm/105/L6311,o=sgd,bs=32,lr=0.03,gc=2,hs=64,span=sum,tdr=0.1,tadr=0,pe=False,canh=2,mp=max,T=default/checkpoints',
+      'config.restore_checkpoint_dir': '/mnt/runtime-error-problems-experiments/experiments/2021-12-23-lstm/105/L6311,o=sgd,bs=32,lr=0.03,gc=2,hs=64,span=sum,tdr=0.1,tadr=0,pe=False,canh=2,mp=max,T=default/top-checkpoints',
   }
   run_sweep(n, offset, experiment_id, study_id, 'EFL', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
