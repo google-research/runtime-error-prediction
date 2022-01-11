@@ -424,6 +424,7 @@ class Trainer:
     exp_id = config.experiment_id or codenet_paths.make_experiment_id()
     run_id = config.run_id or codenet_paths.make_run_id()
     run_dir = codenet_paths.make_run_dir(study_id, exp_id, run_id)
+    print(run_dir)
     if steps == 0:
       steps = None  # Run forever.
 
@@ -450,6 +451,9 @@ class Trainer:
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
         state = finetune.finetune_from_ipagnn(state, config.restore_checkpoint_dir, config)
+      elif config.finetune == 'LSTM':
+        # The checkpoint we're loading from will have different parameters.
+        state = finetune.finetune_from_lstm(state, config.restore_checkpoint_dir, config)
       else:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
