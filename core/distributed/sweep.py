@@ -22,7 +22,7 @@ hparams = {
     'config.cross_attention_num_heads': [1, 2],
     'config.mil_pool': ['max', 'mean', 'logsumexp'],
     'config.compressive_mask_maker': ['default'],
-    'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
+    # 'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
     'transformer_size': ['tiny', 'small', 'default'],
     'config.ggnn_layers': [8, 16, 24],
 }
@@ -409,7 +409,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.use_cross_attention': True,
   #     'config.modulate_mode': 'concat',
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # Exception IPA-GNN Cross-attention
   # offset = 70
@@ -418,7 +418,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   #     'config.use_cross_attention': True,
   #     'config.modulate_mode': 'concat',
   # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create)
+  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # IPA-GNN FiLM Concat with Docstrings
   # offset = 10
@@ -436,16 +436,51 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'GI', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN with docstring input
-  offset = 10
-  overrides = {
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  # offset = 10
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN without input
-  offset = 40
+  # offset = 40
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # IPA-GNN Cross-attention (no bias)
+  # offset = 50
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_cross_attention': True,
+  #     'config.modulate_mode': 'concat',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # # Exception IPA-GNN Cross-attention (no bias)
+  # offset = 60
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_cross_attention': True,
+  #     'config.modulate_mode': 'concat',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # Fine-tuning Exception IPA-GNN from pre-trained LSTM
+  offset = 80
   overrides = {
+      'config.raise_in_ipagnn': True,
+      # 'config.use_film': True,
+      # 'config.modulate_mode': 'concat',
+      'config.finetune': 'LSTM',
+      'config.hidden_size': 64,
+      'transformer_size': 'default',
+      'config.span_encoding_method': 'sum',
+      'config.transformer_dropout_rate': 0.1,
+      'config.transformer_attention_dropout_rate': 0,
+      'config.permissive_node_embeddings': False,
+      'config.restore_checkpoint_dir': '/mnt/runtime-error-problems-experiments/experiments/2021-12-23-lstm/105/L6311,o=sgd,bs=32,lr=0.03,gc=2,hs=64,span=sum,tdr=0.1,tadr=0,pe=False,canh=2,mp=max,T=default/top-checkpoints',
   }
-  run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'EFL', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
 
 # # To kill the runner processes:

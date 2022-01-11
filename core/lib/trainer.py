@@ -124,6 +124,33 @@ class Trainer:
     return TrainState.create(
         apply_fn=model.apply, params=params, tx=tx, rng=rng)
 
+  def create_train_state_from_params(self, rng, model, params, step):
+    """Creates initial TrainState. Skips init and uses params."""
+    config = self.config
+    rng, params_rng, dropout_rng = jax.random.split(rng, 3)
+    learning_rate = config.learning_rate
+    if config.optimizer == 'sgd':
+      tx = optax.sgd(learning_rate)
+    elif config.optimizer == 'adam':
+      tx = optax.adam(learning_rate)
+    else:
+      raise ValueError('Unexpected optimizer', config.optimizer)
+    # TODO(dbieber): I don't think model.apply is used from here.
+    # Instead, it's used from make_loss_fn.
+    opt_state = tx.init(params)
+    return TrainState(
+        step=step,
+        apply_fn=model.apply,
+        params=params,
+        tx=tx,
+        opt_state=opt_state,
+        rng=rng,
+    )
+
+  def restore_checkpoint(self, restore_checkpoint_dir, init_rng, model):
+    state_dict = checkpoints.restore_checkpoint(restore_checkpoint_dir, None)
+    return self.create_train_state_from_params(init_rng, model, state_dict['params'], state_dict['step'])
+
   def make_loss_fn(self, deterministic):
     model = self.make_model(deterministic)
     num_classes = self.info.num_classes
@@ -327,8 +354,7 @@ class Trainer:
     checkpoint_dir = codenet_paths.make_checkpoints_path(run_dir)
     assert config.restore_checkpoint_dir
     # shutil.copytree(config.restore_checkpoint_dir, checkpoint_dir)
-    state = self.create_train_state(init_rng, model)
-    state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
+    state = self.restore_checkpoint(config.restore_checkpoint_dir, init_rng, model)
     # Copy the restored checkpoint into the checkpoint_dir.
     step = state.step
     print(f'Step: {step}')
@@ -398,6 +424,7 @@ class Trainer:
     exp_id = config.experiment_id or codenet_paths.make_experiment_id()
     run_id = config.run_id or codenet_paths.make_run_id()
     run_dir = codenet_paths.make_run_dir(study_id, exp_id, run_id)
+    print(run_dir)
     if steps == 0:
       steps = None  # Run forever.
 
@@ -424,6 +451,9 @@ class Trainer:
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
         state = finetune.finetune_from_ipagnn(state, config.restore_checkpoint_dir, config)
+      elif config.finetune == 'LSTM':
+        # The checkpoint we're loading from will have different parameters.
+        state = finetune.finetune_from_lstm(state, config.restore_checkpoint_dir, config)
       else:
         assert config.finetune == 'ALL'
         state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)

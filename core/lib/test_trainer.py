@@ -40,6 +40,22 @@ class TrainerTest(unittest.TestCase):
     config.max_tokens = 512
     validate_single_step(config)
 
+  def test_finetune_from_lstm(self):
+    config = config_lib.get_test_config()
+    config.model_class = 'LSTM'
+    config.batch_size = 16
+    config.max_tokens = 512
+    config.experiment_id = 'tests-lstm'
+    validate_single_step(config)
+
+    config = config_lib.get_test_config()
+    config.model_class = 'IPAGNN'
+    config.batch_size = 16
+    config.max_tokens = 512
+    config.finetune = 'LSTM'
+    config.restore_checkpoint_dir = 'out/experiments/tests-lstm/checkpoints'
+    validate_single_step(config)
+
   @pytest.mark.slow
   def test_film_ipagnn(self):
     config = config_lib.get_test_config()

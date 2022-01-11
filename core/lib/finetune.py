@@ -2,6 +2,32 @@ from flax.core import frozen_dict
 from flax.training import checkpoints
 
 
+def finetune_from_lstm(state, restore_checkpoint_dir, config):
+  """Updates the current state for fine-tuning from a pre-trained LSTM.
+
+  It updates state using some of the values from the restore_checkpoint_dir.
+
+  The Transformer node_span_encoder, as well as the IPA-GNN lstm weights.
+
+  Branch decisions and raise decisions weights are not going to be loaded.
+  """
+  old_state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, None)
+  old_params = old_state['params']
+
+  state = state.replace(step=int(old_state['step']))
+  state = state.replace(rng=old_state['rng'])
+
+  params = state.params
+  params_copy = params.unfreeze()
+  params_copy['node_span_encoder'] = old_params['input_embedder']
+
+  for n in range(config.rnn_layers):
+    params_copy['ipagnn']['ipagnn_layer_scan'][f'lstm_{n}'] = old_params['encoder'][f'lstm_{n}']['OptimizedLSTMCell_0']
+
+  state = state.replace(params=frozen_dict.FrozenDict(params_copy))
+  return state
+
+
 def finetune_from_ipagnn(state, restore_checkpoint_dir, config):
   """Updates the current state for fine-tuning from a pre-trained IPAGNN.
 

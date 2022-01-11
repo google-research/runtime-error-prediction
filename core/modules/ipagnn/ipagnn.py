@@ -330,11 +330,11 @@ class IPAGNNLayer(nn.Module):
     # Take a full step of IPAGNN
     if config.use_film:
       node_embeddings = film_modulate(node_embeddings, hidden_states, docstring_embeddings, docstring_mask)
-      # node_embeddings.shape: batch_size, num_nodes, hidden_size
+      # node_embeddings.shape: batch_size, num_nodes, n * hidden_size
     elif config.use_cross_attention:
       # node_embeddings.shape: batch_size, num_nodes, hidden_size
       node_embeddings = cross_attention(node_embeddings, hidden_states, docstring_embeddings, docstring_mask)
-      # node_embeddings.shape: batch_size, num_nodes, 2 * hidden_size
+      # node_embeddings.shape: batch_size, num_nodes, n * hidden_size
     hidden_state_contributions = execute(hidden_states, node_embeddings)
     # leaves(hidden_state_contributions).shape: batch_size, num_nodes, hidden_size
 
