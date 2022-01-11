@@ -41,12 +41,12 @@ class TrainerTest(unittest.TestCase):
     validate_single_step(config)
 
   def test_finetune_from_lstm(self):
-    # config = config_lib.get_test_config()
-    # config.model_class = 'LSTM'
-    # config.batch_size = 16
-    # config.max_tokens = 512
-    # config.experiment_id = 'tests-lstm'
-    # validate_single_step(config)
+    config = config_lib.get_test_config()
+    config.model_class = 'LSTM'
+    config.batch_size = 16
+    config.max_tokens = 512
+    config.experiment_id = 'tests-lstm'
+    validate_single_step(config)
 
     config = config_lib.get_test_config()
     config.model_class = 'IPAGNN'
