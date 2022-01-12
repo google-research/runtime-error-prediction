@@ -499,6 +499,9 @@ class Trainer:
     print('Starting training')
     for step_index, batch in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       step = state.step
+      if step == steps:
+        break
+
       if config.multidevice:
         batch = common_utils.shard(batch)
       state, aux = train_step(state, batch)
