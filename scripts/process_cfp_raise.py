@@ -41,6 +41,7 @@ def generate_dataset(
       dataset_path = os.path.join(dataset_path, 'errors-only')
     else:
       dataset_path = os.path.join(dataset_path, 'errors-L2E')
+    os.makedirs(dataset_path, exist_ok=True)
     train_path = codenet_paths.make_tfrecord_path(dataset_path, 'train')
     valid_path = codenet_paths.make_tfrecord_path(dataset_path, 'valid')
     test_path = codenet_paths.make_tfrecord_path(dataset_path, 'test')
