@@ -21,7 +21,7 @@ def generate_dataset(
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_CFP_RAISE_DATASET_PATH,
     fraction=1.0,
-    keep_errors_only=False):
+    keep_errors_only=True):
   """Generates a TFRecord dataset from the control flow programs data.
 
   Args:

@@ -22,10 +22,10 @@ DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/con
 # Processed control_flow_programs dataset path:
 DEFAULT_CFP_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/processed/decimal-large-state-L10/0.0.48-002/'
 
-RAW_CFP_RAISE_DATA_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-11-19-001.tfrecord'
-DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-11-19-001/'
+RAW_CFP_RAISE_DATA_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-12-29-001.tfrecord'
+DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-12-29-001/'
 # RAW_CFP_SYNTH_FULL_DATASET_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-11-19-001/errors-only'
-RAW_CFP_SYNTH_FULL_DATASET_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2022-01-01-002/errors-only'
+# RAW_CFP_SYNTH_FULL_DATASET_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2022-01-01-002/errors-only'
 
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
