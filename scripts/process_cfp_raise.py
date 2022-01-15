@@ -37,12 +37,13 @@ def generate_dataset(
         tokenizer_path=tokenizer_path,
         fraction=fraction,
         keep_errors_only=keep_errors_only)
-    basename = os.path.basename(tfrecord_path)
     if keep_errors_only:
-      dataset_path_suffix = '-binary-runtime'
-    train_path = codenet_paths.make_tfrecord_path(dataset_path, f'train{dataset_path_suffix}')
-    valid_path = codenet_paths.make_tfrecord_path(dataset_path, f'valid{dataset_path_suffix}')
-    test_path = codenet_paths.make_tfrecord_path(dataset_path, f'test{dataset_path_suffix}')
+      dataset_path = os.path.join(dataset_path, 'errors-only')
+    else:
+      dataset_path = os.path.join(dataset_path, 'errors-L2E')
+    train_path = codenet_paths.make_tfrecord_path(dataset_path, 'train')
+    valid_path = codenet_paths.make_tfrecord_path(dataset_path, 'valid')
+    test_path = codenet_paths.make_tfrecord_path(dataset_path, 'test')
     with tf.io.TFRecordWriter(train_path) as train_file_writer:
       with tf.io.TFRecordWriter(valid_path) as valid_file_writer:
         with tf.io.TFRecordWriter(test_path) as test_file_writer:
@@ -55,13 +56,6 @@ def generate_dataset(
               valid_file_writer.write(record_bytes)
             else:
               test_file_writer.write(record_bytes)
-    dataset_tfrecord_path = os.path.join(dataset_path, basename)
-    if keep_errors_only:
-      dataset_tfrecord_path = dataset_tfrecord_path.replace(".tfrecord", "-binary-runtime.tfrecord")
-    with tf.io.TFRecordWriter(dataset_tfrecord_path) as file_writer:
-      for problem in problems_gen:
-        record_bytes = data_io.to_tf_example(problem).SerializeToString()
-        file_writer.write(record_bytes)
 
 def get_target_index(target, keep_errors_only):
   error_idx_offset = 1 if keep_errors_only else 1000
