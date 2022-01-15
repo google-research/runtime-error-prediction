@@ -20,7 +20,8 @@ def generate_dataset(
     tfrecord_pattern=RAW_CFP_RAISE_DATA_PATH,
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     dataset_path=DEFAULT_CFP_RAISE_DATASET_PATH,
-    fraction=1.0):
+    fraction=1.0,
+    keep_errors_only=True):
   """Generates a TFRecord dataset from the control flow programs data.
 
   Args:
@@ -34,9 +35,13 @@ def generate_dataset(
     problems_gen = process_programs(
         tfrecord_path=tfrecord_path,
         tokenizer_path=tokenizer_path,
-        fraction=fraction)
-    basename = os.path.basename(tfrecord_path)
-
+        fraction=fraction,
+        keep_errors_only=keep_errors_only)
+    if keep_errors_only:
+      dataset_path = os.path.join(dataset_path, 'errors-only')
+    else:
+      dataset_path = os.path.join(dataset_path, 'errors-L2E')
+    os.makedirs(dataset_path, exist_ok=True)
     train_path = codenet_paths.make_tfrecord_path(dataset_path, 'train')
     valid_path = codenet_paths.make_tfrecord_path(dataset_path, 'valid')
     test_path = codenet_paths.make_tfrecord_path(dataset_path, 'test')
@@ -53,19 +58,31 @@ def generate_dataset(
             else:
               test_file_writer.write(record_bytes)
 
+def get_target_index(target, keep_errors_only):
+  error_idx_offset = 1 if keep_errors_only else 1000
+
+  if target == 'RuntimeError':
+    return error_idx_offset
+  elif target == 'AssertionError':
+    return error_idx_offset + 1
+
+  if keep_errors_only:
+    return error_idx_offset - 1
+  else:
+    return int(target)
 
 def process_programs(
     tfrecord_path,
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
     fraction=1.0,
-    start_at=0):
+    start_at=0,
+    keep_errors_only=False):
   """Makes RuntimeErrorProblem objects per program using the tokenizer."""
   tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
 
   basename = os.path.basename(tfrecord_path)
   tfrecord_paths = [tfrecord_path]
   dataset = cfp_raise_data_io.load_dataset(tfrecord_paths)
-
   count = 0
   for index, example in enumerate(dataset):
     if random.random() > fraction:
@@ -79,10 +96,11 @@ def process_programs(
     target = example['target'][0].numpy().decode('utf-8')
     original_step_limit = example['steps'][0].numpy()
 
-    if target == 'RuntimeError':
-      target_index = 1000  # Error class.
-    else:
-      target_index = int(target)
+    # if target == 'RuntimeError':
+    #   target_index = 1000  # Error class.
+    # else:
+    #   target_index = int(target)
+    target_index = get_target_index(target, keep_errors_only)
 
     problem = process.make_runtimeerrorproblem(
         source, target_index, tokenizer=tokenizer,
