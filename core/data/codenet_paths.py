@@ -22,6 +22,11 @@ DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/con
 # Processed control_flow_programs dataset path:
 DEFAULT_CFP_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/processed/decimal-large-state-L10/0.0.48-002/'
 
+# Synthetic data
+# No docstrings.
+# GGNN features? Yes.
+SYNTHETIC_ERRORS_ONLY_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-12-29-001/errors-only'
+
 RAW_CFP_RAISE_DATA_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs_raise/decimal-large-state-L30/2021-10-19-001/synthetic-20211018-001.tfrecord'
 DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs_raise/processed/decimal-large-state-L30/2021-10-19-001/'
 

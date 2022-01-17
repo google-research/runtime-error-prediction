@@ -11,7 +11,7 @@ from core.distributed import gcp
 hparams = {
     'config.optimizer': ['sgd'],
     'config.batch_size': [32],
-    'config.learning_rate': [0.001, 0.003, 0.01, 0.03],
+    'config.learning_rate': [0.01, 0.03, 0.1, 0.3],
     # 'config.rnn_layers': [2, 4]
     'config.grad_clip_value': [0, 0.5, 1, 2],
     'config.hidden_size':  [64, 128, 256],
@@ -195,7 +195,7 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   if experiment_id is None:
     experiment_id = get_and_increment_global_experiment_id()
 
-  n = 10  # Machines per model
+  n = 5  # Machines per model
 
   # No-input I, E, T:
   # IPA-GNN
@@ -483,16 +483,50 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'EFL', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN with docstring input
-  offset = 70
-  overrides = {
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  # offset = 70
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # # GGNN without input
-  offset = 80
+  # offset = 80
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # IPA-GNN
+  offset = 60
   overrides = {
+      'config.raise_in_ipagnn': False,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # Exception IPA-GNN
+  offset = 65
+  overrides = {
+      'config.raise_in_ipagnn': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # # GGNN
+  # offset = 70
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # # LSTM
+  # offset = 75
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # # Transformer
+  # offset = 5
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
 
 
 
