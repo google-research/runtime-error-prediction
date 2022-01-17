@@ -442,21 +442,25 @@ class Trainer:
     rng, init_rng = jax.random.split(rng)
     model = self.make_model(deterministic=False)
 
-    state = self.create_train_state(init_rng, model)
     if os.path.exists(checkpoint_dir):
       # If we're restoring an interrupted run, that takes priority.
-      state = checkpoints.restore_checkpoint(checkpoint_dir, state)
+      state = self.restore_checkpoint(checkpoint_dir, init_rng, model)
     elif config.restore_checkpoint_dir:
       # Next, if the config says to start from some checkpoint, do so.
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
+        state = self.create_train_state(init_rng, model)
         state = finetune.finetune_from_ipagnn(state, config.restore_checkpoint_dir, config)
       elif config.finetune == 'LSTM':
         # The checkpoint we're loading from will have different parameters.
+        state = self.create_train_state(init_rng, model)
         state = finetune.finetune_from_lstm(state, config.restore_checkpoint_dir, config)
       else:
         assert config.finetune == 'ALL'
-        state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
+        state = self.restore_checkpoint(config.restore_checkpoint_dir, init_rng, model)
+    else:
+      # Initialize random.
+      state = self.create_train_state(init_rng, model)
     train_step = self.make_train_step()
 
     if config.save_freq >= 50000:
