@@ -198,7 +198,35 @@ Source: {source}""")
         targets[target] = 0
       targets[target] += 1
 
-    return sorted(targets.items())
+    for e in [
+        'No error',
+        'AssertionError',
+        'AttributeError',
+        'EOFError',
+        'FileNotFoundError',
+        'ImportError',
+        'IndentationError',
+        'IndexError',
+        'KeyError',
+        'MemoryError',
+        'ModuleNotFoundError',
+        'NameError',
+        'numpy.AxisError',
+        'OSError',
+        'OverflowError',
+        're.error',
+        'RecursionError',
+        'RuntimeError',
+        'StopIteration',
+        'SyntaxError',
+        'TypeError',
+        'UnboundLocalError',
+        'ValueError',
+        'ZeroDivisionError',
+        'Timeout',
+        'Other',
+    ]:
+      print(e, targets.get(e, 0))
 
 
 if __name__ == '__main__':
