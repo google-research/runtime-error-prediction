@@ -516,16 +516,16 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
 
   # # LSTM
-  # offset = 75
-  # overrides = {
-  # }
-  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
-
-  # Transformer
-  offset = 0
+  offset = 75
   overrides = {
   }
-  run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # Transformer
+  # offset = 0
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
 
 
 
