@@ -185,6 +185,21 @@ Source: {source}""")
 
     return (targets, num_tokens, num_edges, num_nodes, step_limits, target_lineno, num_target_nodes)
 
+  def run_target_counter(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
+    print(f'Analyzing data: {dataset_path}')
+    dataset = self.load_dataset(dataset_path, split=split)
+    targets = {}
+    for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      if step % 1000 == 0:
+        print(step)
+      target_index = example['target'][0]
+      target = error_kinds.to_error(target_index)
+      if target not in targets:
+        targets[target] = 0
+      targets[target] += 1
+
+    return sorted(target.items())
+
 
 if __name__ == '__main__':
   fire.Fire()
