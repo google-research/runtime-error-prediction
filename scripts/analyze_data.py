@@ -198,7 +198,7 @@ Source: {source}""")
         targets[target] = 0
       targets[target] += 1
 
-    return sorted(target.items())
+    return sorted(targets.items())
 
 
 if __name__ == '__main__':
