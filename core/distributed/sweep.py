@@ -495,18 +495,18 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # # IPA-GNN
-  # offset = 60
-  # overrides = {
-  #     'config.raise_in_ipagnn': False,
-  # }
-  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+  offset = 60
+  overrides = {
+      'config.raise_in_ipagnn': False,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
 
   # # Exception IPA-GNN
-  # offset = 65
-  # overrides = {
-  #     'config.raise_in_ipagnn': True,
-  # }
-  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+  offset = 65
+  overrides = {
+      'config.raise_in_ipagnn': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
 
   # GGNN
   # offset = 70
@@ -516,10 +516,10 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
 
   # # LSTM
-  offset = 75
-  overrides = {
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+  # offset = 75
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
 
   # Transformer
   # offset = 0
