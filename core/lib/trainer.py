@@ -412,12 +412,14 @@ class Trainer:
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
+    info = self.info
     print(f'Training on data: {dataset_path}')
     print(f'Traning using model: {config.model_class}')
-    dataset = self.load_dataset(dataset_path, split=split)
+    class_subsample_values = info.class_subsample_values
+    dataset = self.load_dataset(dataset_path, split=split, class_subsample_values=class_subsample_values)
     num_classes = self.info.num_classes
     all_error_kinds = self.info.all_error_kinds
-    valid_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
+    valid_dataset = self.load_dataset(dataset_path, split='valid', epochs=1, class_subsample_values=class_subsample_values)
     evaluate_batch = self.make_evaluate_batch()
 
     study_id = config.study_id
