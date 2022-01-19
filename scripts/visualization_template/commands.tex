@@ -1,0 +1,103 @@
+% Model names
+\newcommand{\codernn}{Line-by-Line RNN\xspace}
+\newcommand{\tracernn}{Trace RNN\xspace}
+\newcommand{\hardipagnn}{Hard IP-RNN\xspace}
+
+\newcommand{\ipagnn}{IPA-GNN\xspace}
+\newcommand{\nocontrol}{NoControl\xspace}
+\newcommand{\noexecute}{NoExecute\xspace}
+\newcommand{\gat}{R-GAT\xspace}
+\newcommand{\ggnn}{GGNN\xspace}
+
+\newcommand{\ipagnnfullname}
+    {Instruction Pointer Attention Graph Neural Network\xspace}
+\newcommand{\ggnnfullname}{Gated Graph Neural Network\xspace}
+
+% Math
+\newcommand{\Dtrain}{D_\text{train}}
+\newcommand{\Dtest}{D_\text{test}}
+\newcommand{\ctrain}{c_\text{train}}
+\newcommand{\ctest}{c_\text{test}}
+\newcommand{\Cmax}{C_{\max}}
+\DeclareMathOperator*{\trace}{trace}
+
+\DeclareMathOperator*{\Softmax}{softmax}
+\DeclareMathOperator*{\Hardmax}{hardmax}
+\DeclareMathOperator*{\argmax}{argmax}
+\newcommand{\init}{\text{init}}
+\newcommand{\fRNN}{f_\text{RNN}}
+\newcommand{\fembed}{\Embed}
+\newcommand{\incomingneighborsX}{N_\text{in}}
+\newcommand{\outgoingneighborsX}{N_\text{out}}
+\newcommand{\neighborsX}{N_\text{all}}
+\newcommand{\eqstart}{&=}  % & or &=
+\newcommand{\separator}{}
+
+\newcommand{\startnode}{\text{start-node}}
+\newcommand{\othernodes}{\text{other-nodes}}
+\newcommand{\outgoingneighbors}{\text{outgoing-neighbors}}
+\newcommand{\incomingneighbors}{\text{incoming-neighbors}}
+\newcommand{\neighbor}{\text{neighbor}}
+\newcommand{\neighbors}{\text{neighbors}}
+\newcommand{\node}{\text{node}}
+\newcommand{\embed}{\text{embed}}
+\DeclareMathOperator*{\Embed}{Embed}
+\DeclareMathOperator*{\RNN}{RNN}
+\DeclareMathOperator*{\LSTM}{LSTM}
+\DeclareMathOperator*{\GRU}{GRU}
+\newcommand{\Oracle}{\text{Oracle}}
+\DeclareMathOperator*{\Dense}{Dense}
+\newcommand{\codeX}{x}
+\newcommand{\inputs}{\text{input}}
+\newcommand{\htilde}{\tilde{h}}
+\newcommand{\identity}{\text{identity}}
+\newcommand{\otherwise}{\text{o/w}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+
+% Formatting
+% For program-representations.tex:
+\newcommand{\code}[1]{\texttt{#1}}
+% For grammar.tex:
+\newcommand{\OR}{\; | \;}
+\newcommand{\T}[1]{\texttt{#1}}
+
+% Colors
+% Color Palette #1955:
+\definecolor{burgundy-1955}{RGB}{155, 66, 58}
+\definecolor{orange-1955}{RGB}{220, 145, 60}
+\definecolor{lightorange-1955}{RGB}{248, 239, 220}
+\definecolor{lightblue-1955}{RGB}{84, 147, 175}
+\definecolor{blue-1955}{RGB}{26, 37, 76}
+% Custom colors:
+\definecolor{darkblue}{rgb}{0.0, 0.0, 0.55}
+\definecolor{lightblue}{rgb}{0.67, 0.84, 0.9}
+\definecolor{newtextcolor}{rgb}{.45, 0.45, 0.45}
+% Semantic colors:
+\newcommand{\ipagnncolor}[1]{{\color{blue}{#1}}}
+\newcommand{\ggnncolor}[1]{{\color{orange}{#1}}}
+
+% Drafting
+\newcommand{\todo}[1]{{\color{red}TODO: {#1}}}
+\newcommand{\nb}[2]{
+		\fbox{\bfseries\sffamily\scriptsize#1}
+		{\sf\small$\blacktriangleright$\textit{#2}$\blacktriangleleft$}
+}
+\newcommand\HUGO[1]{\textcolor{lightblue}{\nb{Hugo}{#1}}}
+\newcommand\HUGOHIDDEN[1]{}
+\newcommand\cas[1]{\textcolor{Plum}{\nb{Charles}{#1}}}
+\newcommand\casHIDDEN[1]{}
+\newcommand\DANNY[1]{\textcolor{blue}{\nb{Danny}{#1}}}
+\newcommand\DANNYHIDDEN[1]{}
+\newcommand\DAVID[1]{\textcolor{darkblue}{\nb{David}{#1}}}
+\newcommand\DAVIDHIDDEN[1]{}
+\newcommand\DANIEL[1]{\textcolor{orange}{\nb{Daniel}{#1}}}
+\newcommand\DANIELHIDDEN[1]{}
+\newcommand{\new}[1]{{\color{newtextcolor}{#1}}}
+\newcommand{\old}[1]{}
+
+% Uncategorized
+\setitemize{leftmargin=*,topsep=0pt,itemsep=0pt}
+

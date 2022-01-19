@@ -1,0 +1,109 @@
+% BEGIN PRELUDE
+
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+    \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2020
+
+% ready for submission
+% \usepackage{neurips_2020}
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+    % \usepackage[preprint]{neurips_2020}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final,nonatbib]{neurips_2020}
+
+% to avoid loading the natbib package, add option nonatbib:
+%     \usepackage[nonatbib]{neurips_2020}
+
+% \usepackage[nonatbib]{neurips_2020}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage[font=small]{caption}
+
+\usepackage{wrapfig}        % wrap text around figure
+
+\usepackage{graphicx}       % textwidth
+\usepackage{arydshln}       % dashlinedash
+\usepackage{float}          % figure positioning
+
+% [start] Custom header
+\usepackage[numbers,sort]{natbib}
+
+% \input{packages.tex}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{multirow}
+
+\input{scripts/visualization_template/commands.tex}
+
+% END PRELUDE
+
+\begin{document}
+
+\setlength\dashlinedash{.5pt}
+\setlength\dashlinegap{6pt}
+\setlength\arrayrulewidth{0.3pt}
+
+\begin{verbatim}
+{{ source_code }}
+\end{verbatim}
+
+\textbf{Program source code.}
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}
+{
+\begin{tabular}{c|c}
+\toprule
+Target & {{ model_class }} \\
+\midrule
+{{ target }} ({{ target_error }}) & {{ prediction }} ({{ prediction_error }}) \\
+\bottomrule
+\end{tabular}
+}
+\caption{
+    \textbf{Error class prediction.}
+}
+\label{fig:program-representations}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}
+{
+\begin{tabular}{cl|cccc|ccc}
+\toprule
+$n$ & Spans & Exception node contribution \\
+\midrule
+{{ table_contents }}
+\bottomrule
+\end{tabular}
+}
+\caption{
+    \textbf{Exception node contributions.} Program lines are associated with spans of nodes. This figures shows the contribution to the exception node of each span.
+}
+\label{fig:program-representations}
+\end{figure}
+
+\begin{figure}[H]
+\includegraphics{viz-instruction-pointer.png}
+\caption{
+    \textbf{Instruction pointer intensity plot.}
+}
+\end{figure}
+
+\end{document}
