@@ -304,5 +304,24 @@ def tpu_run_script(filepath, n, environment, offset=0):
   wait(calls)
 
 
+def tpu_run_script_on_machines(filepath, environment, machines):
+  calls = []
+  for index in machines:
+    hostname = _tpu_hostname(index)
+    zone = _tpu_zone(index)
+    environment_tokens = [
+        f'{key}={value}'
+        for key, value in environment.items()
+    ]
+    command = [
+        'gcloud', 'alpha', 'compute', 'tpus', 'tpu-vm', 'ssh',
+        hostname, '--zone', zone, '--',
+    ] + environment_tokens + [
+        'bash', '-s'
+    ]
+    calls.append(call(command, stdin=open(filepath)))
+  wait(calls)
+
+
 if __name__ == '__main__':
   fire.Fire()
