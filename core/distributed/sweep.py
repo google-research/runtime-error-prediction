@@ -583,18 +583,25 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # Exception IPA-GNN, No Bias, Small dataset
-  offset = 0
-  overrides = {
-      'config.raise_in_ipagnn': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'ES', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  # offset = 0
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'ES', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
-  # IPA-GNN, Small dataset
-  offset = 10
+  # # IPA-GNN, Small dataset
+  # offset = 10
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IS', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # MIL Transformer. No Docstring. Permissive node embeddings.
+  offset = 30
   overrides = {
-      'config.raise_in_ipagnn': False,
+      'config.permissive_node_embeddings': True,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'IS', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'MPN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
 
 # # To kill the runner processes:
