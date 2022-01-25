@@ -253,11 +253,11 @@ Source: {source}""")
     for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
       span_starts = example['node_token_span_starts']
       span_ends = example['node_token_span_ends']
-    for span_start, span_end in zip(span_starts, span_ends):
-      length = span_end - span_start + 1  # span_starts and span_ends are inclusive
-      if length not in lengths:
-        lengths[length] = 0
-      lengths[length] += 1
+      for span_start, span_end in zip(span_starts, span_ends):
+        length = span_end - span_start + 1  # span_starts and span_ends are inclusive
+        if length not in lengths:
+          lengths[length] = 0
+        lengths[length] += 1
     return lengths
 
 
