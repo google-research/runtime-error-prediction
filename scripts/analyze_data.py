@@ -228,6 +228,22 @@ Source: {source}""")
     ]:
       print(e, targets.get(e, 0))
 
+  def inspect_lengths(
+      self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
+      split='train', steps=None):
+    tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
+    dataset = self.load_dataset(dataset_path, split=split)
+    lengths = {}
+    for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      submission_id = example['submission_id'][0].decode('utf-8')
+      problem_id = example['problem_id'][0].decode('utf-8')
+      source, target = explore.get_source_and_target_for_submission(problem_id, submission_id)
+      length = len(source.split('\n'))
+      if length not in lengths:
+        lengths[length] = 0
+      lengths[lengths] += 1
+    return lengths
+
 
 if __name__ == '__main__':
   fire.Fire()
