@@ -244,6 +244,22 @@ Source: {source}""")
       lengths[length] += 1
     return lengths
 
+  def inspect_statement_lengths(
+      self, dataset_path=DEFAULT_DATASET_PATH, tokenizer_path=DEFAULT_TOKENIZER_PATH,
+      split='train', steps=None):
+    tokenizer = tokenization.load_tokenizer(path=tokenizer_path)
+    dataset = self.load_dataset(dataset_path, split=split)
+    lengths = {}
+    for step, example in itertools.islice(enumerate(tfds.as_numpy(dataset)), steps):
+      span_starts = example['node_token_span_starts']
+      span_ends = example['node_token_span_ends']
+    for span_start, span_end in zip(span_starts, span_ends):
+      length = span_end - span_start + 1  # span_starts and span_ends are inclusive
+      if length not in lengths:
+        lengths[length] = 0
+      lengths[length] += 1
+    return lengths
+
 
 if __name__ == '__main__':
   fire.Fire()
