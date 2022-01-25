@@ -241,7 +241,7 @@ Source: {source}""")
       length = len(source.split('\n'))
       if length not in lengths:
         lengths[length] = 0
-      lengths[lengths] += 1
+      lengths[length] += 1
     return lengths
 
 
