@@ -355,7 +355,7 @@ def main(argv):
   t = trainer.Trainer(config=config, info=info)
   t2 = trainer.Trainer(config=config2, info=info)
 
-  split = 'test'
+  split = 'valid'
   dataset = t.load_dataset(
       dataset_path=dataset_path, split=split, include_strings=True)
 
