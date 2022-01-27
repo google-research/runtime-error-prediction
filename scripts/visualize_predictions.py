@@ -384,19 +384,20 @@ def main(argv):
     print('Checkpoint 2 loaded:', config2.restore_checkpoint_dir)
 
   prediction_data = []
+  prediction_data2 = []
   def save_prediction_data():
-    # Sort by descending confidence.
-    # sorted_prediction_data = sorted(prediction_data, key=lambda x: -x['confidence'])
-    sorted_prediction_data = prediction_data
-    output_directory = os.path.join(config.restore_checkpoint_dir, 'predictions')
-    os.makedirs(output_directory, exist_ok=True)
-    predictions_file = os.path.join(output_directory, 'predictions.json')
-    with open(predictions_file, 'a') as f:
-      print(f'Writing {len(sorted_prediction_data)} predictions to {predictions_file}.')
-      for example in sorted_prediction_data:
-        f.write(json.dumps(example))
-        f.write('\n')
-      print(f'Done writing predictions')
+    def save_prediction_data_for_config(config, prediction_data):
+      output_directory = os.path.join(config.restore_checkpoint_dir, 'predictions')
+      os.makedirs(output_directory, exist_ok=True)
+      predictions_file = os.path.join(output_directory, 'predictions.json')
+      with open(predictions_file, 'a') as f:
+        print(f'Writing {len(prediction_data)} predictions to {predictions_file}.')
+        for example in prediction_data:
+          f.write(json.dumps(example))
+          f.write('\n')
+        print(f'Done writing predictions')
+    save_prediction_data_for_config(config, prediction_data)
+    save_prediction_data_for_config(config2, prediction_data2)
   atexit.register(save_prediction_data)
 
   def filter_function(x):
@@ -548,20 +549,23 @@ def main(argv):
         'submission_id': submission_id,
         'target': target,
         'target_error': target_error,
-        config.restore_checkpoint_dir: {
-          'prediction': prediction,
-          'prediction_error': prediction_error,
-          'is_correct': is_correct,
-          'confidence': float(confidence)
-        },
-        config2.restore_checkpoint_dir: {
-          'prediction': prediction2,
-          'prediction_error': prediction_error2,
-          'is_correct': is_correct2,
-          'confidence': float(confidence2)
-        },
+        'prediction': prediction,
+        'prediction_error': prediction_error,
+        'is_correct': is_correct,
+        'confidence': float(confidence)
+      }
+      prediction_datum2 = {
+        'problem_id': problem_id,
+        'submission_id': submission_id,
+        'target': target,
+        'target_error': target_error,
+        'prediction': prediction2,
+        'prediction_error': prediction_error2,
+        'is_correct': is_correct2,
+        'confidence': float(confidence2)
       }
       prediction_data.append(prediction_datum)
+      prediction_data2.append(prediction_datum2)
 
       # Filter examples.
       if not (is_correct and not is_correct2):
