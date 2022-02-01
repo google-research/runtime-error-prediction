@@ -72,4 +72,5 @@ def get_test_info():
       all_error_kinds=error_kinds.ALL_ERROR_KINDS,
       no_error_ids=[error_kinds.NO_ERROR_ID,],
       error_ids=list(set(range(error_kinds.NUM_CLASSES)) - {error_kinds.NO_ERROR_ID}),
+      class_subsample_values={1: 0.0660801055},
   )
