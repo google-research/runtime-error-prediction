@@ -331,7 +331,7 @@ class Trainer:
 
     print(f'Testing on data: {dataset_path}')
     print(f'Using model: {config.model_class}')
-    dataset = self.load_dataset(dataset_path, split=split, epochs=1, class_subsample_values='default')
+    dataset = self.load_dataset(dataset_path, split=split, epochs=1, class_subsample_values=None)
     num_classes = self.info.num_classes
     all_error_kinds = self.info.all_error_kinds
     evaluate_batch = self.make_evaluate_batch()
@@ -412,12 +412,14 @@ class Trainer:
 
   def run_train(self, dataset_path=DEFAULT_DATASET_PATH, split='train', steps=None):
     config = self.config
+    info = self.info
     print(f'Training on data: {dataset_path}')
     print(f'Traning using model: {config.model_class}')
-    dataset = self.load_dataset(dataset_path, split=split)
+    class_subsample_values = info.class_subsample_values
+    dataset = self.load_dataset(dataset_path, split=split, class_subsample_values=class_subsample_values)
     num_classes = self.info.num_classes
     all_error_kinds = self.info.all_error_kinds
-    valid_dataset = self.load_dataset(dataset_path, split='valid', epochs=1)
+    valid_dataset = self.load_dataset(dataset_path, split='valid', epochs=1, class_subsample_values=class_subsample_values)
     evaluate_batch = self.make_evaluate_batch()
 
     study_id = config.study_id
@@ -442,21 +444,25 @@ class Trainer:
     rng, init_rng = jax.random.split(rng)
     model = self.make_model(deterministic=False)
 
-    state = self.create_train_state(init_rng, model)
     if os.path.exists(checkpoint_dir):
       # If we're restoring an interrupted run, that takes priority.
-      state = checkpoints.restore_checkpoint(checkpoint_dir, state)
+      state = self.restore_checkpoint(checkpoint_dir, init_rng, model)
     elif config.restore_checkpoint_dir:
       # Next, if the config says to start from some checkpoint, do so.
       if config.finetune == 'IPAGNN':
         # The checkpoint we're loading from will have different parameters.
+        state = self.create_train_state(init_rng, model)
         state = finetune.finetune_from_ipagnn(state, config.restore_checkpoint_dir, config)
       elif config.finetune == 'LSTM':
         # The checkpoint we're loading from will have different parameters.
+        state = self.create_train_state(init_rng, model)
         state = finetune.finetune_from_lstm(state, config.restore_checkpoint_dir, config)
       else:
         assert config.finetune == 'ALL'
-        state = checkpoints.restore_checkpoint(config.restore_checkpoint_dir, state)
+        state = self.restore_checkpoint(config.restore_checkpoint_dir, init_rng, model)
+    else:
+      # Initialize random.
+      state = self.create_train_state(init_rng, model)
     train_step = self.make_train_step()
 
     if config.save_freq >= 50000:

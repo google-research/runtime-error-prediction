@@ -21,10 +21,10 @@ hparams = {
     'config.permissive_node_embeddings': [False],
     'config.cross_attention_num_heads': [1, 2],
     'config.mil_pool': ['max', 'mean', 'logsumexp'],
-    'config.compressive_mask_maker': ['default'],
+    # 'config.compressive_mask_maker': ['default'],
     # 'config.raise_decision_offset': [-10.0, -3.0, -2.0, -1.0],
     'transformer_size': ['tiny', 'small', 'default'],
-    'config.ggnn_layers': [8, 16, 24],
+    # 'config.ggnn_layers': [8, 16, 24],
 }
 
 transformer_configs = {
@@ -104,6 +104,7 @@ def choose_commands(n, experiment_id, study_id, name, model_class, overrides, da
         '--config.eval_subsample=1 '
         '--config.eval_max_batches=500 '
         '--config.save_freq=5000 '
+        '--config.train_steps=500000 '
         # '--config.restore_checkpoint_dir=/mnt/runtime-error-problems-experiments/experiments/2021-09-24-pretrain-004-copy/6-003/I1466,o=sgd,bs=32,lr=0.3,gc=2,hs=256,span=max,tdr=0,tadr=0,pe=False,T=default/checkpoints/ '
         # '--config.finetune=IPAGNN '
         f'--config.study_id={study_id} '
@@ -466,21 +467,141 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # Fine-tuning Exception IPA-GNN from pre-trained LSTM
-  offset = 80
+  # offset = 80
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     # 'config.use_film': True,
+  #     # 'config.modulate_mode': 'concat',
+  #     'config.finetune': 'LSTM',
+  #     'config.hidden_size': 64,
+  #     'transformer_size': 'default',
+  #     'config.span_encoding_method': 'sum',
+  #     'config.transformer_dropout_rate': 0.1,
+  #     'config.transformer_attention_dropout_rate': 0,
+  #     'config.permissive_node_embeddings': False,
+  #     'config.restore_checkpoint_dir': '/mnt/runtime-error-problems-experiments/experiments/2021-12-23-lstm/105/L6311,o=sgd,bs=32,lr=0.03,gc=2,hs=64,span=sum,tdr=0.1,tadr=0,pe=False,canh=2,mp=max,T=default/top-checkpoints',
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EFL', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # # GGNN with docstring input
+  # offset = 70
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # # GGNN without input
+  # offset = 80
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'GN', 'GGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # # IPA-GNN
+  # offset = 60
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'I', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # # Exception IPA-GNN
+  # offset = 65
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'E', 'IPAGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # GGNN
+  # offset = 70
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'G', 'GGNN', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # # LSTM
+  # offset = 75
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'L', 'LSTM', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # Transformer
+  # n = 4
+  # offset = 94
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+  # n = 1
+  # offset = 45
+  # overrides = {
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'T', 'Transformer', overrides, codenet_paths.SYNTHETIC_ERRORS_ONLY_PATH, skip_create, dry_run)
+
+  # # FiLM no-bias Exception IPA-GNN (doc)
+  # offset = 0
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_film': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # # # # FiLM no-bias Exception IPA-GNN (nodoc)
+  # offset = 75
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_film': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EFN', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # Cross-attention Exception IPA-GNN
+  # offset = 0  # The machine index to start with.
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_cross_attention': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # # FiLM Exception IPA-GNN
+  # offset = 10  # The machine index to start with.
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  #     'config.use_film': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'EF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # # Cross-attention IPA-GNN ***
+  # offset = 20
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_cross_attention': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # # FiLM IPA-GNN
+  # offset = 30  # The machine index to start with.
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  #     'config.use_film': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IF', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # Exception IPA-GNN, No Bias, Small dataset
+  # offset = 0
+  # overrides = {
+  #     'config.raise_in_ipagnn': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'ES', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # # IPA-GNN, Small dataset
+  # offset = 10
+  # overrides = {
+  #     'config.raise_in_ipagnn': False,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'IS', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+
+  # MIL Transformer. No Docstring. Permissive node embeddings.
+  offset = 30
   overrides = {
-      'config.raise_in_ipagnn': True,
-      # 'config.use_film': True,
-      # 'config.modulate_mode': 'concat',
-      'config.finetune': 'LSTM',
-      'config.hidden_size': 64,
-      'transformer_size': 'default',
-      'config.span_encoding_method': 'sum',
-      'config.transformer_dropout_rate': 0.1,
-      'config.transformer_attention_dropout_rate': 0,
-      'config.permissive_node_embeddings': False,
-      'config.restore_checkpoint_dir': '/mnt/runtime-error-problems-experiments/experiments/2021-12-23-lstm/105/L6311,o=sgd,bs=32,lr=0.03,gc=2,hs=64,span=sum,tdr=0.1,tadr=0,pe=False,canh=2,mp=max,T=default/top-checkpoints',
+      'config.permissive_node_embeddings': True,
   }
-  run_sweep(n, offset, experiment_id, study_id, 'EFL', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  run_sweep(n, offset, experiment_id, study_id, 'MPN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
 
 # # To kill the runner processes:
