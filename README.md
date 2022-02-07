@@ -13,7 +13,7 @@ and for the _Python Runtime Errors (PRE)_ dataset. Please cite this work as:
 
 ## Overview
 
-This repository contains the source code used by the paper _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_. This includes the [dataset construction](), [models](), [sweeps](), and [training loop](), and [evaluation logic]().
+This repository contains the source code used by the paper _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_. This includes the [dataset construction](core/data/generation), [models](core/models), [sweeps](core/distributed/sweeps.py), [training loop](core/lib/trainer.py), and [evaluation logic](core/lib/trainer.py).
 
 We detail below how to perform common tasks using this repository, including dataset loading, replicating dataset construction, and replicating training and eval.
 
