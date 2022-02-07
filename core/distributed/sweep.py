@@ -221,12 +221,20 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'TN', 'Transformer', overrides, dataset_path, skip_create, dry_run)
 
   # Cross-attention Exception IPA-GNN
-  # offset = 0  # The machine index to start with.
-  # overrides = {
-  #     'config.raise_in_ipagnn': True,
-  #     'config.use_cross_attention': True,
-  # }
-  # run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, dataset_path, skip_create, dry_run)
+  offset = 0  # The machine index to start with.
+  overrides = {
+      'config.raise_in_ipagnn': True,
+      'config.use_cross_attention': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'EC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
+
+  # Cross-attention IPA-GNN
+  offset = 10  # The machine index to start with.
+  overrides = {
+      'config.raise_in_ipagnn': False,
+      'config.use_cross_attention': True,
+  }
+  run_sweep(n, offset, experiment_id, study_id, 'IC', 'IPAGNN', overrides, codenet_paths.FULL_DATASET_PATH, skip_create, dry_run)
 
   # # FiLM Exception IPA-GNN
   # offset = 10  # The machine index to start with.
@@ -597,11 +605,11 @@ def main(experiment_id=None, study_id=None, dataset_path=None, skip_create=False
   # run_sweep(n, offset, experiment_id, study_id, 'IS', 'IPAGNN', overrides, codenet_paths.SMALL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
   # MIL Transformer. No Docstring. Permissive node embeddings.
-  offset = 30
-  overrides = {
-      'config.permissive_node_embeddings': True,
-  }
-  run_sweep(n, offset, experiment_id, study_id, 'MPN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
+  # offset = 30
+  # overrides = {
+  #     'config.permissive_node_embeddings': True,
+  # }
+  # run_sweep(n, offset, experiment_id, study_id, 'MPN', 'MILTransformer', overrides, codenet_paths.FULL_DATASET_PATH_WITH_DOCSTRINGS, skip_create, dry_run)
 
 
 # # To kill the runner processes:
