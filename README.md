@@ -11,28 +11,21 @@ and for the _Python Runtime Errors (PRE)_ dataset. Please cite this work as:
 }
 ```
 
-### Overview
+## Overview
 
-This repository contains the source code used by the paper _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_. This includes the [dataset construction](core/data/generation), [models](core/models), [sweeps](core/distributed/sweeps.py), [training loop](core/lib/trainer.py), and [evaluation logic](core/lib/trainer.py).
+This repository contains the source code used by the paper _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_. This includes the [dataset construction](), [models](), [sweeps](), and [training loop](), and [evaluation logic]().
 
 We detail below how to perform common tasks using this repository, including dataset loading, replicating dataset construction, and replicating training and eval.
 
-### Python Runtime Errors Dataset
+## Python Runtime Errors Dataset
 
-The dataset is derived from the [Project CodeNet dataset](https://github.com/IBM/Project_CodeNet).
+The dataset is derived from the [Project CodeNet dataset](https://github.com/IBM/Project_CodeNet). We filter the CodeNet dataset to 2.4 million Python submissions, and augment each with a label indicating any runtime error the program encounters when it is run on a sample input. We detail the contents of our augmented version of the dataset below.
 
-#### Loading the Dataset
+### Loading the Dataset
 
-The [data_io](core/data/data_io.py) module provides functionality `load_dataset` for loading dataset iterators.
+The [data_io](core/data/data_io.py) library provides functionality `load_dataset` for loading dataset iterators.
 
-```python
-from core.data import data_io
-dataset = data_io.load_dataset(dataset_path, split='train', include_strings=False)
-```
-
-It also provides functionality for filtering examples by size or complexity; see [trainer.py:load_dataset](core/lib/trainer.py).
-
-#### Dataset Description
+### Dataset Description
 
 We make the Python Runtime Errors dataset available as a TFRecord of TFExamples.
 
@@ -86,7 +79,7 @@ Here are the fields in each Example:
 - **target_lineno**: The line number at which the error occurred, or else 0 if no error occurred during the execution of the submission.
 - **target_node_indexes**: A list of indices of all control flow nodes that are consistent with the target line number target_lineno.
 - **num_target_nodes**: An integer. The number of elements in 'target_node_indexes'.
-- **post_domination_matrix**: An nxn 0/1 matrix. A 1 at element i,j indicates that i is post-dominated by j. This means that any path from i to the exit necessarily passes through node j.
+- **post_domination_matrix**: An n x n 0/1 matrix. A 1 at element i,j indicates that i is post-dominated by j. This means that any path from i to the exit necessarily passes through node j.
 - **post_domination_matrix_shape**: A 2-tuple of integers representing the shape of the post domination matrix.
 - **problem_id**: A string e.g. "p00001" indicating the problem id corresponding to the submission's problem in the original Project CodeNet dataset.
 - **submission_id**: A string e.g. "s149981901" indicating the submission id of the submission in the original Project CodeNet dataset.
@@ -95,6 +88,78 @@ Here are the fields in each Example:
 - **num_nodes**: An integer. The number of nodes in the control flow graph of the submission.
 - **num_edges**: An integer. The number of edges in the control flow graph of the submission.
 
+## Training
+
+### Exception IPA-GNN
+
+The following command starts training an Exception IPA-GNN using the selected hyperparameters in the _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_ paper.
+
+```bash
+python3 -m scripts.runner \
+  --dataset_path=/path/to/dataset \
+  --config.model_class=IPAGNN \
+  --config.raise_in_ipagnn=True \
+  --config.optimizer=sgd \
+  --config.batch_size=32 \
+  --config.learning_rate=0.3 \
+  --config.grad_clip_value=0.5 \
+  --config.hidden_size=128 \
+  --config.span_encoding_method=max \
+  --config.transformer_dropout_rate=0.1 \
+  --config.transformer_attention_dropout_rate=0 \
+  --config.permissive_node_embeddings=False \
+  --config.transformer_emb_dim=512 \
+  --config.transformer_num_heads=8 \
+  --config.transformer_num_layers=6 \
+  --config.transformer_qkv_dim=512 \
+  --config.transformer_mlp_dim=2048 \
+  --config.eval_freq=15000 \
+  --config.eval_subsample=1 \
+  --config.eval_max_batches=500 \
+  --config.save_freq=50000 \
+  --config.train_steps=500000 \
+  --config.study_id=example-study \
+  --config.experiment_id=1 \
+  --config.run_id=exception-example-run
+```
+
+Default configuration values are available in [config/default.py](config/default.py).
+
+
+### IPA-GNN
+
+The following command starts training a vanilla IPA-GNN using the selected hyperparameters in the _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_ paper.
+
+```bash
+python3 -m scripts.runner \
+  --dataset_path=/path/to/dataset \
+  --config.model_class=IPAGNN \
+  --config.raise_in_ipagnn=False \
+  --config.optimizer=sgd \
+  --config.batch_size=32 \
+  --config.learning_rate=0.3 \
+  --config.grad_clip_value=1 \
+  --config.hidden_size=128 \
+  --config.span_encoding_method=first \
+  --config.transformer_dropout_rate=0 \
+  --config.transformer_attention_dropout_rate=0.1 \
+  --config.permissive_node_embeddings=False \
+  --config.transformer_emb_dim=128 \
+  --config.transformer_num_heads=2 \
+  --config.transformer_num_layers=128 \
+  --config.transformer_qkv_dim=4 \
+  --config.transformer_mlp_dim=512 \
+  --config.eval_freq=15000 \
+  --config.eval_subsample=1 \
+  --config.eval_max_batches=500 \
+  --config.save_freq=50000 \
+  --config.train_steps=500000 \
+  --config.study_id=example-study \
+  --config.experiment_id=1 \
+  --config.run_id=ipagnn-example-run
+```
+
+Default configuration values are available in [config/default.py](config/default.py).
 
 
 
