@@ -129,7 +129,7 @@ We make the Python Runtime Errors dataset available as a TFRecord of TFExamples.
 
 First, ensure that [codenet_paths.py](core/data/codenet_paths.py) reflects the location of the raw Project CodeNet data.
 
-1. <details>
+<details>
   <summary>1. Divide the problems into splits</summary>
 
 Our pre-generated splits are available in [out/splits/default.json](out/splits/default.json).
@@ -141,7 +141,7 @@ python -m core.data.splits make_and_save_splits --path=out/splits/example-splits
 ```
 </details>
 
-2. <details>
+<details>
   <summary>2. Generate vocabulary for tokenizer</summary>
 
 The following script will use the raw Project CodeNet data to generate a vocabulary file for the HuggingFace BPE tokenizer.
