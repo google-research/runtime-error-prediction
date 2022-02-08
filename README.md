@@ -21,6 +21,8 @@ We detail below how to perform common tasks using this repository, including dat
 
 The dataset is derived from the [Project CodeNet dataset](https://github.com/IBM/Project_CodeNet). We filter the CodeNet dataset to 2.4 million Python submissions, and augment each with a label indicating any runtime error the program encounters when it is run on a sample input. We detail the contents of our augmented version of the dataset below.
 
+The datasets can be found at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29` and `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
+
 ### Loading the Dataset
 
 The [data_io](core/data/data_io.py) library provides functionality `load_dataset` for loading dataset iterators.
@@ -142,7 +144,18 @@ python -m core.data.splits make_and_save_splits --path=out/splits/example-splits
 </details>
 
 <details>
-  <summary>2. Generate vocabulary for tokenizer</summary>
+  <summary>2. Run all submissions</summary>
+
+Run the following on a GCP virtual machine.
+```bash
+python -m core.data.process_codenet run_codenet_submissions
+```
+
+This will collect data to the `codenet_paths.EVALS_ROOT` directory.
+</details>
+
+<details>
+  <summary>3. Generate vocabulary for tokenizer</summary>
 
 The following script will use the raw Project CodeNet data to generate a vocabulary file for the HuggingFace BPE tokenizer.
 You can also skip this step and use our [pre-generated vocabulary file here](out/tokenizers/train-docstrings-1000000.json).
@@ -157,6 +170,20 @@ python -m core.data.process_codenet generate_tokenizer --path=out/tokenizers/exa
 The vocabulary used in the paper is available at [out/tokenizers/train-docstrings-1000000.json](out/tokenizers/train-docstrings-1000000.json).
 </details>
 
+<details>
+  <summary>4. Generate the dataset</summary>
+
+The following command generates the complete dataset (fraciton = 1.0), with the resource descriptions included in the programs as docstrings (include_docstring = True).
+
+```bash
+python -m core.data.process_codenet generate_codenet_dataset --tokenizer_path=out/tokenizers/example-tokenizer.json --dataset_path=out/datasets/example-dataset --splits_path=out/splits/example-splits.json --include_docstrings=True --fraction=1.0
+```
+
+We used this command to produce the dataset available at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29`.
+We also ran this same command with include_docstring=False to produce `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
+</details>
+
+The pre-generated datasets are available at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29` and `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
 
 
 ## Training
