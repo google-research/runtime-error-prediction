@@ -162,7 +162,7 @@ The following script will use the raw Project CodeNet data to generate a vocabul
 You can also skip this step and use our [pre-generated vocabulary file here](out/tokenizers/train-docstrings-1000000.json).
 
 ```bash
-# First parse the problem descriptions
+# First parse the problem descriptions.
 python -m core.data.process_codenet generate_docstrings
 # Then generate a vocab suitable for the resource descriptions and the source code.
 python -m core.data.process_codenet generate_tokenizer --path=out/tokenizers/example-tokenizer.json --splits_path=out/splits/example-splits.json
@@ -174,14 +174,14 @@ The vocabulary used in the paper is available at [out/tokenizers/train-docstring
 <details>
   <summary>4. Generate the dataset</summary>
 
-The following command generates the complete dataset (fraciton = 1.0), with the resource descriptions included in the programs as docstrings (include_docstring = True).
+The following command generates the complete dataset (`fraction=1.0`), with the resource descriptions included in the programs as docstrings (`include_docstring=True`).
 
 ```bash
 python -m core.data.process_codenet generate_codenet_dataset --tokenizer_path=out/tokenizers/example-tokenizer.json --dataset_path=out/datasets/example-dataset --splits_path=out/splits/example-splits.json --include_docstrings=True --fraction=1.0
 ```
 
 We used this command to produce the dataset available at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29`.
-We also ran this same command with include_docstring=False to produce `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
+We also ran this same command with `include_docstring=False` to produce `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
 </details>
 
 The pre-generated datasets are available at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29` and `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
