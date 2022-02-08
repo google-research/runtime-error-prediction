@@ -91,6 +91,40 @@ We make the Python Runtime Errors dataset available as a TFRecord of TFExamples.
 
 </details>
 
+<details>
+  <summary>The error classes in the dataset are:</summary>
+
+- 1: No Error
+- 2: Other
+- 3: Timeout
+- 4: AssertionError
+- 5: AttributeError
+- 6: decimal
+- 7: EOFError
+- 8: FileNotFoundError
+- 9: ImportError
+- 10: IndentationError
+- 11: IndexError
+- 12: KeyError
+- 13: MathDomainError
+- 14: MemoryError
+- 15: ModuleNotFoundError
+- 16: NameError
+- 17: OSError
+- 18: OverflowError
+- 19: re.error
+- 20: RecursionError
+- 21: RuntimeError
+- 22: StopIteration
+- 23: SyntaxError
+- 24: TabError
+- 25: TypeError
+- 26: UnboundLocalError
+- 27: ValueError
+- 28: ZeroDivisionError
+- 29: numpy.AxisError
+</details>
+
 ### Generating the dataset
 
 ## Training
