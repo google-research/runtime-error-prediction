@@ -13,7 +13,7 @@ and for the _Python Runtime Errors (PRE)_ dataset. Please cite this work as:
 
 ## Overview
 
-This repository contains the source code used by the paper _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_. This includes the [dataset construction](core/data/generation), [models](core/models), [sweeps](core/distributed/sweeps.py), [training loop](core/lib/trainer.py), and [evaluation logic](core/lib/trainer.py).
+This repository contains the source code used by the paper _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_. This includes the [dataset construction](core/data), [models](core/models), [sweeps](core/distributed/sweeps.py), [training loop](core/lib/trainer.py), and [evaluation logic](core/lib/trainer.py).
 
 We detail below how to perform common tasks using this repository, including dataset loading, replicating dataset construction, and replicating training and eval.
 
@@ -126,6 +126,22 @@ We make the Python Runtime Errors dataset available as a TFRecord of TFExamples.
 </details>
 
 ### Generating the dataset
+
+<details>
+  <summary>1. Generate a tokenizer vocabulary (or use our pre-generated tokenizer at [out/tokenizers/train-docstrings-1000000.json](out/tokenizers/train-docstrings-1000000.json))</summary>
+
+The following script will use the raw Project CodeNet data to generate a vocabulary file for the HuggingFace BPE tokenizer.
+You can also skip this step and use our [pre-generated vocabulary file here](out/tokenizers/train-docstrings-1000000.json).
+```bash
+python -m core.data.tokenization generate_tokenizer --path=path/to/new/tokenizer.json --files=path/to/p1.py,path/to/p2.py
+```
+
+To call this from Python, write:
+```python
+from core.data import tokenization
+tokenization.generate_tokenizer(path='path/to/new/tokenizer.json', files=['path/to/p1.py', 'path/to/p2.py'])
+```
+</details>
 
 ## Training
 
