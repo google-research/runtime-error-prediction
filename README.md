@@ -267,5 +267,6 @@ Add the following three flags to your train command to evaluate a trained model 
 
 `--config.restore_checkpoint_dir=study_id/experiment_id/run_id/top-checkpoints --mode=test --split=test`
 
+---
 
 Disclaimer: This is not an official Google project.
