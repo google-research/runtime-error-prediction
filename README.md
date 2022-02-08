@@ -127,11 +127,32 @@ We make the Python Runtime Errors dataset available as a TFRecord of TFExamples.
 
 ### Generating the dataset
 
+First, ensure that [codenet_paths.py](core/data/codenet_paths.py) reflects the location of the raw Project CodeNet data.
+
 <details>
-  <summary>1. Generate a tokenizer vocabulary (or use our pre-generated tokenizer at [out/tokenizers/train-docstrings-1000000.json](out/tokenizers/train-docstrings-1000000.json))</summary>
+  <summary>1. Divide the problems into splits</summary>
+
+Our pre-generated splits are available in [out/splits/default.json](out/splits/default.json).
+
+We generated these splits using the following script:
+
+```bash
+python -m core.data.splits make_and_save_splits --path=out/splits/example-splits.json
+```
+</details>
+
+<details>
+  <summary>1. Generate vocabulary for tokenizer</summary>
 
 The following script will use the raw Project CodeNet data to generate a vocabulary file for the HuggingFace BPE tokenizer.
 You can also skip this step and use our [pre-generated vocabulary file here](out/tokenizers/train-docstrings-1000000.json).
+
+```bash
+python -m core.data.process_codenet generate_tokenizer --path=path/to/new/tokenizer.json --files=path/to/p1.py,path/to/p2.py
+```
+
+
+
 ```bash
 python -m core.data.tokenization generate_tokenizer --path=path/to/new/tokenizer.json --files=path/to/p1.py,path/to/p2.py
 ```
@@ -141,6 +162,9 @@ To call this from Python, write:
 from core.data import tokenization
 tokenization.generate_tokenizer(path='path/to/new/tokenizer.json', files=['path/to/p1.py', 'path/to/p2.py'])
 ```
+
+The vocabulary used in the paper is available at [out/tokenizers/train-docstrings-1000000.json](out/tokenizers/train-docstrings-1000000.json).
+
 </details>
 
 ## Training
