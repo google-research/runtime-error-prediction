@@ -29,7 +29,8 @@ The [data_io](core/data/data_io.py) library provides functionality `load_dataset
 
 We make the Python Runtime Errors dataset available as a TFRecord of TFExamples.
 
-Here are the fields in each Example:
+<details>
+  <summary>Here are the fields in each Example:</summary>
 
 - **tokens**: A list of integer indexes that map to the tokens in the submission. Taken together, these tokens comprise a submission from the original Project CodeNet dataset.
 - **docstring_tokens**: A list of integer indexes that map to tokens in the "resource description" corresponding to the submission's problem id. The resource description is parsed from the problem statement from the original Project CodeNet dataset.
@@ -87,6 +88,10 @@ Here are the fields in each Example:
 - **num_tokens**: An integer. The number of tokens in the submission. This is the length of the tokens list.
 - **num_nodes**: An integer. The number of nodes in the control flow graph of the submission.
 - **num_edges**: An integer. The number of edges in the control flow graph of the submission.
+
+</details>
+
+### Generating the dataset
 
 ## Training
 
