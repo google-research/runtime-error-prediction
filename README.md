@@ -261,5 +261,11 @@ python3 -m scripts.runner \
 Default configuration values are available in [config/default.py](config/default.py).
 
 
+## Evaluation
+
+Add the following three flags to your train command to evaluate a trained model on the validation (`--split=valid`) or test set (`--split=test`).
+
+`--config.restore_checkpoint_dir=study_id/experiment_id/run_id/top-checkpoints --mode=test --split=test`
+
 
 Disclaimer: This is not an official Google project.
