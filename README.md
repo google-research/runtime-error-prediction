@@ -30,6 +30,7 @@ The [data_io](core/data/data_io.py) library provides functionality `load_dataset
 ### Dataset Description
 
 We make the Python Runtime Errors dataset available as a TFRecord of TFExamples.
+Each example represents a single Python 3 submission to a competitive programming problem. Each example is labelled with a target class indicating the error (if any) encountered by the submission when run on a sample input.
 
 <details>
   <summary>Here are the fields in each Example:</summary>
