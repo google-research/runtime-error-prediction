@@ -25,7 +25,8 @@ The datasets can be found at `gs://python-runtime-errors/datasets/project-codene
 
 <details>
   <summary>Direct links to download the dataset</summary>
-  ### 2021-12-29 (gs://python-runtime-errors/datasets/project-codenet/2021-12-29)
+
+  #### 2021-12-29 (gs://python-runtime-errors/datasets/project-codenet/2021-12-29)
 
   In this version of the dataset, the resource descriptions are present in the source of each submission as a docstring at the beginning of the file.
 
@@ -36,7 +37,7 @@ The datasets can be found at `gs://python-runtime-errors/datasets/project-codene
   * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid.tfrecord)
   * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test.tfrecord)
 
-  ### 2021-12-29-nodoc (gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc)
+  #### 2021-12-29-nodoc (gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc)
 
   In this version of the dataset, the source of each submission is tokenized without modification.
 
