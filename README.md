@@ -227,7 +227,12 @@ A setup script to prepare a Cloud TPU for training is [scripts/setup-tpu.sh](scr
 <details>
   <summary>Additional setup details</summary>
 
-  To mount the Python Runtime Errors dataset bucket locally, run the following:
+  To start a Cloud TPU:
+
+  1. Set DEFAULT_PROJECT in [gcp.py](core/distributed/gcp.py) to your GCP project name.
+  2. You can then run `python -m core.distributed.gcp tpu_up_n --n=1 --offset=0` to start n Cloud TPUs, billed to your GCP project. (`--offset` is used to determine the names and zones of the tpus; `--n` indicates how many TPUs to start). This requires that gcloud is set up locally.
+
+  To mount the Python Runtime Errors dataset bucket, run the following:
 
   ```bash
   # Connect to GCS Bucket for data
@@ -237,6 +242,8 @@ A setup script to prepare a Cloud TPU for training is [scripts/setup-tpu.sh](scr
     gcsfuse python-runtime-errors /mnt/python-runtime-errors/
   fi
   ```
+
+  [setup-tpu.sh](scripts/setup-tpu.sh) will do this mounting for you if you run it on your Cloud TPU.
 
   You can then use `/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc` as the `--dataset_path` below in place of `/path/to/dataset`.
   This matches the default dataset path set in [codenet_paths.py](core/data/codenet_paths.py).
