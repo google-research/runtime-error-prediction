@@ -48,6 +48,8 @@ The datasets can be found at `gs://python-runtime-errors/datasets/project-codene
   * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/valid.tfrecord)
   * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/test.tfrecord)
 
+Both versions of the dataset use the [tokenizer vocabulary found here](out/tokenizers/train-docstrings-1000000.json).
+
 The problem ids and submission ids match the submissions in the original [Project CodeNet dataset](https://developer.ibm.com/exchanges/data/all/project-codenet/).
 
 </details>
