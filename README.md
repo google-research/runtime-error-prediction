@@ -218,6 +218,30 @@ The pre-generated datasets are available at `gs://python-runtime-errors/datasets
 
 ## Training
 
+### Setup
+
+Python dependencies are listed in [setup.py](setup.py).
+
+A setup script to prepare a Cloud TPU for training is [scripts/setup-tpu.sh](scripts/setup-tpu.sh).
+
+<details>
+  <summary>Additional setup details</summary>
+
+  To mount the Python Runtime Errors dataset bucket locally, run the following:
+
+  ```bash
+  # Connect to GCS Bucket for data
+  if [ ! -f /mnt/python-runtime-errors/README.md ]; then
+    sudo mkdir -p /mnt/python-runtime-errors
+    sudo chown $(whoami) /mnt/python-runtime-errors
+    gcsfuse python-runtime-errors /mnt/python-runtime-errors/
+  fi
+  ```
+
+  You can then use `/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc` as the `--dataset_path` below in place of `/path/to/dataset`.
+  This matches the default dataset path set in [codenet_paths.py](core/data/codenet_paths.py).
+</details>
+
 ### Exception IPA-GNN
 
 The following command starts training an Exception IPA-GNN using the selected hyperparameters in the _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_ paper.
