@@ -29,7 +29,7 @@ popd
 python3.9 -m venv ipagnn
 source ./ipagnn/bin/activate
 
-pushd compressive-ipagnn
+pushd runtime-error-prediction
 python3.9 -m pip install -r requirements.txt
 python3.9 setup.py develop
 popd

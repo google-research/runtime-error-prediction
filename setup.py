@@ -37,7 +37,7 @@ packages = [
     'experimental',
 ]
 setuptools.setup(
-    name="compressive-ipagnn",
+    name="runtime-error-prediction",
     version="1.0.0",
     classifiers=[
         "Programming Language :: Python :: 3",
