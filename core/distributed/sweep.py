@@ -96,7 +96,7 @@ def choose_commands(n, experiment_id, study_id, name, model_class, overrides, da
     for key, value in params.items():
       flags.append(f'--{key}={value}')
     command = (
-        'cd compressive-ipagnn && '
+        'cd runtime-error-prediction && '
         'python3 -m scripts.runner '
         f'--config.model_class={model_class} '
         f'--dataset_path={dataset_path} '

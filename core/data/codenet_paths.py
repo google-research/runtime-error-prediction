@@ -13,20 +13,20 @@ DEFAULT_SPLITS_PATH = 'out/splits/default.json'
 DEFAULT_EXPERIMENTS_DIR = 'out/experiments'
 EXPERIMENT_ID_PATH = 'out/experiment_id.txt'
 
-FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-nodoc'
-FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29'
-SMALL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-nodoc-f=0.1'
-SMALL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-f=0.1'
+FULL_DATASET_PATH = '/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc'
+FULL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29'
+SMALL_DATASET_PATH = '/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc-f=0.1'
+SMALL_DATASET_PATH_WITH_DOCSTRINGS = '/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-f=0.1'
 # Raw control_flow_programs data pattern:
-DEFAULT_CFP_DATA_PATTERN = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
+DEFAULT_CFP_DATA_PATTERN = '/mnt/python-runtime-errors/datasets/control_flow_programs/decimal-large-state-L10/0.0.48/control_flow_programs-train.tfrecord-*'
 # Processed control_flow_programs dataset path:
-DEFAULT_CFP_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs/processed/decimal-large-state-L10/0.0.48-002/'
+DEFAULT_CFP_DATASET_PATH = '/mnt/python-runtime-errors/datasets/control_flow_programs/processed/decimal-large-state-L10/0.0.48-002/'
 
 # Synthetic data. No docstrings. Yes GGNN features.
 SYNTHETIC_ERRORS_ONLY_PATH = '/mnt/error-prediction-synthetic-data/synthetic-2021-12-29-001/errors-only'
 
-RAW_CFP_RAISE_DATA_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs_raise/decimal-large-state-L30/2021-10-19-001/synthetic-20211018-001.tfrecord'
-DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/control_flow_programs_raise/processed/decimal-large-state-L30/2021-10-19-001/'
+RAW_CFP_RAISE_DATA_PATH = '/mnt/python-runtime-errors/datasets/control_flow_programs_raise/decimal-large-state-L30/2021-10-19-001/synthetic-20211018-001.tfrecord'
+DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/python-runtime-errors/datasets/control_flow_programs_raise/processed/decimal-large-state-L30/2021-10-19-001/'
 
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
@@ -41,7 +41,7 @@ HOSTNAME = socket.gethostname()
 SHORT_HOSTNAME = HOSTNAME
 if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
-  DATA_ROOT = '/Users/dbieber/code/github/googleprivate/compressive-ipagnn/data/Project_CodeNet'
+  DATA_ROOT = '/Users/dbieber/code/github/google-research/runtime-error-prediction/data/Project_CodeNet'
   SHORT_HOSTNAME = 'dbieber-mac'
 elif HOSTNAME == 'dbieber-macbookpro4.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
@@ -53,13 +53,13 @@ elif HOSTNAME == 'code-executor-001':
   EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
   OUT_ROOT = '/mnt/disks/project-codenet-data/out'
 elif HOSTNAME == 'dev-000':
-  PYTHON3 = '/home/dbieber/compressive-ipagnn/ipagnn/bin/python'
+  PYTHON3 = '/home/dbieber/runtime-error-prediction/ipagnn/bin/python'
   DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
   EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
   OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
 elif HOSTNAME.startswith('t1v-'):  # TPU
   PYTHON3 = '/usr/bin/python3'
-  FULL_DATASET_PATH = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-10-07-full'
+  FULL_DATASET_PATH = '/mnt/python-runtime-errors/datasets/project-codenet/2021-10-07-full'
   DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
   EVALS_ROOT = '/mnt/project-codenet-storage/out/evals'
   OUT_ROOT = '/mnt/project-codenet-storage/out'

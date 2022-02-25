@@ -1,5 +1,3 @@
-import getpass
-
 from core.distributed import gcp
 
 call = gcp.call
@@ -9,16 +7,15 @@ _hostname = gcp._hostname
 _zone = gcp._zone
 
 
-access_token = getpass.getpass('Personal access token: ')
-repo_url = f'https://{access_token}@github.com/googleprivate/compressive-ipagnn.git'
+repo_url = f'https://github.com/google-research/runtime-error-prediction.git'
 
 
 def clone_args(index):
-  branch = '2021-08-13-overfit'
+  branch = 'main'
   hostname = _hostname(index)
   zone = _zone(index)
   return ['gcloud', 'compute', 'ssh', hostname, '--command',
-          f'sudo apt install git -y && git clone {repo_url} && cd compressive-ipagnn && git checkout {branch}',
+          f'sudo apt install git -y && git clone {repo_url} && cd runtime-error-prediction && git checkout {branch}',
           '--zone', zone]
 
 
@@ -31,7 +28,7 @@ def setup_args(index):
   hostname = _hostname(index)
   zone = _zone(index)
   return ['gcloud', 'compute', 'ssh', hostname, '--command',
-          f'compressive-ipagnn/core/distributed/setup.sh',
+          f'runtime-error-prediction/core/distributed/setup.sh',
           '--zone', zone]
 
 
