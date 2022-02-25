@@ -47,6 +47,9 @@ The datasets can be found at `gs://python-runtime-errors/datasets/project-codene
   * [train.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/train.tfrecord)
   * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/valid.tfrecord)
   * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/test.tfrecord)
+
+The problem ids and submission ids match the submissions in the original [Project CodeNet dataset](https://developer.ibm.com/exchanges/data/all/project-codenet/).
+
 </details>
 
 ### Loading the Dataset
