@@ -23,6 +23,31 @@ The dataset is derived from the [Project CodeNet dataset](https://github.com/IBM
 
 The datasets can be found at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29` and `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
 
+<details>
+  <summary>Direct links to download the dataset</summary>
+  ### 2021-12-29 (gs://python-runtime-errors/datasets/project-codenet/2021-12-29)
+
+  In this version of the dataset, the resource descriptions are present in the source of each submission as a docstring at the beginning of the file.
+
+  * [train-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/train-ids.json)
+  * [valid-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid-ids.json)
+  * [test-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test-ids.json)
+  * [train.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/train.tfrecord)
+  * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid.tfrecord)
+  * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test.tfrecord)
+
+  ### 2021-12-29-nodoc (gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc)
+
+  In this version of the dataset, the source of each submission is tokenized without modification.
+
+  * [train-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/train-ids.json)
+  * [valid-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid-ids.json)
+  * [test-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test-ids.json)
+  * [train.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/train.tfrecord)
+  * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid.tfrecord)
+  * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test.tfrecord)
+</details>
+
 ### Loading the Dataset
 
 The [data_io](core/data/data_io.py) library provides functionality `load_dataset` for loading dataset iterators.
