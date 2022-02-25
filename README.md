@@ -23,6 +23,35 @@ The dataset is derived from the [Project CodeNet dataset](https://github.com/IBM
 
 The datasets can be found at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29` and `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
 
+<details>
+  <summary>Direct links to download the dataset</summary>
+
+  #### 2021-12-29 (gs://python-runtime-errors/datasets/project-codenet/2021-12-29)
+
+  In this version of the dataset, the resource descriptions are present in the source of each submission as a docstring at the beginning of the file.
+
+  * [train-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/train-ids.json)
+  * [valid-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid-ids.json)
+  * [test-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test-ids.json)
+  * [train.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/train.tfrecord)
+  * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid.tfrecord)
+  * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test.tfrecord)
+
+  #### 2021-12-29-nodoc (gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc)
+
+  In this version of the dataset, the source of each submission is tokenized without modification.
+
+  * [train-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/train-ids.json)
+  * [valid-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/valid-ids.json)
+  * [test-ids.json](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/test-ids.json)
+  * [train.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/train.tfrecord)
+  * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/valid.tfrecord)
+  * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/test.tfrecord)
+
+The problem ids and submission ids match the submissions in the original [Project CodeNet dataset](https://developer.ibm.com/exchanges/data/all/project-codenet/).
+
+</details>
+
 ### Loading the Dataset
 
 The [data_io](core/data/data_io.py) library provides functionality `load_dataset` for loading dataset iterators.
@@ -188,6 +217,37 @@ The pre-generated datasets are available at `gs://python-runtime-errors/datasets
 
 
 ## Training
+
+### Setup
+
+Python dependencies are listed in [setup.py](setup.py).
+
+A setup script to prepare a Cloud TPU for training is [scripts/setup-tpu.sh](scripts/setup-tpu.sh).
+
+<details>
+  <summary>Additional setup details</summary>
+
+  To start a Cloud TPU:
+
+  1. Set DEFAULT_PROJECT in [gcp.py](core/distributed/gcp.py) to your GCP project name.
+  2. You can then run `python -m core.distributed.gcp tpu_up_n --n=1 --offset=0` to start n Cloud TPUs, billed to your GCP project. (`--offset` is used to determine the names and zones of the tpus; `--n` indicates how many TPUs to start). This requires that gcloud is set up locally.
+
+  To mount the Python Runtime Errors dataset bucket, run the following:
+
+  ```bash
+  # Connect to GCS Bucket for data
+  if [ ! -f /mnt/python-runtime-errors/README.md ]; then
+    sudo mkdir -p /mnt/python-runtime-errors
+    sudo chown $(whoami) /mnt/python-runtime-errors
+    gcsfuse python-runtime-errors /mnt/python-runtime-errors/
+  fi
+  ```
+
+  [setup-tpu.sh](scripts/setup-tpu.sh) will do this mounting for you if you run it on your Cloud TPU.
+
+  You can then use `/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc` as the `--dataset_path` below in place of `/path/to/dataset`.
+  This matches the default dataset path set in [codenet_paths.py](core/data/codenet_paths.py).
+</details>
 
 ### Exception IPA-GNN
 
