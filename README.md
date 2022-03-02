@@ -224,10 +224,12 @@ The pre-generated datasets are available at `gs://python-runtime-errors/datasets
 
 Python dependencies are listed in [setup.py](setup.py).
 
-A setup script to prepare a Cloud TPU for training is [scripts/setup-tpu.sh](scripts/setup-tpu.sh).
+We provide a setup script to install all dependencies and mount the Cloud Storage bucket containing the dataset at [scripts/setup-tpu.sh](scripts/setup-tpu.sh).
 
 <details>
   <summary>Additional setup details</summary>
+
+  Training works fine on a CPU, GPU, or TPU, but is likely prohibitively slow on CPU, and is fastest on a TPU.
 
   To start a Cloud TPU:
 
@@ -245,7 +247,7 @@ A setup script to prepare a Cloud TPU for training is [scripts/setup-tpu.sh](scr
   fi
   ```
 
-  [setup-tpu.sh](scripts/setup-tpu.sh) will do this mounting for you if you run it on your Cloud TPU.
+  [setup-tpu.sh](scripts/setup-tpu.sh) will do this mounting for you if you run it on your Cloud TPU or any other GCP VM.
 
   You can then use `/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc` as the `--dataset_path` below in place of `/path/to/dataset`.
   This matches the default dataset path set in [codenet_paths.py](core/data/codenet_paths.py).
