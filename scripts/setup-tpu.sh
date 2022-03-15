@@ -14,7 +14,7 @@ python3 -m pip install -r requirements.txt
 if [ ! -f /mnt/python-runtime-errors/README.md ]; then
   sudo mkdir -p /mnt/python-runtime-errors
   sudo chown $(whoami) /mnt/python-runtime-errors
-  gcsfuse python-runtime-errors /mnt/python-runtime-errors/
+  gcsfuse --implicit-dirs python-runtime-errors /mnt/python-runtime-errors/
 fi
 
 # # If writing experiment results to a bucket, mount that here as well:
@@ -22,7 +22,7 @@ fi
 # if [ ! -f /mnt/$EXPERIMENT_DATA_BUCKET/README.md ]; then
 #   sudo mkdir -p /mnt/$EXPERIMENT_DATA_BUCKET
 #   sudo chown $(whoami) /mnt/$EXPERIMENT_DATA_BUCKET
-#   gcsfuse $EXPERIMENT_DATA_BUCKET /mnt/$EXPERIMENT_DATA_BUCKET/
+#   gcsfuse --implicit-dirs $EXPERIMENT_DATA_BUCKET /mnt/$EXPERIMENT_DATA_BUCKET/
 # fi
 
 # # Uncomment to copy data out of bucket for faster access.
