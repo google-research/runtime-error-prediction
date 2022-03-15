@@ -1,13 +1,16 @@
 # Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions
 
-This is the repository for the paper _Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_,
+This is the repository for the paper [_Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions_](https://arxiv.org/abs/2203.03771),
 and for the _Python Runtime Errors (PRE)_ dataset. Please cite this work as:
 
 ```text
 @misc{bieber2022static,
-      title={Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions},
-      author={David Bieber and Rishab Goel and Daniel Zheng and Hugo Larochelle and Daniel Tarlow},
-      year={2022},
+    title={Static Prediction of Runtime Errors by Learning to Execute Programs with External Resource Descriptions},
+    author={David Bieber and Rishab Goel and Daniel Zheng and Hugo Larochelle and Daniel Tarlow},
+    year={2022},
+    eprint={2203.03771},
+    archivePrefix={arXiv},
+    primaryClass={cs.LG}
 }
 ```
 
@@ -224,10 +227,14 @@ The pre-generated datasets are available at `gs://python-runtime-errors/datasets
 
 Python dependencies are listed in [setup.py](setup.py).
 
-A setup script to prepare a Cloud TPU for training is [scripts/setup-tpu.sh](scripts/setup-tpu.sh).
+We provide a setup script to install all dependencies and mount the Cloud Storage bucket containing the dataset at [scripts/setup-tpu.sh](scripts/setup-tpu.sh). If running on CPU or GPU, replace the first line of setup-tpu.sh with [the appropriate jax installation command for your system](https://github.com/google/jax#installation).
 
 <details>
   <summary>Additional setup details</summary>
+
+  Training should work fine on a CPU, GPU, or TPU, but is likely prohibitively slow on CPU, and is fastest on a TPU.
+
+  The first line of setup-tpu.sh installs jax for use on TPU; if instead running on CPU or GPU, use [the appropriate jax installation command for your system](https://github.com/google/jax#installation).
 
   To start a Cloud TPU:
 
