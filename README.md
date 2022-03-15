@@ -232,7 +232,7 @@ We provide a setup script to install all dependencies and mount the Cloud Storag
 <details>
   <summary>Additional setup details</summary>
 
-  Training should work fine on a CPU, GPU, or TPU, but is likely prohibitively slow on CPU, and is fastest on a TPU.
+  Training works fine on a CPU, GPU, or TPU, but is likely prohibitively slow on CPU, and is fastest on a TPU.
 
   The first line of setup-tpu.sh installs jax for use on TPU; if instead running on CPU or GPU, use [the appropriate jax installation command for your system](https://github.com/google/jax#installation).
 
@@ -252,7 +252,7 @@ We provide a setup script to install all dependencies and mount the Cloud Storag
   fi
   ```
 
-  [setup-tpu.sh](scripts/setup-tpu.sh) will do this mounting for you if you run it on your Cloud TPU.
+  [setup-tpu.sh](scripts/setup-tpu.sh) will do this mounting for you if you run it on your Cloud TPU or any other GCP VM.
 
   You can then use `/mnt/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc` as the `--dataset_path` below in place of `/path/to/dataset`.
   This matches the default dataset path set in [codenet_paths.py](core/data/codenet_paths.py).

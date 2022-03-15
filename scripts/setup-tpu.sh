@@ -25,8 +25,8 @@ fi
 #   gcsfuse --implicit-dirs $EXPERIMENT_DATA_BUCKET /mnt/$EXPERIMENT_DATA_BUCKET/
 # fi
 
-# Copy data out of bucket for faster access.
-if [ ! -d project-codenet-data/full-noudf-ids ]; then
-  mkdir -p project-codenet-data
-  cp -r /mnt/python-runtime-errors/datasets/project-codenet/full-noudf-ids project-codenet-data/full-noudf-ids
-fi
+# # Uncomment to copy data out of bucket for faster access.
+# if [ ! -d project-codenet-data/full-noudf-ids ]; then
+#   mkdir -p project-codenet-data
+#   cp -r /mnt/python-runtime-errors/datasets/project-codenet/2021-12-29 project-codenet-data/2021-12-29
+# fi
