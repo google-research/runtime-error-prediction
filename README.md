@@ -225,7 +225,7 @@ The pre-generated datasets are available at `gs://python-runtime-errors/datasets
 
 ### Dataset License
 
-The Python Runtime Errors dataset is licensed under the [Community Data License Agreement - Permissive - Version 2.0](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/LICENSE).
+The Python Runtime Errors dataset is made available under the [Community Data License Agreement - Permissive - Version 2.0](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/LICENSE).
 
 ## Training
 
