@@ -39,6 +39,7 @@ The datasets can be found at `gs://python-runtime-errors/datasets/project-codene
   * [train.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/train.tfrecord) (3.5 GB)
   * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/valid.tfrecord) (371.4 MB)
   * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29/test.tfrecord) (365.6 MB)
+  * [LICENSE](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/LICENSE) (Community Data License Agreement - Permissive - Version 2.0)
 
   #### 2021-12-29-nodoc (gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc)
 
@@ -50,6 +51,7 @@ The datasets can be found at `gs://python-runtime-errors/datasets/project-codene
   * [train.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/train.tfrecord) (3.1 GB)
   * [valid.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/valid.tfrecord) (331.9 MB)
   * [test.tfrecord](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc/test.tfrecord) (327.6 MB)
+  * [LICENSE](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/LICENSE) (Community Data License Agreement - Permissive - Version 2.0)
 
 Both versions of the dataset use the [tokenizer vocabulary found here](out/tokenizers/train-docstrings-1000000.json).
 
@@ -220,6 +222,10 @@ We also ran this same command with `include_docstring=False` to produce `gs://py
 
 The pre-generated datasets are available at `gs://python-runtime-errors/datasets/project-codenet/2021-12-29` and `gs://python-runtime-errors/datasets/project-codenet/2021-12-29-nodoc`.
 
+
+### Dataset License
+
+The Python Runtime Errors dataset is made available under the [Community Data License Agreement - Permissive - Version 2.0](https://storage.googleapis.com/python-runtime-errors/datasets/project-codenet/LICENSE).
 
 ## Training
 
