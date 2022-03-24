@@ -33,7 +33,7 @@ OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 
 # For Beam usage:
-DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
+DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
 EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/evals/'
 OUT_ROOT = '/mnt/project-codenet-trace-collection/traces/'
 DATA_BUCKET = 'project-codenet-storage'

@@ -61,12 +61,15 @@ def run_codenet_submissions(**flags):
   save_main_session = True
   pipeline_options = PipelineOptions.from_dictionary(flags)
   pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
+
+  gcs_data_root = codenet_paths.DATA_ROOT.replace('/mnt/', 'gs://')
+
   with beam.Pipeline(options=pipeline_options) as p:
     _ = (
         p
         | 'ProblemIds' >> beam.Create(problem_ids)
         | 'ProblemDirs' >> beam.Map(
-            lambda problem_id: (problem_id, os.path.join(codenet_paths.DATA_ROOT, 'data', problem_id, 'Python')))
+            lambda problem_id: (problem_id, os.path.join(gcs_data_root, 'data', problem_id, 'Python')))
         | 'SubmissionIds' >> beam.FlatMapTuple(
             lambda problem_id, problem_dir: [
                 (problem_id, _get_submission_id(submission_path))
