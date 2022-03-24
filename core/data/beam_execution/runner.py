@@ -8,6 +8,9 @@ from apache_beam.io import WriteToText
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 
+from core.data import codenet
+from core.data import codenet_paths
+
 import fire
 
 

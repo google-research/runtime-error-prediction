@@ -5,4 +5,5 @@ python3 -m \
     --output gs://project-codenet-trace-collection/results/output \
     --runner DataflowRunner \
     --project runtime-error-problems \
-    --temp_location gs://project-codenet-trace-collection/temp/
+    --temp_location gs://project-codenet-trace-collection/temp/ \
+    --requirements_file core/data/beam_execution/requirements.txt
