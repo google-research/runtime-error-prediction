@@ -34,7 +34,7 @@ EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 
 # For Beam usage:
 DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
-EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/evals/'
+EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/2022-03-24/'
 OUT_ROOT = '/mnt/project-codenet-trace-collection/traces/'
 DATA_BUCKET = 'project-codenet-storage'
 TRACE_BUCKET = 'project-codenet-trace-collection'
