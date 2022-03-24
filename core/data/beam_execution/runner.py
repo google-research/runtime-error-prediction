@@ -56,7 +56,7 @@ def _get_submission_id(submission_path):
 
 def run_codenet_submissions(**flags):
   last_problem_id = None
-  problem_ids = [f'p{problem_number:05d}' for problem_number in range(4053)]
+  problem_ids = [f'p{problem_number:05d}' for problem_number in range(3)]
 
   save_main_session = True
   pipeline_options = PipelineOptions.from_dictionary(flags)
@@ -72,9 +72,9 @@ def run_codenet_submissions(**flags):
                 (problem_id, _get_submission_id(submission_path))
                 for submission_path in gcsio.GcsIO().list_prefix(problem_dir).keys()
             ])
-        # | 'Run' >> beam.MapTuple(codenet_paths.run_for_errors)
-        # | 'One' >> beam.Map(lambda x: ('done', 1))
-        # | 'GroupAndSum' >> beam.CombinePerKey(sum)
+        | 'Run' >> beam.MapTuple(codenet.run_for_errors_gcp)
+        | 'One' >> beam.Map(lambda x: ('done', 1))
+        | 'GroupAndSum' >> beam.CombinePerKey(sum)
         | 'Write' >> WriteToText(flags['output'])
     )
 

@@ -1,5 +1,6 @@
 import fire
 
+from absl import logging
 import functools
 import os
 import re
@@ -206,8 +207,23 @@ def get_submission_eval_raw(problem_id, submission_id):
   return error_data, timeout_data, stdout_data, stderr_data
 
 
+def mount_bucket(bucket_name):
+  command = f"""
+  if [ ! -f /mnt/{bucket_name}/README.md ]; then
+    sudo mkdir -p /mnt/{bucket_name}
+    sudo chown $(whoami) /mnt/{bucket_name}
+    gcsfuse --implicit-dirs {bucket_name} /mnt/{bucket_name}/
+  fi
+  """
+  subprocess.run(command, shell=True)
+
+
 def run_for_errors(problem_id, submission_id, skip_existing=True):
   """Runs the command in the error-checker subprocess."""
+  logging.info(f'Running problem {problem_id} submission {submission_id}')
+
+  mount_bucket('project-codenet-storage')
+
   evals_dir = get_evals_dir(problem_id, submission_id)
   if os.path.exists(evals_dir):
     if skip_existing:

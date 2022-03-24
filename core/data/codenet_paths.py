@@ -34,8 +34,8 @@ EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 
 # For Beam usage:
 DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
-EVALS_ROOT = 'gs://project-codenet-storage/out/evals'
-OUT_ROOT = 'gs://project-codenet-storage/out/'
+EVALS_ROOT = '/mnt/project-codenet-storage/traces/evals/'
+OUT_ROOT = '/mnt/project-codenet-storage/traces/'
 
 FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
@@ -48,8 +48,8 @@ SHORT_HOSTNAME = HOSTNAME
 if HOSTNAME == 'dev-000' or HOSTNAME.startswith('beamapp'):
   PYTHON3 = '/usr/bin/python3'
   DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
-  EVALS_ROOT = 'gs://project-codenet-storage/out/evals'
-  OUT_ROOT = 'gs://project-codenet-storage/out/'
+  EVALS_ROOT = '/mnt/project-codenet-storage/traces/evals/'
+  OUT_ROOT = '/mnt/project-codenet-storage/traces/'
 elif HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/google-research/runtime-error-prediction/data/Project_CodeNet'
