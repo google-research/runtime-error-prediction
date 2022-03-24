@@ -257,8 +257,8 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
     with gcsio_client.open(stdout_path, 'wb') as f:
       f.write(p.stdout)
   except subprocess.TimeoutExpired as e:
-    with gcsio_client.open(timeout_path, 'w') as f:
-      f.write(str(e) + '\n')
+    with gcsio_client.open(timeout_path, 'wb') as f:
+      f.write((str(e) + '\n').encode('utf-8'))
 
 
 if __name__ == '__main__':

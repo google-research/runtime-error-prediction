@@ -36,9 +36,9 @@ def run_for_errors(python_filepath, out_path):
   try:
     exec(compiled, {}, {})
   except Exception as e:
-    with gcsio_client.open(out_path, 'w') as f:
+    with gcsio_client.open(out_path, 'wb') as f:
       # We can handle the exception systematically here.
-      f.write(str(e) + '\n')
+      f.write((str(e) + '\n').encode('utf-8'))
     raise
 
 
