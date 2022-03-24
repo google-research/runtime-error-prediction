@@ -50,6 +50,13 @@ def run(**flags):
     output | WriteToText(flags['output'])
 
 
+def _get_submission_ids(problem_id):
+  problem_dir = os.path.join(gcs_data_root, 'data', problem_id, 'Python')
+  return [
+      (problem_id, _get_submission_id(submission_path))
+      for submission_path in gcsio.GcsIO().list_prefix(problem_dir).keys()
+  ]
+
 def _get_submission_id(submission_path):
   return submission_path.split('/')[-1].split('.')[0]
 
@@ -68,13 +75,7 @@ def run_codenet_submissions(**flags):
     _ = (
         p
         | 'ProblemIds' >> beam.Create(problem_ids)
-        | 'ProblemDirs' >> beam.Map(
-            lambda problem_id: (problem_id, os.path.join(gcs_data_root, 'data', problem_id, 'Python')))
-        | 'SubmissionIds' >> beam.FlatMapTuple(
-            lambda problem_id, problem_dir: [
-                (problem_id, _get_submission_id(submission_path))
-                for submission_path in gcsio.GcsIO().list_prefix(problem_dir).keys()
-            ])
+        | 'SubmissionIds' >> beam.FlatMap(_get_submission_ids)
         | 'Run' >> beam.MapTuple(codenet.run_for_errors)
         | 'One' >> beam.Map(lambda x: ('done', 1))
         | 'GroupAndSum' >> beam.CombinePerKey(sum)
