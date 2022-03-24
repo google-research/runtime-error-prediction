@@ -215,7 +215,9 @@ def mount_bucket(bucket_name):
     gcsfuse --implicit-dirs {bucket_name} /mnt/{bucket_name}/
   fi
   """
-  subprocess.run(command, shell=True)
+  p = subprocess.run(command, shell=True, capture_output=True)
+  logging.info(f'mount_bucket({bucket_name}) stdout: {p.stdout}')
+  logging.info(f'mount_bucket({bucket_name}) stderr: {p.stderr}')
 
 
 def run_for_errors(problem_id, submission_id, skip_existing=True):
@@ -237,7 +239,7 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   input_filepath = get_input_path(problem_id, submission_id)
 
   if not os.path.exists(input_filepath):
-    logging.info(f'{problem_id}:{submission_id} Input filepath missing.')
+    logging.info(f'{problem_id}:{submission_id} Input filepath missing: {input_filepath}.')
     return
 
   error_path, timeout_path, stdout_path, stderr_path = get_evals_paths(
