@@ -36,6 +36,7 @@ EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
 EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/evals/'
 OUT_ROOT = '/mnt/project-codenet-trace-collection/traces/'
+DATA_BUCKET = 'project-codenet-storage'
 TRACE_BUCKET = 'project-codenet-trace-collection'
 
 FILE_DIRNAME = os.path.dirname(__file__)
@@ -46,11 +47,11 @@ PERSONAL_ACCESS_TOKEN_PATH = ''
 PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
 SHORT_HOSTNAME = HOSTNAME
-if HOSTNAME == 'dev-000' or HOSTNAME.startswith('beamapp'):
+if HOSTNAME.startswith('beamapp'):
   PYTHON3 = '/usr/bin/python3'
-  DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
-  EVALS_ROOT = '/mnt/project-codenet-storage/traces/evals/'
-  OUT_ROOT = '/mnt/project-codenet-storage/traces/'
+  DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
+  EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/evals/'
+  OUT_ROOT = '/mnt/project-codenet-trace-collection/traces/'
 elif HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/google-research/runtime-error-prediction/data/Project_CodeNet'

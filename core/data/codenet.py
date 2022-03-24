@@ -220,8 +220,9 @@ def mount_bucket(bucket_name):
 
 def run_for_errors(problem_id, submission_id, skip_existing=True):
   """Runs the command in the error-checker subprocess."""
-  logging.info(f'Running problem {problem_id} submission {submission_id}')
+  logging.info(f'Running problem {problem_id} submission {submission_id} on {codenet_paths.HOSTNAME}')
 
+  mount_bucket(codenet_paths.DATA_BUCKET)
   mount_bucket(codenet_paths.TRACE_BUCKET)
 
   evals_dir = get_evals_dir(problem_id, submission_id)
