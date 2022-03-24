@@ -47,7 +47,7 @@ PERSONAL_ACCESS_TOKEN_PATH = ''
 PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
 SHORT_HOSTNAME = HOSTNAME
-if HOSTNAME.startswith('beamapp'):
+if HOSTNAME == 'dev-000' or HOSTNAME.startswith('beamapp'):
   PYTHON3 = '/usr/bin/python3'
   DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
   EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/evals/'
