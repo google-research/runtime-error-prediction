@@ -63,7 +63,7 @@ def _get_submission_id(submission_path):
 
 
 def run_codenet_submissions(**flags):
-  problem_ids = [f'p{problem_number:05d}' for problem_number in range(4)]
+  problem_ids = [f'p{problem_number:05d}' for problem_number in range(4053)]
 
   save_main_session = True
   pipeline_options = PipelineOptions.from_dictionary(flags)
