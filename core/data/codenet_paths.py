@@ -34,8 +34,9 @@ EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
 
 # For Beam usage:
 DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
-EVALS_ROOT = '/mnt/project-codenet-storage/traces/evals/'
-OUT_ROOT = '/mnt/project-codenet-storage/traces/'
+EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/evals/'
+OUT_ROOT = '/mnt/project-codenet-trace-collection/traces/'
+TRACE_BUCKET = 'project-codenet-trace-collection'
 
 FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')

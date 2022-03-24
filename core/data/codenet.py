@@ -222,7 +222,7 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   """Runs the command in the error-checker subprocess."""
   logging.info(f'Running problem {problem_id} submission {submission_id}')
 
-  mount_bucket('project-codenet-storage')
+  mount_bucket(codenet_paths.TRACE_BUCKET)
 
   evals_dir = get_evals_dir(problem_id, submission_id)
   if os.path.exists(evals_dir):
