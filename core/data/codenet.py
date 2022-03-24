@@ -246,19 +246,19 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   command = [PYTHON3, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
   try:
     logging.info(f'RUN {command}')
-    subprocess.run(
+    p = subprocess.run(
         command,
         input=gcsio_client.open(input_filepath, 'rb').read(),
-        stderr=gcsio_client.open(stderr_path, 'wb'),
-        stdout=gcsio_client.open(stdout_path, 'wb'),
+        capture_output=True,
         timeout=1,
     )
+    with gcsio_client.open(stderr_path, 'wb') as f:
+      f.write(p.stderr)
+    with gcsio_client.open(stdout_path, 'wb') as f:
+      f.write(p.stdout)
   except subprocess.TimeoutExpired as e:
     with gcsio_client.open(timeout_path, 'w') as f:
       f.write(str(e) + '\n')
-  stdout = gcsio_client.open(stdout_path, 'r').read()
-  stderr = gcsio_client.open(stderr_path, 'r').read()
-  return stdout
 
 
 if __name__ == '__main__':
