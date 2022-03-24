@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import re
@@ -64,7 +63,6 @@ def _get_submission_id(submission_path):
 
 
 def run_codenet_submissions(**flags):
-  last_problem_id = None
   problem_ids = [f'p{problem_number:05d}' for problem_number in range(4)]
 
   save_main_session = True
