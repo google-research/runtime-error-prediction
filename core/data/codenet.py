@@ -245,10 +245,12 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
       problem_id, submission_id)
   command = [PYTHON3, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
   try:
+    with gcsio_client.open(input_filepath, 'rb') as f:
+      process_input = f.read()
     logging.info(f'RUN {command}')
     p = subprocess.run(
         command,
-        input=gcsio_client.open(input_filepath, 'rb').read(),
+        input=process_input,
         capture_output=True,
         timeout=5,
     )
