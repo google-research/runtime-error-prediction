@@ -31,6 +31,12 @@ DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/python-runtime-errors/datasets/control_fl
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
+
+# For Beam usage:
+DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
+EVALS_ROOT = 'gs://project-codenet-storage/out/evals'
+OUT_ROOT = 'gs://project-codenet-storage/out/'
+
 FILE_DIRNAME = os.path.dirname(__file__)
 ERROR_CHECKER = os.path.join(FILE_DIRNAME, 'error-checker.py')
 
@@ -39,7 +45,7 @@ PERSONAL_ACCESS_TOKEN_PATH = ''
 PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
 SHORT_HOSTNAME = HOSTNAME
-if HOSTNAME == 'dev-000':
+if HOSTNAME == 'dev-000' or HOSTNAME.startswith('beamapp'):
   PYTHON3 = '/usr/bin/python3'
   DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
   EVALS_ROOT = 'gs://project-codenet-storage/out/evals'
