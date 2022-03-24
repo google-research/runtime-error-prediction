@@ -83,4 +83,4 @@ def run_codenet_submissions(**flags):
 
 if __name__ == '__main__':
   logging.getLogger().setLevel(logging.INFO)
-  fire.Fire(run)
+  fire.Fire(run_codenet_submissions)
