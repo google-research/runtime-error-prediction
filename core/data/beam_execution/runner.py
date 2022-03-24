@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import re
 
 import apache_beam as beam
@@ -7,6 +8,7 @@ from apache_beam.io import ReadFromText
 from apache_beam.io import WriteToText
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
+from apache_beam.io.gcp import gcsio
 
 from core.data import codenet
 from core.data import codenet_paths
@@ -48,10 +50,15 @@ def run(**flags):
     output | WriteToText(flags['output'])
 
 
+def _get_submission_id(submission_path):
+  return submission_path.split('/')[-1].split('.')[0]
+
+
 def run_codenet_submissions(**flags):
   last_problem_id = None
-  problem_ids = list(range(4053))
-  all_problem_and_submision_ids = list(codenet.get_all_problem_and_submission_ids())
+  problem_ids = [f'p{problem_number:05d}' for problem_number in range(4053)]
+
+  gcsio_client = gcsio.GcsIO()
 
   save_main_session = True
   pipeline_options = PipelineOptions.from_dictionary(flags)
@@ -59,14 +66,17 @@ def run_codenet_submissions(**flags):
   with beam.Pipeline(options=pipeline_options) as p:
     _ = (
         p
-        | 'ProblemNumbers' >> beam.Create(problem_ids)
-        | 'ProblemPaths' >> beam.Map(
-            lambda problem_id: os.path.join(codenet_paths.DATA_ROOT, 'data', problem_id))
-        | 'SubmissionPaths' >> beam.FlatMap(
-            lambda problem_path: os.path.join(codenet_paths.DATA_ROOT, 'data', problem_id))
-        | 'Run' >> beam.Map(lambda x: codenet_paths.run_for_errors(*x))
-        | 'One' >> beam.Map(lambda x: ('done', 1))
-        | 'GroupAndSum' >> beam.CombinePerKey(sum)
+        | 'ProblemIds' >> beam.Create(problem_ids)
+        | 'ProblemDirs' >> beam.Map(
+            lambda problem_id: (problem_id, os.path.join(codenet_paths.DATA_ROOT, 'data', problem_id, 'Python')))
+        | 'SubmissionIds' >> beam.FlatMapTuple(
+            lambda problem_id, problem_dir: [
+                (problem_id, _get_submission_id(submission_path)) for submission_path in
+                gcsio_client.list_prefix(problem_dir).keys()
+            ])
+        # | 'Run' >> beam.MapTuple(codenet_paths.run_for_errors)
+        # | 'One' >> beam.Map(lambda x: ('done', 1))
+        # | 'GroupAndSum' >> beam.CombinePerKey(sum)
         | 'Write' >> WriteToText(flags['output'])
     )
 

@@ -39,11 +39,11 @@ PERSONAL_ACCESS_TOKEN_PATH = ''
 PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
 SHORT_HOSTNAME = HOSTNAME
-if HOSTNAME == 'dbieber-macbookpro4.roam.corp.google.com':
-  PYTHON3 = ''
-  DATA_ROOT = 'gs://project-codenet-data/Project_CodeNet/'
-  EVALS_ROOT = 'gs://project-codenet-data/out/evals'
-  OUT_ROOT = 'gs://project-codenet-data/out/'
+if HOSTNAME == 'dev-000':
+  PYTHON3 = '/usr/bin/python3'
+  DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
+  EVALS_ROOT = 'gs://project-codenet-storage/out/evals'
+  OUT_ROOT = 'gs://project-codenet-storage/out/'
 elif HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/google-research/runtime-error-prediction/data/Project_CodeNet'
