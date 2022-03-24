@@ -14,12 +14,16 @@
 
 """Runs a Python program using exec to check for output and errors."""
 
+from apache_beam.io.gcp import gcsio
+
 import fire
 
 
 def run_for_errors(python_filepath, out_path):
+  gcsio_client = gcsio.GcsIO()
+
   # Assumes the input is stdin when called.
-  python_source = open(python_filepath, 'r').read()
+  python_source = gcsio_client.open(python_filepath, 'r').read()
   python_source = python_source.replace('__name__ == "__main__"', 'True')
   python_source = python_source.replace("__name__ == '__main__'", 'True')
   python_source = (
@@ -32,7 +36,7 @@ def run_for_errors(python_filepath, out_path):
   try:
     exec(compiled, {}, {})
   except Exception as e:
-    with open(out_path, 'w') as f:
+    with gcsio_client.open(out_path, 'w') as f:
       # We can handle the exception systematically here.
       f.write(str(e) + '\n')
     raise
