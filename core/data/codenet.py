@@ -8,6 +8,8 @@ import shutil
 import subprocess
 import tqdm
 
+from apache_beam.io.gcp import gcsio
+
 from core.data import codenet_paths
 from core.data import error_kinds
 
@@ -224,21 +226,18 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   """Runs the command in the error-checker subprocess."""
   logging.info(f'Running problem {problem_id} submission {submission_id} on {codenet_paths.HOSTNAME}')
 
-  mount_bucket(codenet_paths.DATA_BUCKET)
-  mount_bucket(codenet_paths.TRACE_BUCKET)
+  gcsio_client = gcsio.GcsIO()
 
   evals_dir = get_evals_dir(problem_id, submission_id)
-  if os.path.exists(evals_dir):
+  if gcsio_client.list_prefix(evals_dir):
     if skip_existing:
       logging.info(f'{problem_id}:{submission_id} Evals already exists. Skipping.')
       return
-    shutil.rmtree(evals_dir)
-  os.makedirs(evals_dir)
 
   python_filepath = get_python_path(problem_id, submission_id)
   input_filepath = get_input_path(problem_id, submission_id)
 
-  if not os.path.exists(input_filepath):
+  if not gcsio_client.exists(input_filepath):
     logging.info(f'{problem_id}:{submission_id} Input filepath missing: {input_filepath}.')
     return
 
@@ -249,16 +248,16 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
     logging.info(f'RUN {command}')
     subprocess.run(
         command,
-        input=open(input_filepath, 'rb').read(),
-        stderr=open(stderr_path, 'wb'),
-        stdout=open(stdout_path, 'wb'),
+        input=gcsio_client.open(input_filepath, 'rb').read(),
+        stderr=gcsio_client.open(stderr_path, 'wb'),
+        stdout=gcsio_client.open(stdout_path, 'wb'),
         timeout=1,
     )
   except subprocess.TimeoutExpired as e:
-    with open(timeout_path, 'w') as f:
+    with gcsio_client.open(timeout_path, 'w') as f:
       f.write(str(e) + '\n')
-  stdout = open(stdout_path, 'r').read()
-  stderr = open(stderr_path, 'r').read()
+  stdout = gcsio_client.open(stdout_path, 'r').read()
+  stderr = gcsio_client.open(stderr_path, 'r').read()
   return stdout
 
 
