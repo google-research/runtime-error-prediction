@@ -228,6 +228,7 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   evals_dir = get_evals_dir(problem_id, submission_id)
   if os.path.exists(evals_dir):
     if skip_existing:
+      logging.info(f'{problem_id}:{submission_id} Evals already exists. Skipping.')
       return
     shutil.rmtree(evals_dir)
   os.makedirs(evals_dir)
@@ -236,12 +237,14 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
   input_filepath = get_input_path(problem_id, submission_id)
 
   if not os.path.exists(input_filepath):
+    logging.info(f'{problem_id}:{submission_id} Input filepath missing.')
     return
 
   error_path, timeout_path, stdout_path, stderr_path = get_evals_paths(
       problem_id, submission_id)
   command = [PYTHON3, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
   try:
+    logging.info(f'RUN {command}')
     subprocess.run(
         command,
         input=open(input_filepath, 'rb').read(),
