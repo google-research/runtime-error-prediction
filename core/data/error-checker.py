@@ -23,7 +23,7 @@ def run_for_errors(python_filepath, out_path):
   gcsio_client = gcsio.GcsIO()
 
   # Assumes the input is stdin when called.
-  python_source = gcsio_client.open(python_filepath, 'r').read()
+  python_source = gcsio_client.open(python_filepath, 'r').read().decode('utf-8')
   python_source = python_source.replace('__name__ == "__main__"', 'True')
   python_source = python_source.replace("__name__ == '__main__'", 'True')
   python_source = (
