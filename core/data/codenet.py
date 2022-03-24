@@ -250,7 +250,7 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
         command,
         input=gcsio_client.open(input_filepath, 'rb').read(),
         capture_output=True,
-        timeout=1,
+        timeout=5,
     )
     with gcsio_client.open(stderr_path, 'wb') as f:
       f.write(p.stderr)
