@@ -72,7 +72,7 @@ def run_codenet_submissions(**flags):
                 (problem_id, _get_submission_id(submission_path))
                 for submission_path in gcsio.GcsIO().list_prefix(problem_dir).keys()
             ])
-        | 'Run' >> beam.MapTuple(codenet.run_for_errors_gcp)
+        | 'Run' >> beam.MapTuple(codenet.run_for_errors)
         | 'One' >> beam.Map(lambda x: ('done', 1))
         | 'GroupAndSum' >> beam.CombinePerKey(sum)
         | 'Write' >> WriteToText(flags['output'])
