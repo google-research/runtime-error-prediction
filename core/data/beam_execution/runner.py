@@ -51,11 +51,13 @@ def run(**flags):
 
 
 def _get_submission_ids(problem_id):
+  gcs_data_root = codenet_paths.DATA_ROOT.replace('/mnt/', 'gs://')
   problem_dir = os.path.join(gcs_data_root, 'data', problem_id, 'Python')
   return [
       (problem_id, _get_submission_id(submission_path))
       for submission_path in gcsio.GcsIO().list_prefix(problem_dir).keys()
   ]
+
 
 def _get_submission_id(submission_path):
   return submission_path.split('/')[-1].split('.')[0]
@@ -68,9 +70,6 @@ def run_codenet_submissions(**flags):
   save_main_session = True
   pipeline_options = PipelineOptions.from_dictionary(flags)
   pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
-
-  gcs_data_root = codenet_paths.DATA_ROOT.replace('/mnt/', 'gs://')
-
   with beam.Pipeline(options=pipeline_options) as p:
     _ = (
         p
