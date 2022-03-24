@@ -15,7 +15,7 @@ from core.data import error_kinds
 
 DATA_ROOT = codenet_paths.DATA_ROOT
 EVALS_ROOT = codenet_paths.EVALS_ROOT
-PYTHON3 = codenet_paths.PYTHON3
+PYTHON3 = 'python3'
 ERROR_CHECKER = codenet_paths.ERROR_CHECKER
 PIPE = subprocess.PIPE
 
