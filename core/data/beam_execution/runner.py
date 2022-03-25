@@ -73,10 +73,8 @@ def run_codenet_submissions(**flags):
         p
         | 'ProblemIds' >> beam.Create(problem_ids)
         | 'SubmissionIds' >> beam.FlatMap(_get_submission_ids)
+        | 'Reshuffle' >> beam.Reshuffle()
         | 'Run' >> beam.MapTuple(codenet.run_for_errors)
-        | 'One' >> beam.Map(lambda x: ('done', 1))
-        | 'GroupAndSum' >> beam.CombinePerKey(sum)
-        | 'Write' >> WriteToText(flags['output'])
     )
 
 
