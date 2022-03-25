@@ -31,11 +31,6 @@ DEFAULT_CFP_RAISE_DATASET_PATH = '/mnt/python-runtime-errors/datasets/control_fl
 DATA_ROOT = '/mnt/disks/project-codenet-data/Project_CodeNet/'
 OUT_ROOT = '/mnt/disks/project-codenet-data/out/'
 EVALS_ROOT = '/mnt/disks/project-codenet-data/out/evals'
-
-# For Beam usage:
-DATA_ROOT = '/mnt/project-codenet-storage/Project_CodeNet/'
-EVALS_ROOT = '/mnt/project-codenet-trace-collection/traces/2022-03-24/'
-OUT_ROOT = '/mnt/project-codenet-trace-collection/traces/'
 DATA_BUCKET = 'project-codenet-storage'
 TRACE_BUCKET = 'project-codenet-trace-collection'
 
@@ -50,7 +45,7 @@ SHORT_HOSTNAME = HOSTNAME
 if HOSTNAME == 'dev-000' or HOSTNAME.startswith('beamapp'):
   PYTHON3 = '/usr/bin/python3'
   DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
-  EVALS_ROOT = 'gs://project-codenet-trace-collection/traces/evals/'
+  EVALS_ROOT = 'gs://project-codenet-trace-collection/traces/2022-03-25/evals/'
   OUT_ROOT = 'gs://project-codenet-trace-collection/traces/'
 elif HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
