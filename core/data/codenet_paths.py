@@ -1,3 +1,17 @@
+# Copyright (C) 2021 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from datetime import datetime
 
 import os
@@ -39,11 +53,11 @@ PERSONAL_ACCESS_TOKEN_PATH = ''
 PYTHON3 = '/usr/bin/python3'
 HOSTNAME = socket.gethostname()
 SHORT_HOSTNAME = HOSTNAME
-if HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
+if 'dbieber-macbookpro.roam' in HOSTNAME:
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/google-research/runtime-error-prediction/data/Project_CodeNet'
   SHORT_HOSTNAME = 'dbieber-mac'
-elif HOSTNAME == 'dbieber-macbookpro4.roam.corp.google.com':
+elif 'dbieber-macbookpro4.roam' in HOSTNAME:
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   PERSONAL_ACCESS_TOKEN_PATH = '/Users/dbieber/secrets/colab_github_access_token'
   SHORT_HOSTNAME = 'dbieber-mac4'
