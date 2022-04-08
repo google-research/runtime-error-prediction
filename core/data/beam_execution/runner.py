@@ -79,7 +79,7 @@ def run_codenet_submissions(**flags):
     )
 
 
-def _check_matches(problem_id, submission_id):
+def _get_statuses(problem_id, submission_id):
   metadata = codenet.get_submission_metadata(problem_id, submission_id)
   codenet_error_status = metadata['status'] in ('Runtime Error', 'Time Limit Exceeded')
   # codenet_error_status: True indicates an error (incl. timeout).
@@ -87,8 +87,32 @@ def _check_matches(problem_id, submission_id):
   our_error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
   our_error_status = our_error_kind not in (error_kinds.NO_ERROR, error_kinds.NO_ERROR_WITH_STDERR, error_kinds.NO_DATA)
   # our_error_status: True indicates an error (incl. timeout).
+  return codenet_error_status, our_error_status
 
-  return codenet_error_status == our_error_status
+
+def _check_matches(codenet_error_status, our_error_status):
+  matches = codenet_error_status == our_error_status
+  results = [
+      ('matches', matches),
+      ('raw', (codenet_error_status, our_error_status)),
+  ]
+  if codenet_error_status:
+    results.append(
+        ('codenet error', matches),
+    )
+  else:
+    results.append(
+        ('no codenet error', matches),
+    )
+  if our_error_status:
+    results.append(
+        ('our error', matches),
+    )
+  else:
+    results.append(
+        ('no error', matches),
+    )
+  return results
 
 
 def run_check_matches(num_problems=4053, **flags):
@@ -98,12 +122,13 @@ def run_check_matches(num_problems=4053, **flags):
   pipeline_options = PipelineOptions.from_dictionary(flags)
   pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
   with beam.Pipeline(options=pipeline_options) as p:
-    _ = (
+    statuses = (
         p
         | 'ProblemIds' >> beam.Create(problem_ids)
         | 'SubmissionIds' >> beam.FlatMap(_get_submission_ids)
         | 'Reshuffle' >> beam.Reshuffle()
-        | 'Compare' >> beam.MapTuple(_check_matches)
+        | 'Statuses' >> beam.MapTuple(_get_statuses)
+        | 'Matches' >> beam.FlatMapTuple(_check_matches)
         | 'Count' >> beam.combiners.Count.PerElement()
         | 'Write' >> beam.io.WriteToText(flags['output'])
     )
