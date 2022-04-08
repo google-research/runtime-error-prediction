@@ -164,6 +164,7 @@ def get_python_major_version(problem_id, submission_id):
 
 def read(path):
   if 'gs://' in path:
+    gcsio_client = gcsio.GcsIO()
     with gcsio_client.open(path, 'rb') as f:
       return f.read()
   if os.path.exists(path):
