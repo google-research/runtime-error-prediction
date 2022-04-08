@@ -116,8 +116,7 @@ def get_error_lineno(problem_id, submission_id):
 @functools.lru_cache(maxsize=32)
 def get_problem_metadata(problem_id):
   metadata_path = get_metadata_path(problem_id)
-  with open(metadata_path, 'r') as f:
-    metadata_str = f.read()
+  metadata_str = read(metadata_path)
   metadata_str_lines = metadata_str.split('\n')
   headers_str, body_lines = metadata_str_lines[0], metadata_str_lines[1:]
   assert headers_str == 'submission_id,problem_id,user_id,date,language,original_language,filename_ext,status,cpu_time,memory,code_size,accuracy'
@@ -164,6 +163,9 @@ def get_python_major_version(problem_id, submission_id):
 
 
 def read(path):
+  if 'gs://' in path:
+    with gcsio_client.open(path, 'rb') as f:
+      return f.read()
   if os.path.exists(path):
     with open(path, 'r') as f:
       return f.read()
@@ -245,8 +247,7 @@ def run_for_errors(problem_id, submission_id, skip_existing=True):
       problem_id, submission_id)
   command = [PYTHON3, ERROR_CHECKER, 'run_for_errors', python_filepath, error_path]
   try:
-    with gcsio_client.open(input_filepath, 'rb') as f:
-      process_input = f.read()
+    process_input = read(input_filepath)
     logging.info(f'RUN {command}')
     p = subprocess.run(
         command,
