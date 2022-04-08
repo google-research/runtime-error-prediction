@@ -13,8 +13,8 @@ from apache_beam.io.gcp import gcsio
 from core.data import codenet_paths
 from core.data import error_kinds
 
-DATA_ROOT = codenet_paths.DATA_ROOT.replace('gs://', '/mnt/')
-EVALS_ROOT = codenet_paths.EVALS_ROOT.replace('gs://', '/mnt/')
+DATA_ROOT = codenet_paths.DATA_ROOT
+EVALS_ROOT = codenet_paths.EVALS_ROOT
 PYTHON3 = 'python3'
 ERROR_CHECKER = codenet_paths.ERROR_CHECKER
 PIPE = subprocess.PIPE
