@@ -91,8 +91,8 @@ def _check_matches(problem_id, submission_id):
   return codenet_error_status == our_error_status
 
 
-def run_check_matches(**flags):
-  problem_ids = [f'p{problem_number:05d}' for problem_number in range(4053)]
+def run_check_matches(num_problems=4053, **flags):
+  problem_ids = [f'p{problem_number:05d}' for problem_number in range(num_problems)]
 
   save_main_session = True
   pipeline_options = PipelineOptions.from_dictionary(flags)
