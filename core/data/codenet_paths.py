@@ -45,7 +45,7 @@ SHORT_HOSTNAME = HOSTNAME
 if HOSTNAME == 'dev-000' or HOSTNAME.startswith('beamapp'):
   PYTHON3 = '/usr/bin/python3'
   DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
-  EVALS_ROOT = 'gs://project-codenet-trace-collection/traces/2022-03-25/evals/'
+  EVALS_ROOT = 'gs://project-codenet-trace-collection/traces/evals/'
   OUT_ROOT = 'gs://project-codenet-trace-collection/traces/'
 elif HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'

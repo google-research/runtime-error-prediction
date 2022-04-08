@@ -11,6 +11,7 @@ from apache_beam.io.gcp import gcsio
 
 from core.data import codenet
 from core.data import codenet_paths
+from core.data import error_kinds
 
 import fire
 
@@ -78,6 +79,36 @@ def run_codenet_submissions(**flags):
     )
 
 
+def _check_matches(problem_id, submission_id):
+  metadata = codenet.get_submission_metadata(problem_id, submission_id)
+  codenet_error_status = metadata['status'] in ('Runtime Error', 'Time Limit Exceeded')
+  # codenet_error_status: True indicates an error (incl. timeout).
+
+  our_error_kind = codenet.get_submission_error_kind(problem_id, submission_id)
+  our_error_status = our_error_kind not in (error_kinds.NO_ERROR, error_kinds.NO_ERROR_WITH_STDERR, error_kinds.NO_DATA)
+  # our_error_status: True indicates an error (incl. timeout).
+
+  return codenet_error_status == our_error_status
+
+
+def run_check_matches(**flags):
+  problem_ids = [f'p{problem_number:05d}' for problem_number in range(4053)]
+
+  save_main_session = True
+  pipeline_options = PipelineOptions.from_dictionary(flags)
+  pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
+  with beam.Pipeline(options=pipeline_options) as p:
+    _ = (
+        p
+        | 'ProblemIds' >> beam.Create(problem_ids)
+        | 'SubmissionIds' >> beam.FlatMap(_get_submission_ids)
+        | 'Reshuffle' >> beam.Reshuffle()
+        | 'Compare' >> beam.MapTuple(_check_matches)
+        | 'Count' >> beam.combiners.Count.PerElement()
+        | 'Write' >> beam.io.WriteToText(flags['output'])
+    )
+
+
 if __name__ == '__main__':
   logging.getLogger().setLevel(logging.INFO)
-  fire.Fire(run_codenet_submissions)
+  fire.Fire()
