@@ -166,7 +166,7 @@ def read(path):
   if 'gs://' in path:
     gcsio_client = gcsio.GcsIO()
     with gcsio_client.open(path, 'rb') as f:
-      return f.read()
+      return f.read().decode('utf-8')
   if os.path.exists(path):
     with open(path, 'r') as f:
       return f.read()
