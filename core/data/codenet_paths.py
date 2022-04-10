@@ -45,8 +45,10 @@ SHORT_HOSTNAME = HOSTNAME
 if HOSTNAME.startswith('beamapp'):
   PYTHON3 = '/usr/bin/python3'
   DATA_ROOT = 'gs://project-codenet-storage/Project_CodeNet/'
-  EVALS_ROOT = 'gs://project-codenet-trace-collection/traces/evals/'
-  OUT_ROOT = 'gs://project-codenet-trace-collection/traces/'
+  EVALS_ROOT = 'gs://project-codenet-storage/out/evals'
+  OUT_ROOT = 'gs://project-codenet-storage/out/'
+  # EVALS_ROOT = 'gs://project-codenet-trace-collection/traces/evals/'
+  # OUT_ROOT = 'gs://project-codenet-trace-collection/traces/'
 elif HOSTNAME == 'dbieber-macbookpro.roam.corp.google.com':
   PYTHON3 = '/Users/dbieber/.virtualenvs/_3/bin/python'
   DATA_ROOT = '/Users/dbieber/code/github/google-research/runtime-error-prediction/data/Project_CodeNet'

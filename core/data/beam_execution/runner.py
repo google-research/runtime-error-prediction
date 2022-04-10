@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -10,6 +11,7 @@ from apache_beam.options.pipeline_options import SetupOptions
 from apache_beam.io.gcp import gcsio
 
 from core.data import codenet
+from core.data import data_io
 from core.data import codenet_paths
 from core.data import error_kinds
 
@@ -126,6 +128,38 @@ def run_check_matches(num_problems=4053, **flags):
         p
         | 'ProblemIds' >> beam.Create(problem_ids)
         | 'SubmissionIds' >> beam.FlatMap(_get_submission_ids)
+        | 'Reshuffle' >> beam.Reshuffle()
+        | 'Statuses' >> beam.MapTuple(_get_statuses)
+        | 'Matches' >> beam.FlatMapTuple(_check_matches)
+        | 'Count' >> beam.combiners.Count.PerElement()
+        | 'Write' >> beam.io.WriteToText(flags['output'])
+    )
+
+
+def _get_problem_and_submission_ids(ids_file):
+  gcsio_client = gcsio.GcsIO()
+  with gcsio_client.open(ids_file, 'rb') as f:
+    raw = f.read()
+    text = raw.decode('utf-8')
+    return json.loads(text)
+
+
+def run_check_matches_new(**flags):
+  save_main_session = True
+  pipeline_options = PipelineOptions.from_dictionary(flags)
+  pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
+
+  ids_files = [
+      'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/train-ids.json',
+      'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/valid-ids.json',
+      'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/test-ids.json',
+  ]
+
+  with beam.Pipeline(options=pipeline_options) as p:
+    statuses = (
+        p
+        | 'IdFiles' >> beam.Create(ids_files)
+        | 'SubmissionIds' >> beam.FlatMap(_get_problem_and_submission_ids)
         | 'Reshuffle' >> beam.Reshuffle()
         | 'Statuses' >> beam.MapTuple(_get_statuses)
         | 'Matches' >> beam.FlatMapTuple(_check_matches)
