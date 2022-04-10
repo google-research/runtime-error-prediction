@@ -11,7 +11,6 @@ from apache_beam.options.pipeline_options import SetupOptions
 from apache_beam.io.gcp import gcsio
 
 from core.data import codenet
-from core.data import data_io
 from core.data import codenet_paths
 from core.data import error_kinds
 
