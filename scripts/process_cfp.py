@@ -7,9 +7,10 @@ import fire
 import tensorflow as tf
 
 from core.data import codenet
-from core.data import data_io
 from core.data import cfp_data_io
 from core.data import codenet_paths
+from core.data import data_io
+from core.data import error_kinds
 from core.data import process
 from core.data import tokenization
 
