@@ -270,6 +270,7 @@ def compute_binary_probabilities(logits, info):
   # binary_logits.shape: batch_size, 2
   return jax.nn.softmax(binary_logits)  # P(error), P(no-error)
 
+
 def compute_binary_f1_score(targets, logits, info):
   binary_predictions = compute_binary_predictions(logits, info)
   binary_targets = compute_binary_targets(targets, info)

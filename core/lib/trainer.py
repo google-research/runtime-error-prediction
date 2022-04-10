@@ -314,6 +314,7 @@ class Trainer:
       localization_targets = None
       localization_num_targets = None
       localization_predictions = None
+    # TODO: Use label from CodeNet's metadata.
     eval_metrics = metrics.evaluate(
         targets, predictions, logits_np, num_classes,
         localization_targets,

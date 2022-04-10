@@ -42,6 +42,42 @@ def generate_codenet_dataset(
         file_writer.write(record_bytes)
 
 
+def modify_codenet_dataset_with_metadata_labels(
+    new_dataset_path,
+    dataset_path=DEFAULT_CFP_DATASET_PATH):
+  """Generates a TFRecord dataset from the control flow programs data.
+
+  Args:
+    dataset_path: The path to write the dataset to.
+  """
+  # dataset_path = '/mnt/runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-sampled-test/test.tfrecord'
+  dataset = tf.data.TFRecordDataset(
+      [dataset_path],
+      compression_type=None, buffer_size=None, num_parallel_reads=None
+  )
+  with tf.io.TFRecordWriter(new_dataset_path) as file_writer:
+    for example_bytes_tensor in tqdm.tqdm(dataset):
+      example_bytes = example_bytes_tensor.numpy()
+      example = tf.train.Example()
+      example.ParseFromString(example_bytes)
+
+      # Compute new target:
+      problem_id = example.features.feature['problem_id'].bytes_list.value[0].decode('utf-8')
+      submission_id = example.features.feature['submission_id'].bytes_list.value[0].decode('utf-8')
+      metadata = codenet.get_submission_metadata(problem_id, submission_id)
+      codenet_error_status = metadata['status'] in ('Runtime Error', 'Time Limit Exceeded')
+      new_target = (
+          error_kinds.to_index(error_kinds.OTHER_ERROR)
+          if codenet_error_status else
+          error_kinds.to_index(error_kinds.NO_ERROR)
+      )
+
+      example.features.feature['target'].int64_list.value[0] = new_target
+
+      record_bytes = example.SerializeToString()
+      file_writer.write(record_bytes)
+
+
 def process_control_flow_programs(
     tfrecord_path,
     tokenizer_path=DEFAULT_TOKENIZER_PATH,
