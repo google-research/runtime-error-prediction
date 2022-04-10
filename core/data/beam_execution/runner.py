@@ -149,9 +149,10 @@ def run_check_matches_new(**flags):
   pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
 
   ids_files = [
-      'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/train-ids.json',
-      'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/valid-ids.json',
-      'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/test-ids.json',
+      # 'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/train-ids.json',
+      # 'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/valid-ids.json',
+      # 'gs://python-runtime-errors/datasets/project-codenet/2021-12-29/test-ids.json',
+      'gs://runtime-error-problems-experiments/datasets/project-codenet/2021-12-29-sampled-test/test-ids.json',
   ]
 
   with beam.Pipeline(options=pipeline_options) as p:
