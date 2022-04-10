@@ -6,6 +6,7 @@ import tqdm
 import fire
 import tensorflow as tf
 
+from core.data import codenet
 from core.data import data_io
 from core.data import cfp_data_io
 from core.data import codenet_paths
