@@ -23,6 +23,7 @@ class EvaluationMetric(enum.Enum):
   WEIGHTED_F1_SCORE = enum.auto()
   WEIGHTED_F1_SCORE_ERROR_ONLY = enum.auto()
   MACRO_F1_SCORE = enum.auto()
+  BINARY_ACCURACY = enum.auto()
   BINARY_F1_SCORE = enum.auto()
   BINARY_AUC = enum.auto()
   BINARY_RECALL_AT_90 = enum.auto()
@@ -56,6 +57,9 @@ def evaluate(targets, predictions, logits, num_classes,
   if EvaluationMetric.WEIGHTED_F1_SCORE.value in eval_metric_names:
     results[EvaluationMetric.WEIGHTED_F1_SCORE.value] = metrics.f1_score(
         targets, predictions, average='weighted')
+  if EvaluationMetric.BINARY_ACCURACY.value in eval_metric_names:
+    results[EvaluationMetric.BINARY_ACCURACY.value] = compute_binary_accuracy(
+        targets, logits, info)
   if EvaluationMetric.BINARY_F1_SCORE.value in eval_metric_names:
     results[EvaluationMetric.BINARY_F1_SCORE.value] = compute_binary_f1_score(
         targets, logits, info)
@@ -269,6 +273,14 @@ def compute_binary_probabilities(logits, info):
   binary_logits = jnp.stack([error_ps, no_error_ps], axis=-1)
   # binary_logits.shape: batch_size, 2
   return jax.nn.softmax(binary_logits)  # P(error), P(no-error)
+
+
+def compute_binary_accuracy(targets, logits, info):
+  binary_predictions = compute_binary_predictions(logits, info)
+  binary_targets = compute_binary_targets(targets, info)
+  metric = (
+      jnp.sum(binary_predictions == binary_targets) / jnp.sum(jnp.ones_like(binary_targets)))
+  return metric
 
 
 def compute_binary_f1_score(targets, logits, info):

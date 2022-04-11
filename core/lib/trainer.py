@@ -386,6 +386,8 @@ class Trainer:
                          test_writer.scalar, step)
     metrics.write_metric(EvaluationMetric.MACRO_F1_SCORE.value, test_metrics,
                          test_writer.scalar, step)
+    metrics.write_metric(EvaluationMetric.BINARY_ACCURACY.value, test_metrics,
+                         test_writer.scalar, step)
     metrics.write_metric(EvaluationMetric.BINARY_F1_SCORE.value, test_metrics,
                          test_writer.scalar, step)
     metrics.write_metric(EvaluationMetric.BINARY_AUC.value, test_metrics,
@@ -620,6 +622,8 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
                              train_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.MACRO_F1_SCORE.value, train_metrics,
                              train_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.BINARY_ACCURACY.value, train_metrics,
+                             train_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.BINARY_F1_SCORE.value, train_metrics,
                              train_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.BINARY_AUC.value, train_metrics,
@@ -654,6 +658,8 @@ Last Minibatch Accuracy: {100 * batch_accuracy:02.1f}""")
         metrics.write_metric(EvaluationMetric.WEIGHTED_F1_SCORE.value, valid_metrics,
                              valid_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.MACRO_F1_SCORE.value, valid_metrics,
+                             valid_writer.scalar, step)
+        metrics.write_metric(EvaluationMetric.BINARY_ACCURACY.value, valid_metrics,
                              valid_writer.scalar, step)
         metrics.write_metric(EvaluationMetric.BINARY_F1_SCORE.value, valid_metrics,
                              valid_writer.scalar, step)
