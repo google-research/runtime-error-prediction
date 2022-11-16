@@ -142,5 +142,22 @@ def get_all_input_descriptions():
   print('No info ids', no_info_ids)
   print('No text ids', no_text_ids)
 
+
+def get_input_description(problem_id: str):
+  path = f'/mnt/project-codenet-storage/Project_CodeNet/problem_descriptions/{problem_id}.html'
+  if not os.path.exists(path):
+    print(f'Path {path} does not exist')
+    return
+  with open(path, 'r') as f:
+    text = f.read()
+  info = extract_input_information(text)
+  if not info:
+    print(f'No input description info for path {path}')
+    return
+  print('Index:', problem_id)
+  print('"""')
+  print(info)
+  print('"""')
+
 if __name__ == '__main__':
   fire.Fire()
