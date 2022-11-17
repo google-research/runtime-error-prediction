@@ -79,7 +79,7 @@ class Trainer:
 
     if split.endswith('-batch'):
       # Prepare a dataset with a single repeating batch.
-      split = split[:-len('-batch')]
+      split = split.removesuffix('-batch')
       return (
           data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
           .map(map_fn)

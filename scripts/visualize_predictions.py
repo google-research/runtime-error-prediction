@@ -355,9 +355,9 @@ def main(argv):
   t = trainer.Trainer(config=config, info=info)
   t2 = trainer.Trainer(config=config2, info=info)
 
-  split = 'valid'
+  split = 'valid-batch'
   dataset = t.load_dataset(
-      dataset_path=dataset_path, split=split, include_strings=True)
+      dataset_path=dataset_path, split=split, epochs=1, include_strings=True)
 
   # Load the prediction visualization jinja2 LaTeX template.
   env = jinja2.Environment(
