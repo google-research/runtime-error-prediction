@@ -301,7 +301,7 @@ def show_latex_predictions(config, info: VisualizationInfo, latex_template: jinj
   latex_file = os.path.join(output_directory, 'viz.tex')
   with open(latex_file, 'w') as f:
     f.write(rendered)
-  call(['pdflatex', '-output-directory', output_directory, latex_file])
+  # call(['pdflatex', '-output-directory', output_directory, latex_file])
 
 
 def create_train_state_from_params(config, rng, model, params, step):
