@@ -290,10 +290,10 @@ def show_latex_predictions(config, info: VisualizationInfo, latex_template: jinj
   instruction_pointer_image_file = os.path.join(
     output_directory, 'instruction-pointer.png')
 
-  # If the dataset is yesdoc, trim the first row of the instruction pointer array.
+  # If the dataset is yesdoc, trim the first row and column of the instruction pointer array.
   # The first row corresponds to the docstring resource description.
   if FLAGS.dataset_path:
-    instruction_pointer = instruction_pointer[1:]
+    instruction_pointer = instruction_pointer[1:, 1:]
 
   np.save(error_contributions_array_file, error_contributions)
   np.save(instruction_pointer_array_file, instruction_pointer)
