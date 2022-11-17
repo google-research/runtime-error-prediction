@@ -292,7 +292,7 @@ def show_latex_predictions(config, info: VisualizationInfo, latex_template: jinj
 
   # If the dataset is yesdoc, trim the first row and column of the instruction pointer array.
   # The first row corresponds to the docstring resource description.
-  if FLAGS.dataset_path:
+  if 'nodoc' not in FLAGS.dataset_path:
     instruction_pointer = instruction_pointer[1:, 1:]
 
   np.save(error_contributions_array_file, error_contributions)
