@@ -75,7 +75,8 @@ def get_output_directory(checkpoints_dir, problem_id, submission_id):
   if not checkpoints_dir:
     raise ValueError('checkpoints_dirs must not be empty.')
   checkpoints_parent_dir = os.path.dirname(checkpoints_dir)
-  return os.path.join(checkpoints_parent_dir, 'visualizations', problem_id, submission_id)
+  dataset_path_suffix = os.path.basename(FLAGS.dataset_path)
+  return os.path.join(checkpoints_parent_dir, dataset_path_suffix, 'visualizations', problem_id, submission_id)
 
 
 def get_raise_contribution_at_step(instruction_pointer, raise_decisions, raise_index):
@@ -288,6 +289,11 @@ def show_latex_predictions(config, info: VisualizationInfo, latex_template: jinj
     output_directory, 'instruction-pointer-image.npy')
   instruction_pointer_image_file = os.path.join(
     output_directory, 'instruction-pointer.png')
+
+  # If the dataset is yesdoc, trim the first row of the instruction pointer array.
+  # The first row corresponds to the docstring resource description.
+  if FLAGS.dataset_path:
+    instruction_pointer = instruction_pointer[1:]
 
   np.save(error_contributions_array_file, error_contributions)
   np.save(instruction_pointer_array_file, instruction_pointer)
