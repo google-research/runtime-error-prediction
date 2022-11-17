@@ -575,9 +575,10 @@ def main(argv):
       prediction_data2.append(prediction_datum2)
 
       # Filter examples.
-      if not (is_correct and not is_correct2):
-        print('Skipping bc not (is_correct and not is_correct2)')
-        continue
+      # Commenting out so that visualization artifacts are always produced.
+      # if not (is_correct and not is_correct2):
+      #   print('Skipping bc not (is_correct and not is_correct2)')
+      #   continue
 
       visualization_info = VisualizationInfo(
           raw=raw,
