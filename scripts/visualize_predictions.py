@@ -419,8 +419,8 @@ def main(argv):
     problem_ids = batch.pop('problem_id')
     submission_ids = batch.pop('submission_id')
     docstring_token_batch = batch.get('docstring_tokens')
-    state, aux = train_step(state, batch)
-    state2, aux2 = train_step2(state2, batch)
+    _, aux = train_step(state, batch)
+    _, aux2 = train_step2(state2, batch)
     print('Got state and state2!')
 
     exit_index = batch['exit_index']
