@@ -83,7 +83,7 @@ class Trainer:
       return (
           data_io.load_dataset(dataset_path, split=split, include_strings=include_strings)
           .map(map_fn)
-          .filter(filter_fn)
+          # .filter(filter_fn)  # DO NOT SUBMIT: Uncomment before submitting.
           .take(batch_size)
           .repeat(epochs)
           .padded_batch(batch_size, padded_shapes=padded_shapes)

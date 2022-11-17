@@ -358,6 +358,7 @@ def main(argv):
   split = 'valid-batch'
   dataset = t.load_dataset(
       dataset_path=dataset_path, split=split, epochs=1, include_strings=True)
+  print(f'Length of dataset: {len(list(iter(dataset)))}')
 
   # Load the prediction visualization jinja2 LaTeX template.
   env = jinja2.Environment(
@@ -569,6 +570,7 @@ def main(argv):
 
       # Filter examples.
       if not (is_correct and not is_correct2):
+        print('Skipping bc not (is_correct and not is_correct2)')
         continue
 
       visualization_info = VisualizationInfo(
