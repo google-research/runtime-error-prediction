@@ -63,12 +63,12 @@ def make_figure(*,
                 **kwargs):
   """"Creates a matplotlib plot from the given data."""
   fig = plt.figure()
+  ax = fig.gca()
+  ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
   plt.imshow(data, cmap='gist_gray', interpolation=interpolation, **kwargs)
   # Hide y-axis labels.
   plt.tick_params(axis='y', which='both', labelsize=0)
   # Add colorbar.
-  ax = plt.figure().gca()
-  ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
   # colorbar = plt.colorbar(orientation='vertical', ticks=[0., 1.])
   # colorbar.ax.set_yticklabels(['0.0', '1.0'])
   return fig
