@@ -10,6 +10,7 @@ from absl import flags
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 import termcolor
 
@@ -66,6 +67,8 @@ def make_figure(*,
   # Hide y-axis labels.
   plt.tick_params(axis='y', which='both', labelsize=0)
   # Add colorbar.
+  ax = plt.figure().gca()
+  ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
   # colorbar = plt.colorbar(orientation='vertical', ticks=[0., 1.])
   # colorbar.ax.set_yticklabels(['0.0', '1.0'])
   return fig
