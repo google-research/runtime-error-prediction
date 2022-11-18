@@ -30,7 +30,7 @@ def load_array(input_path):
   print(array)
 
 
-def instruction_pointer_to_image(instruction_pointer):
+def instruction_pointer_to_image(instruction_pointer, timesteps):
   """Converts the given instruction pointer array to an image."""
   # Slice the trailing dimensions where there are no changes.
   np.set_printoptions(precision=3, suppress=True)
@@ -43,7 +43,7 @@ def instruction_pointer_to_image(instruction_pointer):
   counts = np.cumsum(instruction_pointer_raise_node_is_one)
   idx = np.searchsorted(counts, 6)
   # instruction_pointer_trimmed = instruction_pointer[:, :idx]
-  instruction_pointer_trimmed = instruction_pointer[:, :24]
+  instruction_pointer_trimmed = instruction_pointer[:, :timesteps]
   instruction_pointer_figure = make_figure(
       # data=instruction_pointer_trimmed,
       data=instruction_pointer_trimmed,
@@ -74,11 +74,11 @@ def make_figure(*,
   return fig
 
 
-def load_instruction_pointer(input_path, output_path=None):
+def load_instruction_pointer(input_path, output_path=None, timesteps=24):
   # plt.style.use('dark_background')
   instruction_pointer_array = np.load(input_path)
   print(instruction_pointer_array.shape)
-  figure = instruction_pointer_to_image(instruction_pointer_array)
+  figure = instruction_pointer_to_image(instruction_pointer_array, timesteps)
   # np.save('viz-instruction-pointer.npy', image)
   base_filename = os.path.splitext(input_path)[0]
   if output_path:
