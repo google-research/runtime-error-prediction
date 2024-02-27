@@ -1,0 +1,10 @@
+base_path: /Users/rishabgoel/Documents/compressive-ipagnn/data/codeforces
+trace_code_path: error_generation/trace_code.py
+process_suffix: processed
+errors:
+  - zero_err
+  - assert_err
+  - not_subscriptable_err
+  - idx_out_range_err
+  - math_domain_err
+  - not_iterable_err
